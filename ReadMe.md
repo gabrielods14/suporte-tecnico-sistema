@@ -5,6 +5,7 @@ Este projeto tem como objetivo o desenvolvimento de um **sistema de suporte téc
 
 O sistema será composto por **três plataformas distintas** (Mobile, Desktop e Web), todas integradas a uma **API central**, formando um único ecossistema.
 
+<<<<<<< HEAD
 ### 🚀 Status Atual do Projeto
 - ✅ **Frontend Web (React)** - Implementado e funcional
 - ✅ **Backend Flask** - Implementado e integrado com API externa
@@ -53,11 +54,24 @@ pip install -r requirements.txt
 python app.py
 # API disponível em: http://localhost:5000
 ```
+=======
+---
+
+## Tecnologias Utilizadas
+- **Backend (API):** C# (.NET 8), Entity Framework, SQL Server (Azure), integração com serviços de IA.  
+- **Frontend Web:** HTML, CSS, JS, React.  
+- **Mobile:** JS, React Native.  
+- **Desktop:** Python, Kivy.  
+- **Infraestrutura:** GitHub Projects, Git Flow simplificado, Azure Cloud.  
+>>>>>>> 154c2c9 (Inicializando repostório remoto)
 
 ---
 
 ## 📂 Estrutura do Repositório
+<<<<<<< HEAD
 ```bash
+=======
+>>>>>>> 154c2c9 (Inicializando repostório remoto)
 📂 suporte-tecnico-sistema
 │── 📂 api # Código da API (backend + IA + banco de dados)
 │── 📂 mobile # Código do aplicativo mobile
@@ -69,7 +83,11 @@ python app.py
 │── Contributing.md # Guia de contribuição para colaboradores
 │── LICENSE # Licença do projeto
 │── .gitignore
+<<<<<<< HEAD
 ```
+=======
+
+>>>>>>> 154c2c9 (Inicializando repostório remoto)
 
 Cada subpasta contém um `README.md` próprio, descrevendo como instalar e rodar o projeto específico.
 

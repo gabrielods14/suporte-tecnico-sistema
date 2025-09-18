@@ -21,7 +21,11 @@ O projeto está dividido em múltiplas pastas:
 
 ### 1. Clonar o repositório
 ```bash
+<<<<<<< HEAD
 git clone https://github.com/gabrielods14/suporte-tecnico-sistema.git
+=======
+git clone 
+>>>>>>> 154c2c9 (Inicializando repostório remoto)
 cd suporte-tecnico-sistema
 ```
 
