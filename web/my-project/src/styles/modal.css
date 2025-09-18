@@ -1,0 +1,70 @@
+/* src/styles/modal.css */
+.modal-overlay {
+  position: fixed; /* Cobre a tela inteira */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Fundo escuro semi-transparente */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; /* Garante que o modal fique na frente de tudo */
+}
+
+.modal-content {
+  background-color: var(--bg-light);
+  border-radius: 8px;
+  overflow: hidden; /* Garante que o header com cantos retos não vaze */
+  width: 90%;
+  max-width: 400px;
+  box-shadow: var(--shadow-dark);
+  text-align: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-header {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  padding: 15px 20px;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.modal-body {
+  padding: 30px 20px;
+  color: var(--text-dark);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.modal-footer {
+  padding: 0 20px 20px;
+}
+
+.modal-button {
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  padding: 10px 40px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  transition: background-color 0.3s ease;
+  width: auto;
+}
+
+.modal-button:hover {
+  background-color: var(--secondary-color);
+}
+
+/* Animação simples para o modal aparecer */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

@@ -1,0 +1,156 @@
+/* src/styles/login.css */
+.login-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-dark); /* Fundo preto para a página */
+}
+
+.login-hero {
+  flex: 1; /* Ocupa o espaço restante */
+  background-color: var(--secondary-color); /* Vermelho escuro */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-light);
+  font-size: 2.5rem;
+  font-weight: 700;
+  padding: 20px;
+  text-align: center;
+}
+
+.login-container {
+  flex-basis: 400px; /* Largura fixa para o contêiner de login */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+}
+
+.login-form {
+  width: 100%;
+  max-width: 300px;
+  text-align: center;
+}
+
+.login-form h1 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: var(--text-light);
+  text-transform: uppercase;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  text-align: left;
+  margin-bottom: 5px;
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  background-color: #333;
+  border-color: #555;
+  color: var(--text-light);
+  padding: 12px 15px;
+  font-size: 1rem;
+}
+
+.form-group input[type="text"]::placeholder,
+.form-group input[type="password"]::placeholder {
+  color: #bbb;
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  font-size: 0.9rem;
+}
+
+.form-options .remember-me {
+  display: flex;
+  align-items: center;
+  color: var(--text-light);
+}
+
+.form-options .remember-me input {
+  margin-right: 8px;
+  accent-color: var(--primary-color); /* Estiliza o checkbox */
+}
+
+.form-options a {
+  color: var(--text-light);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.form-options a:hover {
+  color: var(--primary-color);
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover {
+  background-color: var(--secondary-color);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .login-page {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    flex: none; /* Remove o flex-grow */
+    height: 200px; /* Altura fixa para o hero em telas menores */
+    width: 100%;
+    font-size: 2rem;
+  }
+
+  .login-container {
+    flex-basis: auto; /* Permite que ocupe o espaço necessário */
+    width: 100%;
+    padding: 30px 20px;
+  }
+
+  .login-form {
+    max-width: 100%; /* Ocupa a largura total disponível */
+  }
+}
+
+.form-group {
+  position: relative; /* Necessário para posicionar o ícone absolutamente */
+}
+
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbb; /* Cor do ícone */
+  font-size: 1.1rem;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  padding-left: 45px; /* Aumenta o padding para dar espaço ao ícone */
+}

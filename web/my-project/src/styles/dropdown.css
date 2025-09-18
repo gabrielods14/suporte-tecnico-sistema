@@ -1,0 +1,56 @@
+/* src/styles/dropdown.css */
+.dropdown-container {
+  position: relative; /* Contexto para o posicionamento do menu */
+  display: inline-block;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%; /* Posiciona logo abaixo do ícone */
+  right: 0;
+  background-color: white;
+  color: var(--text-dark);
+  border-radius: 4px;
+  box-shadow: var(--shadow-dark);
+  z-index: 100;
+  width: 150px; /* Largura do menu */
+  overflow: hidden;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 5px 0; /* Espaçamento interno */
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: var(--bg-light); /* Cor de fundo ao passar o mouse */
+}
+
+.dropdown-item .item-icon {
+  font-size: 1rem;
+  color: #555;
+}
+
+/* Reutilizando a animação do modal */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,194 @@
+/* src/styles/home.css */
+.home-page-layout {
+  display: grid;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main";
+  grid-template-columns: 220px 1fr; /* Largura da sidebar e do conteúdo */
+  grid-template-rows: 60px 1fr; /* Altura do header e do conteúdo */
+  min-height: 100vh;
+  background-color: var(--bg-light);
+}
+
+.home-header {
+  grid-area: header;
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 20px;
+  box-shadow: var(--shadow-dark);
+}
+
+.header-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.header-user-info .user-icon {
+  font-size: 1.5rem; /* Ícone de usuário */
+}
+
+.header-user-info .settings-icon {
+  font-size: 1.2rem; /* Ícone de engrenagem */
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.header-user-info .dropdown-arrow {
+  margin-left: 5px;
+}
+
+.home-sidebar {
+  grid-area: sidebar;
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  padding: 20px 0;
+  box-shadow: var(--shadow-dark);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-logo {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 30px;
+  color: var(--text-light);
+}
+
+.sidebar-nav ul {
+  list-style: none;
+}
+
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: var(--text-light);
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  gap: 10px;
+}
+
+.sidebar-nav li a:hover,
+.sidebar-nav li a.active {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.sidebar-nav .nav-icon {
+  font-size: 1.2rem;
+}
+
+.home-main-content {
+  grid-area: main;
+  padding: 30px;
+  background-color: var(--bg-light);
+  display: flex;
+  flex-direction: column;
+}
+
+.main-welcome {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  color: var(--text-dark);
+  text-align: center;
+}
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.card {
+  background-color: var(--secondary-color);
+  color: var(--text-light);
+  padding: 25px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: var(--shadow-light);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 150px; /* Altura mínima para os cards */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background-color: var(--primary-color);
+}
+
+.card .card-icon {
+  font-size: 3.5rem;
+  margin-bottom: 15px;
+}
+
+.card span {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.home-footer {
+  margin-top: auto; /* Empurra o footer para baixo */
+  padding-top: 30px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-dark);
+  border-top: 1px solid var(--border-color);
+  margin-top: 50px;
+  padding-top: 20px;
+}
+
+/* Responsividade */
+@media (max-width: 992px) {
+  .home-page-layout {
+    grid-template-columns: 180px 1fr; /* Sidebar um pouco menor */
+  }
+
+  .sidebar-logo {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-page-layout {
+    grid-template-areas:
+      "header"
+      "main";
+    grid-template-columns: 1fr;
+    grid-template-rows: 60px 1fr;
+  }
+
+  .home-sidebar {
+    display: none; /* Esconde a sidebar em mobile, pode ser substituída por um menu hambúrguer */
+  }
+
+  .home-header {
+    justify-content: space-between; /* Ajusta o header em mobile */
+  }
+
+  /* Se for implementar um menu hambúrguer: */
+  /* .home-header::before {
+    content: "\2261"; // Ícone de hambúrguer
+    font-size: 1.8rem;
+    cursor: pointer;
+    margin-right: 15px;
+  } */
+
+  .main-welcome {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr; /* Cards empilhados em telas muito pequenas */
+    gap: 15px;
+  }
+}
