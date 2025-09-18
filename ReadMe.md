@@ -17,6 +17,7 @@ O sistema será composto por **três plataformas distintas** (Mobile, Desktop e 
 ---
 
 ## 📂 Estrutura do Repositório
+```bash
 📂 suporte-tecnico-sistema
 │── 📂 api # Código da API (backend + IA + banco de dados)
 │── 📂 mobile # Código do aplicativo mobile
@@ -28,7 +29,7 @@ O sistema será composto por **três plataformas distintas** (Mobile, Desktop e 
 │── Contributing.md # Guia de contribuição para colaboradores
 │── LICENSE # Licença do projeto
 │── .gitignore
-
+```
 
 Cada subpasta contém um `README.md` próprio, descrevendo como instalar e rodar o projeto específico.
 
