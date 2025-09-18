@@ -1,0 +1,62 @@
+# ==================
+# Arquivos de sistema
+# ==================
+.DS_Store
+Thumbs.db
+*.log
+
+# ==================
+# IDEs
+# ==================
+.vscode/
+.idea/
+.vs/
+
+# ==================
+# .NET / C#
+# ==================
+bin/
+obj/
+*.user
+*.suo
+*.dbmdl
+*.bak
+
+# ==================
+# Node.js / React / React Native
+# ==================
+node_modules/
+npm-debug.log
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.env
+.expo/
+
+# ==================
+# Python / Kivy
+# ==================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.egg-info/
+.env/
+.venv/
+venv/
+
+# ==================
+# Build / Deploy
+# ==================
+dist/
+build/
+coverage/
+*.exe
+*.dll
+*.so
+
+# ==================
+# Outros
+# ==================
+*.swp
