@@ -21,7 +21,7 @@ O projeto está dividido em múltiplas pastas:
 
 ### 1. Clonar o repositório
 ```bash
-git clone 
+git clone https://github.com/gabrielods14/suporte-tecnico-sistema.git
 cd suporte-tecnico-sistema
 ```
 
