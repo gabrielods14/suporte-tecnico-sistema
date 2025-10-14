@@ -3,19 +3,79 @@ import React, { useState } from 'react';
 import '../styles/login.css';
 import { FaUser, FaLock } from 'react-icons/fa';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import Toast from '../components/Toast';
 
 function LoginPage({ onLoginSuccess }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  const [showAdminCredentials, setShowAdminCredentials] = useState(false);
 
-  const handleSubmit = (e) => {
+  const showToast = (message, type = 'error') => {
+    setToast({ isVisible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ isVisible: false, message: '', type: 'error' });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      onLoginSuccess();
-    } else {
-      alert('Usuário ou senha inválidos.');
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('http://localhost:5000/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: username,
+          senha: password
+        }),
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        // Se não conseguir fazer parse do JSON, usa mensagem padrão
+        data = { message: 'Erro interno do servidor.' };
+      }
+
+      if (response.ok) {
+        // Salva o token no localStorage se a API retornar um
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        // Passa os dados do usuário para o App
+        onLoginSuccess(data.user || { nome: 'Usuário', email: username });
+      } else {
+        // Trata diferentes tipos de erro
+        let errorMessage = 'Usuário ou senha incorretos.';
+        
+        if (data.message) {
+          // Se a API retornou uma mensagem específica, usa ela
+          errorMessage = data.message;
+        } else if (response.status === 404) {
+          errorMessage = 'Usuário ou senha incorretos.';
+        } else if (response.status === 401) {
+          errorMessage = 'Usuário ou senha incorretos.';
+        } else if (response.status === 400) {
+          errorMessage = 'Dados inválidos. Verifique email e senha.';
+        } else if (response.status >= 500) {
+          errorMessage = 'Erro interno do servidor. Tente novamente mais tarde.';
+        }
+        
+        showToast(errorMessage, 'error');
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      showToast('Erro de conexão. Verifique se o servidor está rodando.', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,9 +124,43 @@ function LoginPage({ onLoginSuccess }) {
                 Esqueci a senha
               </button>
             </div>
-            <button type="submit" className="login-button">
-              Entrar
+            <button type="submit" className="login-button" disabled={isLoading}>
+              {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
+            
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+              <button 
+                type="button"
+                onClick={() => setShowAdminCredentials(!showAdminCredentials)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-light)',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  fontSize: '0.9rem'
+                }}
+              >
+                {showAdminCredentials ? 'Ocultar' : 'Mostrar'} credenciais de teste
+              </button>
+              
+              {showAdminCredentials && (
+                <div style={{
+                  marginTop: '15px',
+                  padding: '15px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '5px',
+                  fontSize: '0.9rem',
+                  textAlign: 'left'
+                }}>
+                  <p><strong>Usuário:</strong> admin@helpwave.com</p>
+                  <p><strong>Senha:</strong> admin123</p>
+                  <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.8 }}>
+                    Use estas credenciais para fazer o primeiro login
+                  </p>
+                </div>
+              )}
+            </div>
           </form>
         </section>
       </main>
@@ -74,6 +168,13 @@ function LoginPage({ onLoginSuccess }) {
       <ForgotPasswordModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
       />
     </React.Fragment>
   );

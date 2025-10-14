@@ -7,10 +7,10 @@ import Header from '../components/Header';
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
 
-function HomePage({ onLogout }) {
+function HomePage({ onLogout, onNavigateToRegister, userInfo }) {
   return (
     <div className="home-page-layout">
-      <Header onLogout={onLogout} /> {/* Adicionado ao grid area 'header' */}
+      <Header onLogout={onLogout} userName={userInfo?.nome} /> {/* Adicionado ao grid area 'header' */}
       <Sidebar /> {/* Adicionado ao grid area 'sidebar' */}
 
       <main className="home-main-content">
@@ -37,7 +37,7 @@ function HomePage({ onLogout }) {
             <FaChartBar className="card-icon" />
             <span>RELATÓRIOS</span>
           </article>
-          <article className="card">
+          <article className="card" onClick={onNavigateToRegister}>
             {/* Ícone substituído */}
             <FaUserPlus className="card-icon" />
             <span>CADASTRO DE FUNCIONÁRIO</span>

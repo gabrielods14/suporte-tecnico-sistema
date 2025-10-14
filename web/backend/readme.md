@@ -1,52 +1,56 @@
-🚀 Documentação do Backend (Flask / Python)
-Este README.md lista os comandos exatos que foram executados para instalar e rodar o servidor Flask, que atua como um intermediário seguro para a API de Dados do Azure.
+# Backend - Sistema de Suporte Técnico HelpWave
 
-🛠️ Guia de Instalação Rápida
-Para rodar o backend, você deve ter o Python e o pip instalados.
+Este é o backend do sistema HelpWave, desenvolvido em Flask, que atua como intermediário seguro para a API de Dados do Azure.
 
-1. Preparar e Ativar o Ambiente Virtual (venv)
-Execute os comandos a partir da pasta backend:
+## 🛠️ Instalação Rápida
 
-Bash
+### Pré-requisitos
+- Python 3.7+
+- pip
 
-# 1. Cria o ambiente
+### Passos de Instalação
+
+1. **Criar ambiente virtual:**
+```bash
 python -m venv venv
-Em seguida, ative o ambiente (essencial para isolar as bibliotecas):
+```
 
-Bash
-
-# Se estiver no Windows:
+2. **Ativar ambiente virtual:**
+```bash
+# Windows:
 .\venv\Scripts\activate
 
-# Se estiver no macOS ou Linux:
+# macOS/Linux:
 source venv/bin/activate
-Resultado: O (venv) deve aparecer no início do seu terminal.
+```
 
-2. Instalar Pacotes e Bibliotecas Essenciais
-Instale todos os pacotes que foram adicionados para o projeto. Eles garantem a comunicação e a segurança do servidor:
+3. **Instalar dependências:**
+```bash
+pip install -r requirements.txt
+```
 
-Bash
+4. **Executar servidor:**
+```bash
+python app.py
+```
 
-(venv) pip install flask flask-cors flask-bcrypt requests
-flask: É o framework principal para construir a API.
+O servidor estará disponível em `http://localhost:5000`
 
-flask-cors: Permite a comunicação com o Frontend (React).
+## 🌐 Endpoints da API
 
-flask-bcrypt: É o módulo de criptografia (instalado para segurança, mas o hash está desativado nas rotas de repasse).
+- `POST /login` - Autenticação de usuário
+- `POST /register` - Cadastro de funcionário
 
-requests: Faz a comunicação com a API de Dados do Azure.
+## 🔧 Configuração
 
-3. Rodar o Servidor
-Com o (venv) ativo, inicie o servidor Flask:
+O backend está configurado para se conectar com a API externa do Azure:
+- **URL Base:** `https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net`
+- **Endpoint de Login:** `/api/Autenticacao`
+- **Endpoint de Cadastro:** `/api/Usuarios`
 
-Bash
+## 📦 Dependências
 
-(venv) python app.py
-Pronto! O servidor estará rodando em http://127.0.0.1:5000.
-
-🌐 Endpoints da API
-Lembre-se de usar o Postman ou Insomnia para enviar requisições POST para estes endereços, pois o navegador não funcionará:
-
-Login: Endereço /login
-
-Cadastro: Endereço /register
+- **Flask:** Framework principal para construir a API
+- **Flask-CORS:** Permite comunicação com o Frontend (React)
+- **Flask-Bcrypt:** Módulo de criptografia para segurança
+- **Requests:** Comunicação com a API de Dados do Azure

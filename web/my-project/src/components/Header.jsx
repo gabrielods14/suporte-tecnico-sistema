@@ -4,14 +4,14 @@ import React, { useState } from 'react';
 import { FaUserCircle, FaCog, FaChevronDown } from 'react-icons/fa';
 import DropdownMenu from './DropdownMenu';
 
-function Header({ onLogout }) {
+function Header({ onLogout, userName = 'Administrador' }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
     <header className="home-header">
       <div className="header-user-info">
         <FaUserCircle className="user-icon" />
-        <span>BEM-VINDO(A) XXXXXX</span>
+        <span>BEM-VINDO(A) {userName.toUpperCase()}</span>
         <div className="dropdown-container">
           <FaCog 
             className="settings-icon" 

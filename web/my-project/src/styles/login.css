@@ -1,49 +1,62 @@
 /* src/styles/login.css */
+
+/* CSS Grid Layout Principal - Mobile First */
 .login-page {
-  display: flex;
+  display: grid;
+  grid-template-rows: auto 1fr;
   min-height: 100vh;
-  background-color: var(--bg-dark); /* Fundo preto para a página */
+  background-color: var(--bg-dark);
 }
 
+/* Hero Section usando Grid */
 .login-hero {
-  flex: 1; /* Ocupa o espaço restante */
-  background-color: var(--secondary-color); /* Vermelho escuro */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
+  display: grid;
+  place-items: center;
   color: var(--text-light);
-  font-size: 2.5rem;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
   font-weight: 700;
-  padding: 20px;
+  padding: clamp(20px, 5vw, 40px);
   text-align: center;
+  min-height: 200px;
 }
 
+/* Container de Login usando Flexbox */
 .login-container {
-  flex-basis: 400px; /* Largura fixa para o contêiner de login */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: clamp(20px, 5vw, 40px);
   background-color: var(--bg-dark);
   color: var(--text-light);
+  width: 100%;
 }
 
+/* Formulário usando Flexbox */
 .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
   width: 100%;
-  max-width: 300px;
+  max-width: 400px;
   text-align: center;
 }
 
 .login-form h1 {
-  font-size: 2rem;
-  margin-bottom: 30px;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: 0;
   color: var(--text-light);
   text-transform: uppercase;
+  font-weight: 700;
 }
 
+/* Form Groups com Flexbox */
 .form-group {
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 0.5rem;
 }
 
 .form-group label {
@@ -54,14 +67,24 @@
   color: var(--text-light);
 }
 
+/* Inputs com Flexbox e responsividade */
 .form-group input[type="text"],
 .form-group input[type="password"] {
   width: 100%;
   background-color: #333;
-  border-color: #555;
+  border: 2px solid #555;
+  border-radius: 8px;
   color: var(--text-light);
-  padding: 12px 15px;
-  font-size: 1rem;
+  padding: 12px 15px 12px 45px;
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
 }
 
 .form-group input[type="text"]::placeholder,
@@ -69,12 +92,24 @@
   color: #bbb;
 }
 
+/* Ícones com posicionamento flexível */
+.input-icon {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbb;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
+  z-index: 1;
+}
+
+/* Opções do formulário com Flexbox */
 .form-options {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+  font-size: clamp(0.8rem, 2vw, 0.9rem);
 }
 
 .form-options .remember-me {
@@ -98,59 +133,140 @@
   color: var(--primary-color);
 }
 
+/* Botão de login com Flexbox e responsividade */
 .login-button {
   width: 100%;
-  padding: 12px 20px;
-  background-color: var(--primary-color);
+  padding: clamp(12px, 3vw, 16px) 20px;
+  background: linear-gradient(135deg, var(--primary-color), #dc3545);
   color: white;
-  border-radius: 4px;
-  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
   font-weight: 700;
-  transition: background-color 0.3s ease;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.login-button:hover {
-  background-color: var(--secondary-color);
+.login-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button:disabled {
+  background: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Breakpoints Responsivos - Mobile First Approach */
+
+/* Tablet e Desktop - Grid Layout */
+@media (min-width: 768px) {
   .login-page {
-    flex-direction: column;
+    grid-template-columns: 1fr 400px;
+    grid-template-rows: 1fr;
   }
-
+  
   .login-hero {
-    flex: none; /* Remove o flex-grow */
-    height: 200px; /* Altura fixa para o hero em telas menores */
-    width: 100%;
-    font-size: 2rem;
+    min-height: 100vh;
+    font-size: clamp(2rem, 4vw, 3rem);
   }
-
+  
   .login-container {
-    flex-basis: auto; /* Permite que ocupe o espaço necessário */
-    width: 100%;
-    padding: 30px 20px;
+    max-width: 400px;
+    padding: clamp(30px, 5vw, 50px);
   }
+  
+  .form-options {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
 
+/* Desktop Large */
+@media (min-width: 1024px) {
+  .login-page {
+    grid-template-columns: 1fr 450px;
+  }
+  
+  .login-container {
+    max-width: 450px;
+  }
+  
   .login-form {
-    max-width: 100%; /* Ocupa a largura total disponível */
+    max-width: 400px;
   }
 }
 
-.form-group {
-  position: relative; /* Necessário para posicionar o ícone absolutamente */
+/* Mobile Small */
+@media (max-width: 375px) {
+  .login-hero {
+    min-height: 150px;
+    padding: 15px;
+  }
+  
+  .login-container {
+    padding: 15px;
+  }
+  
+  .login-form {
+    gap: 1rem;
+  }
 }
 
-.input-icon {
-  position: absolute;
-  left: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #bbb; /* Cor do ícone */
-  font-size: 1.1rem;
+/* Container Queries para componentes flexíveis */
+@container (min-width: 300px) {
+  .form-options {
+    flex-direction: row;
+    justify-content: space-between;
+  }
 }
 
-.form-group input[type="text"],
-.form-group input[type="password"] {
-  padding-left: 45px; /* Aumenta o padding para dar espaço ao ícone */
+/* Melhorias de acessibilidade e UX */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Suporte para modo escuro/claro (se implementado) */
+@media (prefers-color-scheme: light) {
+  .login-page {
+    background-color: #f8f9fa;
+  }
+  
+  .login-container {
+    background-color: #f8f9fa;
+    color: #333;
+  }
+  
+  .form-group input[type="text"],
+  .form-group input[type="password"] {
+    background-color: #fff;
+    border-color: #ddd;
+    color: #333;
+  }
+}
+
+/* Melhorias para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .login-button {
+    min-height: 44px; /* Tamanho mínimo recomendado para touch */
+  }
+  
+  .form-group input[type="text"],
+  .form-group input[type="password"] {
+    min-height: 44px;
+  }
 }

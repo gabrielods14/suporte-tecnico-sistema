@@ -5,14 +5,54 @@ Este projeto tem como objetivo o desenvolvimento de um **sistema de suporte téc
 
 O sistema será composto por **três plataformas distintas** (Mobile, Desktop e Web), todas integradas a uma **API central**, formando um único ecossistema.
 
+### 🚀 Status Atual do Projeto
+- ✅ **Frontend Web (React)** - Implementado e funcional
+- ✅ **Backend Flask** - Implementado e integrado com API externa
+- ✅ **Sistema de Login** - Autenticação via API do Azure
+- ✅ **Cadastro de Funcionários** - Formulário completo integrado
+- ✅ **Design Responsivo** - Interface adaptável
+- 🔄 **Mobile** - Em desenvolvimento
+- 🔄 **Desktop** - Em desenvolvimento
+- 🔄 **IA para Triagem** - Planejado para próximas versões
+
 ---
 
 ## Tecnologias Utilizadas
-- **Backend (API):** C# (.NET 8), Entity Framework, SQL Server (Azure), integração com serviços de IA.  
-- **Frontend Web:** HTML, CSS, JS, React.  
-- **Mobile:** JS, React Native.  
-- **Desktop:** Python, Kivy.  
-- **Infraestrutura:** GitHub Projects, Git Flow simplificado, Azure Cloud.  
+
+### ✅ Implementado
+- **Frontend Web:** React 19.1.1, Vite, React Icons, CSS3
+- **Backend Intermediário:** Flask, Flask-CORS, Flask-Bcrypt, Requests
+- **API Externa:** Integração com Azure (C# .NET 8)
+- **Infraestrutura:** GitHub, Git Flow, Azure Cloud
+
+### 🔄 Planejado
+- **Backend Principal:** C# (.NET 8), Entity Framework, SQL Server (Azure)
+- **Mobile:** React Native
+- **Desktop:** Python, Kivy
+- **IA:** Integração com serviços de IA para triagem  
+
+---
+
+## 🚀 Execução Rápida
+
+### Frontend (React)
+```bash
+cd web/my-project
+npm install
+npm run dev
+# Acesse: http://localhost:5173
+```
+
+### Backend (Flask)
+```bash
+cd web/backend
+python -m venv venv
+# Windows: .\venv\Scripts\activate
+# Linux/Mac: source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+# API disponível em: http://localhost:5000
+```
 
 ---
 
