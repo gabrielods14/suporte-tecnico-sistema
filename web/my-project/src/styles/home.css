@@ -15,10 +15,43 @@
   background-color: var(--primary-color);
   color: var(--text-light);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
   padding: 0 20px;
   box-shadow: var(--shadow-dark);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  font-size: 1.8rem;
+  color: var(--text-light);
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+.header-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.header-title:hover {
+  transform: scale(1.05);
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 .header-user-info {
@@ -173,6 +206,14 @@
 
   .home-header {
     justify-content: space-between; /* Ajusta o header em mobile */
+  }
+  
+  .header-title {
+    font-size: 1.2rem; /* Reduz o tamanho do título em mobile */
+  }
+  
+  .header-icon {
+    font-size: 1.4rem; /* Reduz o tamanho do ícone em mobile */
   }
 
   /* Se for implementar um menu hambúrguer: */

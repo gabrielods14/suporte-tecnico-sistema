@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import React, { useState } from 'react';
 // Importando os ícones
-import { FaUserCircle, FaCog, FaChevronDown } from 'react-icons/fa';
+import { FaUserCircle, FaCog, FaChevronDown, FaWaveSquare } from 'react-icons/fa';
 import DropdownMenu from './DropdownMenu';
 
 function Header({ onLogout, userName = 'Administrador' }) {
@@ -9,6 +9,9 @@ function Header({ onLogout, userName = 'Administrador' }) {
 
   return (
     <header className="home-header">
+      <div className="header-left">
+        <span className="header-title">HELPWAVE</span>
+      </div>
       <div className="header-user-info">
         <FaUserCircle className="user-icon" />
         <span>BEM-VINDO(A) {userName.toUpperCase()}</span>
