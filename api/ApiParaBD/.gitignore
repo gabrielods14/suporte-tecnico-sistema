@@ -1,0 +1,123 @@
+# .gitignore gerado para projeto .NET / Visual Studio
+# Ignora binários, artefatos de build e arquivos do Visual Studio/Rider
+
+# Build Folders
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# Publish output
+publish/
+**/publish/
+
+# Runtime
+*.runtimeconfig.json
+*.deps.json
+
+# Visual Studio cache files
+*.dbmdl
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+project.assets.json
+.nuget/
+
+# ASP.NET Scaffolding
+ScaffoldedFiles/
+
+# IIS Express
+IISExpress/
+*.vspscc
+
+# User secrets
+secrets.json
+
+# Logs
+*.log
+Logs/
+
+# OS generated files
+Thumbs.db
+.DS_Store
+ehthumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Database files
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Test results
+TestResults/
+*.trx
+
+# Coverage
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Azure
+.publishsettings
+*.Publish.xml
+
+# ASP.NET Core
+appsettings.*.json
+appsettings.Local.json
+
+# Node / NPM (in case front-end assets exist)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# Docker
+**/docker-compose.override.yml
+
+# Credentials
+*.pfx
+*.pem
+
+# VS Code
+.vscode/
+
+# Resharper
+_ReSharper*/
+*.ReSharper*/
+
+# Others
+*.class
+*.jar
+
+# Keep human-readable note
+# Se precisar ignorar arquivos adicionais (chaves, certificados, arquivos de configuração locais),
+# adicione-os abaixo.

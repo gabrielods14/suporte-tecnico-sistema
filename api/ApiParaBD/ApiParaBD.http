@@ -1,0 +1,6 @@
+@ApiParaBD_HostAddress = http://localhost:5232
+
+GET {{ApiParaBD_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
