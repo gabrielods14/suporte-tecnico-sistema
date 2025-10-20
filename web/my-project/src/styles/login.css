@@ -46,7 +46,7 @@
 .login-form h1 {
   font-size: clamp(1.5rem, 3vw, 2rem);
   margin-bottom: 0;
-  color: var(--text-light);
+  color: var(--text-dark);
   text-transform: uppercase;
   font-weight: 700;
 }
@@ -64,17 +64,17 @@
   text-align: left;
   margin-bottom: 5px;
   font-size: 0.9rem;
-  color: var(--text-light);
+  color: var(--text-dark);
 }
 
 /* Inputs com Flexbox e responsividade */
 .form-group input[type="text"],
 .form-group input[type="password"] {
   width: 100%;
-  background-color: #333;
-  border: 2px solid #555;
+  background-color: #ffffff;
+  border: 2px solid #ccc;
   border-radius: 8px;
-  color: var(--text-light);
+  color: var(--text-dark);
   padding: 12px 15px 12px 45px;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
@@ -115,7 +115,7 @@
 .form-options .remember-me {
   display: flex;
   align-items: center;
-  color: var(--text-light);
+  color: var(--text-dark);
 }
 
 .form-options .remember-me input {
@@ -124,7 +124,7 @@
 }
 
 .form-options a {
-  color: var(--text-light);
+  color: var(--text-dark);
   text-decoration: none;
   transition: color 0.3s ease;
 }
