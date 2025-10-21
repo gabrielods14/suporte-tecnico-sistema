@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RegisterEmployeePage from './pages/RegisterEmployeePage';
+import NewTicketPage from './pages/NewTicketPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,6 +28,10 @@ function App() {
     setCurrentPage('register');
   };
 
+  const navigateToNewTicket = () => {
+    setCurrentPage('newticket');
+  };
+
   const navigateToHome = () => {
     setCurrentPage('home');
   };
@@ -41,11 +46,19 @@ function App() {
         <HomePage 
           onLogout={handleLogout} 
           onNavigateToRegister={navigateToRegister}
+          onNavigateToNewTicket={navigateToNewTicket}
           userInfo={userInfo}
         />
       )}
       {currentPage === 'register' && (
         <RegisterEmployeePage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          userInfo={userInfo}
+        />
+      )}
+      {currentPage === 'newticket' && (
+        <NewTicketPage 
           onLogout={handleLogout}
           onNavigateToHome={navigateToHome}
           userInfo={userInfo}

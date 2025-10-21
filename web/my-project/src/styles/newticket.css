@@ -1,0 +1,444 @@
+/* src/styles/newticket.css */
+
+/* CSS Variables para consistência de cores */
+:root {
+  --header-red: #A93226;
+  --background-gray: #F5F5F5;
+  --input-white: #FFFFFF;
+  --border-gray: #E0E0E0;
+  --text-dark: #000000;
+  --error-red: #DC3545;
+  --success-green: #28A745;
+  --primary-color: #A93226;
+  --secondary-color: #8B0000;
+  --light-red: #F8D7DA;
+  --text-gray: #6C757D;
+}
+
+/* CSS Grid Layout Principal - Mobile First */
+.newticket-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header"
+    "main-content";
+  min-height: 100vh;
+  background-color: var(--background-gray);
+}
+
+/* Layout para desktop com sidebar */
+@media (min-width: 768px) {
+  .newticket-layout {
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: 60px 1fr;
+    grid-template-areas:
+      "sidebar header"
+      "sidebar main-content";
+  }
+}
+
+/* Container principal usando Flexbox */
+.newticket-main-content {
+  grid-area: main-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: clamp(1rem, 3vw, 2rem);
+  background-color: var(--background-gray);
+  color: var(--text-dark);
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Botão de voltar */
+.back-button {
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  border: none;
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.2);
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 10;
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, var(--secondary-color), #6B0000);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(169, 50, 38, 0.3);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+/* Header da página */
+.newticket-header {
+  width: 100%;
+  background-color: var(--header-red);
+  color: white;
+  padding: clamp(1rem, 3vw, 2rem);
+  margin-bottom: 2rem;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(169, 50, 38, 0.2);
+  border-radius: 0 0 12px 12px;
+}
+
+.newticket-header h1 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin: 0;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Formulário com Grid Layout */
+.newticket-form {
+  background-color: var(--input-white);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(169, 50, 38, 0.15);
+  width: 100%;
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-self: center;
+  border: 1px solid rgba(169, 50, 38, 0.1);
+}
+
+/* Layout em duas colunas para desktop */
+@media (min-width: 768px) {
+  .newticket-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    max-width: 800px;
+  }
+  
+  /* Campo de descrição ocupa duas colunas */
+  .form-group:last-of-type {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Form Groups com Flexbox */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.form-group label {
+  font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--text-dark);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+/* Inputs e Textarea */
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: clamp(12px, 2.5vw, 16px);
+  background-color: var(--input-white) !important;
+  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  color: var(--text-dark);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  transition: all 0.3s ease;
+  font-family: inherit;
+  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.05);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.5;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--text-gray);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.1);
+  background-color: var(--input-white);
+}
+
+/* Select Container com estilo customizado */
+.select-container {
+  position: relative;
+}
+
+.form-group select {
+  width: 100%;
+  padding: clamp(12px, 2.5vw, 16px);
+  background-color: var(--input-white) !important;
+  border: 2px solid var(--border-gray);
+  border-radius: 8px;
+  color: var(--text-dark);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  transition: all 0.3s ease;
+  font-family: inherit;
+  appearance: none;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.05);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-color);
+  font-size: 12px;
+  pointer-events: none;
+  font-weight: bold;
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.1);
+  background-color: var(--input-white) !important;
+}
+
+/* Estados de validação - Heurística de Nielsen: Visibilidade do Status */
+.form-group input:valid,
+.form-group textarea:valid,
+.form-group select:valid {
+  border-color: var(--success-green);
+  background-color: var(--input-white) !important;
+}
+
+.form-group input:invalid:not(:placeholder-shown),
+.form-group textarea:invalid:not(:placeholder-shown),
+.form-group select:invalid {
+  border-color: var(--error-red);
+  background-color: var(--input-white) !important;
+}
+
+/* Mensagens de erro */
+.form-group .error-message {
+  color: var(--error-red);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  display: none;
+  font-weight: 500;
+}
+
+.form-group.error .error-message {
+  display: block;
+}
+
+.form-group.error input,
+.form-group.error textarea,
+.form-group.error select {
+  border-color: var(--error-red);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+  background-color: var(--input-white) !important;
+}
+
+/* Contador de caracteres */
+.character-count {
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+/* Botão de submit - Heurística de Nielsen: Controle e Liberdade */
+.submit-button {
+  width: 100%;
+  padding: clamp(14px, 3vw, 18px) 20px;
+  background-color: var(--header-red);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  background-color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Indicador de progresso - Heurística de Nielsen: Visibilidade do Status */
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Texto de ajuda */
+.form-help {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  margin-top: 1rem;
+}
+
+/* Breakpoints Responsivos - Mobile First */
+
+/* Mobile Small */
+@media (max-width: 375px) {
+  .newticket-form {
+    padding: 1.25rem;
+    gap: 1.5rem;
+  }
+  
+  .newticket-header {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .newticket-form {
+    max-width: 700px;
+  }
+}
+
+/* Desktop Large */
+@media (min-width: 1024px) {
+  .newticket-form {
+    max-width: 900px;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+  
+  .newticket-main-content {
+    padding: 3rem;
+  }
+  
+  .newticket-header {
+    margin-bottom: 3rem;
+  }
+}
+
+/* Melhorias de Acessibilidade - Heurística de Nielsen: Flexibilidade e Eficiência */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Suporte para modo escuro/claro */
+@media (prefers-color-scheme: light) {
+  .newticket-layout {
+    background-color: var(--background-gray);
+  }
+  
+  .newticket-main-content {
+    background-color: var(--background-gray);
+  }
+  
+  .newticket-form {
+    background-color: var(--input-white);
+    border: 1px solid rgba(169, 50, 38, 0.1);
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    background-color: var(--input-white);
+    border: 2px solid var(--border-gray);
+  }
+}
+
+/* Melhorias para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .submit-button {
+    min-height: 48px;
+  }
+  
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    min-height: 48px;
+  }
+}
+
+/* Foco visível para navegação por teclado */
+.form-group input:focus-visible,
+.form-group textarea:focus-visible,
+.form-group select:focus-visible,
+.submit-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Estados de hover para elementos interativos */
+.form-group select:hover {
+  border-color: var(--primary-color);
+}
+
+/* Melhorias de legibilidade */
+.form-group label {
+  line-height: 1.4;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  line-height: 1.5;
+}
+
+/* Responsividade para telas muito grandes */
+@media (min-width: 1400px) {
+  .newticket-form {
+    max-width: 1000px;
+  }
+}

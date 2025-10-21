@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
 
-function HomePage({ onLogout, onNavigateToRegister, userInfo }) {
+function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, userInfo }) {
   return (
     <div className="home-page-layout">
       <Header onLogout={onLogout} userName={userInfo?.nome} /> {/* Adicionado ao grid area 'header' */}
@@ -17,7 +17,7 @@ function HomePage({ onLogout, onNavigateToRegister, userInfo }) {
         <h2 className="main-welcome">BEM VINDO (A)</h2>
 
         <section className="dashboard-cards">
-          <article className="card">
+          <article className="card" onClick={onNavigateToNewTicket}>
             {/* Ícone substituído */}
             <FaEdit className="card-icon" />
             <span>NOVO CHAMADO</span>
