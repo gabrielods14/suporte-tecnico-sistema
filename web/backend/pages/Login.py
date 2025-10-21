@@ -41,18 +41,28 @@ def login_user():
         }), 200
 
     # Prepara os dados no formato que a API do Azure espera para login
+    # CORREÇÃO: A API C# espera Email e Senha com maiúsculas
     dados_para_api = {
-        'email': email,
-        'senha': senha
-        # Se a sua API do Azure exigir outro campo (ex: 'grant_type'), adicione aqui.
+        'Email': email,  # Maiúscula conforme DTO da API C#
+        'Senha': senha   # Maiúscula conforme DTO da API C#
     }
 
     try:
-        # Assumindo que o endpoint de autenticação é /api/Autenticacao
-        # ESTE CAMINHO PODE PRECISAR DE AJUSTE CONFORME SUA API
-        url_autenticacao = f"{API_URL_BASE}/api/Autenticacao" 
+        # CORREÇÃO: Endpoint correto da API C# é /api/Auth/login
+        url_autenticacao = f"{API_URL_BASE}/api/Auth/login" 
         
-        response = requests.post(url_autenticacao, json=dados_para_api)
+        # CORREÇÃO: Adicionar headers corretos
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        
+        response = requests.post(url_autenticacao, json=dados_para_api, headers=headers)
+        
+        # DEBUG: Log da resposta para facilitar debug
+        print(f"Status Code: {response.status_code}")
+        print(f"Response Headers: {response.headers}")
+        print(f"Response Content: {response.text}")
 
         # ----------------------------------------------------
         # 1. Login BEM-SUCEDIDO (Geralmente retorna 200)

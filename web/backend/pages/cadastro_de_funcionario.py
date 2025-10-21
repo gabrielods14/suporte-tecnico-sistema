@@ -41,21 +41,28 @@ def register_user():
 
     # ------------------------------------------------------------------
     # Prepara os dados no formato EXIGIDO pela API do Azure (Swagger)
+    # CORREÇÃO: A API C# espera propriedades com maiúsculas conforme DTOs
     # ------------------------------------------------------------------
     dados_para_api = {
-        'nome': nome,
-        'email': email,
-        'senha': senha,
-        'telefone': telefone or "", 
-        'cargo': cargo or "Usuário Padrão", # Valor default se não for enviado
-        'permissao': permissao or 1         # Valor default se não for enviado
+        'Nome': nome,                    # Maiúscula conforme CriarUsuarioDto
+        'Email': email,                  # Maiúscula conforme CriarUsuarioDto
+        'Senha': senha,                  # Maiúscula conforme CriarUsuarioDto
+        'Telefone': telefone or "",     # Maiúscula conforme CriarUsuarioDto
+        'Cargo': cargo or "Usuário Padrão", # Maiúscula conforme CriarUsuarioDto
+        'Permissao': permissao or 1      # Maiúscula conforme CriarUsuarioDto
     }
 
     try:
         # Endpoint de Cadastro na API do Azure (Corrigido para 'Usuarios' com 'U' maiúsculo)
         url_cadastro = f"{API_URL_BASE}/api/Usuarios"
         
-        response = requests.post(url_cadastro, json=dados_para_api)
+        # CORREÇÃO: Adicionar headers corretos
+        headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        
+        response = requests.post(url_cadastro, json=dados_para_api, headers=headers)
 
         # 1. Cadastro BEM-SUCEDIDO (Geralmente retorna 201 Created)
         if response.status_code in [200, 201]:
