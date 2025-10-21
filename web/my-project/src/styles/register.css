@@ -1,82 +1,325 @@
 /* src/styles/register.css */
 
+/* CSS Grid Layout Principal - Mobile First */
 .register-layout {
   display: grid;
-  grid-template-columns: 250px 1fr;
-  grid-template-rows: 60px 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
-    "sidebar header"
-    "sidebar main-content";
-  height: 100vh;
-  background-color: #f5f5f5;
+    "header"
+    "main-content";
+  min-height: 100vh;
+  background-color: var(--bg-dark);
 }
 
+/* Layout para desktop com sidebar */
+@media (min-width: 768px) {
+  .register-layout {
+    grid-template-columns: 250px 1fr;
+    grid-template-rows: 60px 1fr;
+    grid-template-areas:
+      "sidebar header"
+      "sidebar main-content";
+  }
+}
+
+/* Container principal usando Flexbox */
 .register-main-content {
   grid-area: main-content;
-  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: clamp(1rem, 3vw, 2rem);
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+  overflow-y: auto;
+}
+
+/* Header do formulário */
+.register-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-}
-
-.register-main-content h2 {
-  font-size: 2rem;
-  color: #333;
+  gap: 1rem;
   margin-bottom: 2rem;
-}
-
-.register-form {
-  background-color: #fff;
-  padding: 2rem 3rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 600px;
+  align-self: center;
 }
 
+.register-header h2 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  color: var(--text-light);
+  margin: 0;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Botão de voltar com melhor UX */
+.back-button {
+  background: linear-gradient(135deg, var(--primary-color), #dc3545);
+  color: white;
+  border: none;
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  align-self: flex-start;
+  margin-bottom: 2rem;
+  margin-left: 0;
+}
+
+.back-button:hover {
+  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+/* Formulário com Grid Layout para campos */
+.register-form {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 600px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-self: center;
+}
+
+/* Layout em duas colunas para desktop */
+@media (min-width: 768px) {
+  .register-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2rem;
+  }
+  
+  /* Campos que ocupam duas colunas */
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Form Groups com Flexbox e validação visual */
 .form-group {
-  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
 }
 
 .form-group label {
-  display: block;
-  font-size: 0.9rem;
-  color: #555;
-  margin-bottom: 0.5rem;
+  font-size: clamp(0.9rem, 2vw, 1rem);
+  color: var(--text-light);
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
 
 .form-group input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 1rem;
-  transition: border-color 0.3s ease;
+  padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px);
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--text-light);
+  font-size: clamp(0.9rem, 2.5vw, 1rem);
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .form-group input:focus {
-  border-color: #e57373;
   outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+  background-color: rgba(255, 255, 255, 0.15);
 }
 
+/* Estados de validação - Heurística de Nielsen: Visibilidade do Status */
+.form-group input:valid {
+  border-color: #28a745;
+}
+
+.form-group input:invalid:not(:placeholder-shown) {
+  border-color: #dc3545;
+}
+
+/* Mensagens de erro */
+.form-group .error-message {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+  display: none;
+}
+
+.form-group.error .error-message {
+  display: block;
+}
+
+.form-group.error input {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+}
+
+/* Botão de submit com melhor UX - Heurística de Nielsen: Controle e Liberdade */
 .submit-button {
   width: 100%;
-  padding: 1rem;
+  padding: clamp(12px, 3vw, 16px) 20px;
+  background: linear-gradient(135deg, var(--primary-color), #dc3545);
+  color: white;
   border: none;
-  background-color: #e57373;
-  color: #fff;
-  font-weight: bold;
-  border-radius: 5px;
+  border-radius: 8px;
+  font-size: clamp(1rem, 2.5vw, 1.1rem);
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  grid-column: 1 / -1; /* Ocupa toda a largura do grid */
+  margin-top: 1rem;
 }
 
-.submit-button:hover {
-  background-color: #d35a5a;
+.submit-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .submit-button:disabled {
-  background-color: #999;
+  background: #666;
   cursor: not-allowed;
   opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Indicador de progresso - Heurística de Nielsen: Visibilidade do Status */
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Breakpoints Responsivos - Mobile First */
+
+/* Mobile Small */
+@media (max-width: 375px) {
+  .register-form {
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .register-header {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .register-form {
+    max-width: 700px;
+  }
+}
+
+/* Desktop Large */
+@media (min-width: 1024px) {
+  .register-form {
+    max-width: 800px;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem 3rem;
+  }
+  
+  .register-main-content {
+    padding: 3rem;
+  }
+}
+
+/* Melhorias de Acessibilidade - Heurística de Nielsen: Flexibilidade e Eficiência */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Suporte para modo escuro/claro */
+@media (prefers-color-scheme: light) {
+  .register-layout {
+    background-color: #f8f9fa;
+  }
+  
+  .register-main-content {
+    background-color: #f8f9fa;
+    color: #333;
+  }
+  
+  .register-form {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-group input {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+  
+  .form-group input::placeholder {
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Melhorias para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .submit-button,
+  .back-button {
+    min-height: 44px;
+  }
+  
+  .form-group input {
+    min-height: 44px;
+  }
+}
+
+/* Foco visível para navegação por teclado */
+.form-group input:focus-visible,
+.submit-button:focus-visible,
+.back-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
