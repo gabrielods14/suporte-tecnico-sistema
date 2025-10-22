@@ -85,5 +85,71 @@ namespace ApiParaBD.Controllers
             // Retorna 201 Created com a localização do novo chamado e o objeto criado.
             return CreatedAtAction(nameof(GetChamado), new { id = novoChamado.Id }, novoChamado);
         }
+
+        // --- ENDPOINT PARA ATUALIZAR UM CHAMADO ---
+        // PUT /api/Chamados/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarChamado(int id, [FromBody] AtualizarChamadoDto atualizacaoDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Buscar o chamado existente
+            var chamado = await _context.Chamados.FindAsync(id);
+            if (chamado == null)
+            {
+                return NotFound(new { message = "Chamado não encontrado." });
+            }
+
+            // Atualizar apenas os campos fornecidos
+            if (atualizacaoDto.Status.HasValue)
+            {
+                chamado.Status = (StatusChamado)atualizacaoDto.Status.Value;
+            }
+
+            if (atualizacaoDto.TecnicoResponsavelId.HasValue)
+            {
+                // Verificar se o técnico existe
+                var tecnico = await _context.Usuarios.FindAsync(atualizacaoDto.TecnicoResponsavelId.Value);
+                if (tecnico == null)
+                {
+                    return BadRequest(new { message = "Técnico responsável não encontrado." });
+                }
+                chamado.TecnicoResponsavelId = atualizacaoDto.TecnicoResponsavelId.Value;
+            }
+
+            if (atualizacaoDto.DataFechamento.HasValue)
+            {
+                chamado.DataFechamento = atualizacaoDto.DataFechamento.Value;
+            }
+
+            if (!string.IsNullOrEmpty(atualizacaoDto.Titulo))
+            {
+                chamado.Titulo = atualizacaoDto.Titulo;
+            }
+
+            if (!string.IsNullOrEmpty(atualizacaoDto.Descricao))
+            {
+                chamado.Descricao = atualizacaoDto.Descricao;
+            }
+
+            if (atualizacaoDto.Prioridade.HasValue)
+            {
+                chamado.Prioridade = (PrioridadeChamado)atualizacaoDto.Prioridade.Value;
+            }
+
+            // Salvar as alterações
+            await _context.SaveChangesAsync();
+
+            // Retornar o chamado atualizado com os dados relacionados
+            var chamadoAtualizado = await _context.Chamados
+                .Include(c => c.Solicitante)
+                .Include(c => c.TecnicoResponsavel)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            return Ok(chamadoAtualizado);
+        }
     }
 }
