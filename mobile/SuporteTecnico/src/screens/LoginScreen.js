@@ -1,0 +1,293 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ScrollView,
+  StatusBar,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import ConfirmationModal from '../components/ConfirmationModal';
+import ApiService from '../services/api';
+
+const LoginScreen = ({ navigation }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showCredentials, setShowCredentials] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Fazer login usando a API real
+      const response = await ApiService.login(email, password);
+      
+      if (response.token) {
+        // Login bem-sucedido, navegar para a tela home
+        navigation.navigate('Home');
+      } else {
+        Alert.alert('Erro', 'Erro no login. Tente novamente.');
+      }
+    } catch (error) {
+      Alert.alert('Erro', error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
+    setShowForgotPasswordModal(true);
+  };
+
+  const confirmForgotPassword = () => {
+    setShowForgotPasswordModal(false);
+  };
+
+  return (
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+      
+      {/* Hero Section */}
+      <View style={styles.hero}>
+        <Text style={styles.heroText}>HelpWave - Simplificando o seu suporte.</Text>
+      </View>
+
+      {/* Login Form */}
+      <View style={styles.formContainer}>
+        <View style={styles.form}>
+          <Text style={styles.title}>LOGIN</Text>
+          
+          <View style={styles.inputContainer}>
+            <Icon name="person-outline" size={20} color="#bbb" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="USUÁRIO"
+              placeholderTextColor="#bbb"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+          
+          <View style={styles.inputContainer}>
+            <Icon name="lock-closed-outline" size={20} color="#bbb" style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="SENHA"
+              placeholderTextColor="#bbb"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Icon 
+                name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                size={20} 
+                color="#bbb" 
+              />
+            </TouchableOpacity>
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.button, isLoading && styles.buttonDisabled]} 
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? 'ENTRANDO...' : 'ENTRAR'}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.forgotPasswordButton}
+            onPress={handleForgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.credentialsButton}
+            onPress={() => setShowCredentials(!showCredentials)}
+          >
+            <Text style={styles.credentialsText}>
+              {showCredentials ? 'Ocultar' : 'Mostrar'} credenciais de teste
+            </Text>
+          </TouchableOpacity>
+          
+          {showCredentials && (
+            <View style={styles.credentialsBox}>
+              <Text style={styles.credentialLabel}>Usuário:</Text>
+              <Text style={styles.credentialValue}>admin@suporte.com</Text>
+              <Text style={styles.credentialLabel}>Senha:</Text>
+              <Text style={styles.credentialValue}>123456</Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      {/* Forgot Password Confirmation Modal */}
+      <ConfirmationModal
+        visible={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+        onConfirm={confirmForgotPassword}
+        title="Recuperar Senha"
+        message="Para alterar sua senha, entre em contato com seu superior ou administrador do sistema. Eles poderão ajudá-lo a redefinir sua senha de acesso de forma segura."
+        confirmText="Entendi"
+        cancelText="Cancelar"
+        confirmColor="#28a745"
+        iconName="shield-checkmark-outline"
+        iconColor="#28a745"
+        type="info"
+      />
+    </ScrollView>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+  },
+  hero: {
+    backgroundColor: '#8B0000',
+    paddingVertical: 60,
+    paddingHorizontal: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 200,
+  },
+  heroText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+    lineHeight: 36,
+  },
+  formContainer: {
+    flex: 1,
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    justifyContent: 'center',
+  },
+  form: {
+    backgroundColor: 'transparent',
+    paddingHorizontal: 10,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 40,
+    color: '#fff',
+    letterSpacing: 2,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    borderRadius: 8,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#555',
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 15,
+    zIndex: 1,
+  },
+  input: {
+    flex: 1,
+    paddingHorizontal: 50,
+    paddingVertical: 15,
+    fontSize: 18,
+    color: '#fff',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    padding: 5,
+  },
+  button: {
+    backgroundColor: '#dc3545',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    shadowColor: '#dc3545',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  buttonDisabled: {
+    backgroundColor: '#6c757d',
+    shadowOpacity: 0,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  forgotPasswordButton: {
+    marginTop: 20,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  forgotPasswordText: {
+    color: '#ffc107',
+    fontSize: 18,
+    textDecorationLine: 'underline',
+    fontWeight: '500',
+  },
+  credentialsButton: {
+    marginTop: 30,
+    alignItems: 'center',
+  },
+  credentialsText: {
+    color: '#fff',
+    fontSize: 16,
+    textDecorationLine: 'underline',
+  },
+  credentialsBox: {
+    marginTop: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 20,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  credentialLabel: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 10,
+  },
+  credentialValue: {
+    color: '#fff',
+    fontSize: 14,
+    marginBottom: 5,
+  },
+});
+
+export default LoginScreen;
