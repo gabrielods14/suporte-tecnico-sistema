@@ -8,6 +8,7 @@ import TicketDetailScreen from '../screens/TicketDetailScreen';
 import CreateTicketScreen from '../screens/CreateTicketScreen';
 import PendingTicketsScreen from '../screens/PendingTicketsScreen';
 import CompletedTicketsScreen from '../screens/CompletedTicketsScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 import { TicketProvider } from '../context/TicketContext';
 
 const Stack = createStackNavigator();
@@ -42,11 +43,16 @@ const AppNavigator = () => {
             component={PendingTicketsScreen} 
             options={{ title: 'Chamados em Andamento' }}
           />
-          <Stack.Screen 
-            name="CompletedTickets" 
-            component={CompletedTicketsScreen} 
-            options={{ title: 'Chamados Finalizados' }}
-          />
+              <Stack.Screen 
+                name="CompletedTickets" 
+                component={CompletedTicketsScreen} 
+                options={{ title: 'Chamados Finalizados' }}
+              />
+              <Stack.Screen 
+                name="Settings" 
+                component={SettingsScreen} 
+                options={{ title: 'Configurações' }}
+              />
         </Stack.Navigator>
       </NavigationContainer>
     </TicketProvider>

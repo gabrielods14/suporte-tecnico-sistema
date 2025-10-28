@@ -30,17 +30,38 @@ const LoginScreen = ({ navigation }) => {
     setIsLoading(true);
 
     try {
+      console.log('Iniciando processo de login...');
+      console.log('Email:', email);
+      console.log('Password:', password ? '***' : 'vazia');
+      
       // Fazer login usando a API real
       const response = await ApiService.login(email, password);
       
-      if (response.token) {
+      console.log('Resposta do login:', response);
+      
+      if (response && response.token) {
+        console.log('Login bem-sucedido! Navegando para Home...');
         // Login bem-sucedido, navegar para a tela home
         navigation.navigate('Home');
       } else {
+        console.log('Erro: Nenhum token recebido');
         Alert.alert('Erro', 'Erro no login. Tente novamente.');
       }
     } catch (error) {
-      Alert.alert('Erro', error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      console.log('Erro capturado no handleLogin:', error);
+      console.log('Mensagem do erro:', error.message);
+      
+      let errorMessage = 'Erro ao fazer login. Verifique suas credenciais.';
+      
+      if (error.message.includes('Network request failed')) {
+        errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+      } else if (error.message.includes('E-mail ou senha inválidos')) {
+        errorMessage = 'E-mail ou senha inválidos. Verifique suas credenciais.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      Alert.alert('Erro', errorMessage);
     } finally {
       setIsLoading(false);
     }
