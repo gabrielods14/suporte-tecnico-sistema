@@ -1,28 +1,25 @@
 from flask import request, jsonify
-from app import app
 import requests
 
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
 
 
-@app.route('/chamados', methods=['POST'])
 def criar_chamado():
     dados = request.json or {}
 
-    tipo = dados.get('tipo')
+    tipoChamado = dados.get('tipoChamado') or dados.get('tipo')
     titulo = dados.get('titulo')
     descricao = dados.get('descricao')
+    prioridade = dados.get('prioridade', 'MÉDIA')
 
-    if not tipo or not titulo or not descricao:
-        return jsonify({'message': 'Campos obrigatórios: tipo, titulo e descricao.'}), 400
+    if not tipoChamado or not titulo or not descricao:
+        return jsonify({'message': 'Campos obrigatórios: tipoChamado, titulo e descricao.'}), 400
 
     payload_api = {
-        'tipo': tipo,
+        'tipo': tipoChamado,
         'titulo': titulo,
         'descricao': descricao,
-        'prioridade': dados.get('prioridade'),
-        'anexos': dados.get('anexos'),
-        'solicitanteId': dados.get('solicitanteId'),
+        'prioridade': prioridade,
     }
     payload_api = {k: v for k, v in payload_api.items() if v is not None}
 

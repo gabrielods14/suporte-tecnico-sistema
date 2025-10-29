@@ -119,7 +119,7 @@ function LoginPage({ onLoginSuccess }) {
               <button
                 type="button" // Impede que o botão envie o formulário
                 onClick={() => setIsModalOpen(true)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-light)', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: '#333333', cursor: 'pointer', padding: 0, textDecoration: 'underline', fontWeight: '500' }}
               >
                 Esqueci a senha
               </button>
@@ -135,27 +135,22 @@ function LoginPage({ onLoginSuccess }) {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--text-light)',
+                  color: '#FFFFFF',
                   cursor: 'pointer',
                   textDecoration: 'underline',
-                  fontSize: '0.9rem'
+                  fontSize: '0.9rem',
+                  fontWeight: '500',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                 }}
               >
                 {showAdminCredentials ? 'Ocultar' : 'Mostrar'} credenciais de teste
               </button>
               
               {showAdminCredentials && (
-                <div style={{
-                  marginTop: '15px',
-                  padding: '15px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '5px',
-                  fontSize: '0.9rem',
-                  textAlign: 'left'
-                }}>
+                <div className="credentials-info">
                   <p><strong>Usuário:</strong> admin@helpwave.com</p>
                   <p><strong>Senha:</strong> admin123</p>
-                  <p style={{ fontSize: '0.8rem', marginTop: '10px', opacity: 0.8 }}>
+                  <p>
                     Use estas credenciais para fazer o primeiro login
                   </p>
                 </div>

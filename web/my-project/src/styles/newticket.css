@@ -1,21 +1,6 @@
-/* src/styles/newticket.css */
+/* src/styles/newticket.css - Página de Novo Ticket Unificada */
 
-/* CSS Variables para consistência de cores */
-:root {
-  --header-red: #A93226;
-  --background-gray: #F5F5F5;
-  --input-white: #FFFFFF;
-  --border-gray: #E0E0E0;
-  --text-dark: #000000;
-  --error-red: #DC3545;
-  --success-green: #28A745;
-  --primary-color: #A93226;
-  --secondary-color: #8B0000;
-  --light-red: #F8D7DA;
-  --text-gray: #6C757D;
-}
-
-/* CSS Grid Layout Principal - Mobile First */
+/* ===== LAYOUT PRINCIPAL COM GRID ===== */
 .newticket-layout {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -23,95 +8,100 @@
     "header"
     "main-content";
   min-height: 100vh;
-  background-color: var(--background-gray);
+  background-color: #F8F9FA;
 }
 
 /* Layout para desktop com sidebar */
 @media (min-width: 768px) {
   .newticket-layout {
-    grid-template-columns: 250px 1fr;
-    grid-template-rows: 60px 1fr;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 70px 1fr;
     grid-template-areas:
       "sidebar header"
       "sidebar main-content";
   }
 }
 
-/* Container principal usando Flexbox */
+/* ===== CONTAINER PRINCIPAL ===== */
 .newticket-main-content {
   grid-area: main-content;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: clamp(1rem, 3vw, 2rem);
-  background-color: var(--background-gray);
-  color: var(--text-dark);
+  padding: var(--space-2xl);
+  background-color: #F8F9FA;
+  color: var(--text-primary);
   overflow-y: auto;
   position: relative;
 }
 
-/* Botão de voltar */
+/* ===== BOTÃO DE VOLTAR ===== */
 .back-button {
-  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
   border: none;
-  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
-  border-radius: 8px;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-size: clamp(0.9rem, 2vw, 1rem);
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.2);
-  margin-bottom: 2rem;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--space-xl);
   position: relative;
   z-index: 10;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .back-button:hover {
-  background: linear-gradient(135deg, var(--secondary-color), #6B0000);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(169, 50, 38, 0.3);
+  box-shadow: var(--shadow-md);
 }
 
 .back-button:active {
   transform: translateY(0);
 }
 
-/* Header da página */
+/* ===== HEADER DA PÁGINA ===== */
 .newticket-header {
   width: 100%;
-  background-color: var(--header-red);
-  color: white;
-  padding: clamp(1rem, 3vw, 2rem);
-  margin-bottom: 2rem;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  padding: var(--space-2xl);
+  margin-bottom: var(--space-2xl);
   text-align: center;
-  box-shadow: 0 4px 8px rgba(169, 50, 38, 0.2);
-  border-radius: 0 0 12px 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .newticket-header h1 {
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-size: var(--font-size-3xl);
   margin: 0;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   letter-spacing: 1px;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Formulário com Grid Layout */
+/* ===== FORMULÁRIO DE NOVO TICKET ===== */
 .newticket-form {
-  background-color: var(--input-white);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
+  padding: var(--space-2xl);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 2rem;
+  gap: var(--space-xl);
   align-self: center;
-  border: 1px solid rgba(169, 50, 38, 0.1);
+  border: 2px solid #F5F5F5;
 }
 
 /* Layout em duas colunas para desktop */
@@ -138,7 +128,7 @@
 
 .form-group label {
   font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--text-dark);
+  color: #333333;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -150,14 +140,15 @@
 .form-group textarea {
   width: 100%;
   padding: clamp(12px, 2.5vw, 16px);
-  background-color: var(--input-white) !important;
-  border: 2px solid var(--border-gray);
+  background-color: #FFFFFF !important;
+  border: 2px solid #E5E5E5;
   border-radius: 8px;
-  color: var(--text-dark);
+  color: #1A1A1A;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-weight: 500;
   transition: all 0.3s ease;
   font-family: inherit;
-  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .form-group textarea {
@@ -168,15 +159,16 @@
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: var(--text-gray);
+  color: #666666;
+  font-weight: 400;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.1);
-  background-color: var(--input-white);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
 }
 
 /* Select Container com estilo customizado */
@@ -187,16 +179,17 @@
 .form-group select {
   width: 100%;
   padding: clamp(12px, 2.5vw, 16px);
-  background-color: var(--input-white) !important;
-  border: 2px solid var(--border-gray);
+  background-color: #FFFFFF !important;
+  border: 2px solid #E5E5E5;
   border-radius: 8px;
-  color: var(--text-dark);
+  color: #1A1A1A;
   font-size: clamp(0.9rem, 2.5vw, 1rem);
+  font-weight: 500;
   transition: all 0.3s ease;
   font-family: inherit;
   appearance: none;
   cursor: pointer;
-  box-shadow: 0 2px 4px rgba(169, 50, 38, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .select-arrow {
@@ -213,28 +206,28 @@
 .form-group select:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.1);
-  background-color: var(--input-white) !important;
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF !important;
 }
 
 /* Estados de validação - Heurística de Nielsen: Visibilidade do Status */
 .form-group input:valid,
 .form-group textarea:valid,
 .form-group select:valid {
-  border-color: var(--success-green);
-  background-color: var(--input-white) !important;
+  border-color: var(--success-color);
+  background-color: #FFFFFF !important;
 }
 
 .form-group input:invalid:not(:placeholder-shown),
 .form-group textarea:invalid:not(:placeholder-shown),
 .form-group select:invalid {
-  border-color: var(--error-red);
-  background-color: var(--input-white) !important;
+  border-color: var(--error-color);
+  background-color: #FFFFFF !important;
 }
 
 /* Mensagens de erro */
 .form-group .error-message {
-  color: var(--error-red);
+  color: var(--error-color);
   font-size: 0.85rem;
   margin-top: 0.25rem;
   display: none;
@@ -248,24 +241,25 @@
 .form-group.error input,
 .form-group.error textarea,
 .form-group.error select {
-  border-color: var(--error-red);
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
-  background-color: var(--input-white) !important;
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  background-color: #FFFFFF !important;
 }
 
 /* Contador de caracteres */
 .character-count {
   font-size: 0.8rem;
-  color: var(--text-gray);
+  color: #666666;
   text-align: right;
   margin-top: 0.25rem;
+  font-weight: 400;
 }
 
 /* Botão de submit - Heurística de Nielsen: Controle e Liberdade */
 .submit-button {
   width: 100%;
   padding: clamp(14px, 3vw, 18px) 20px;
-  background-color: var(--header-red);
+  background: var(--gradient-primary);
   color: white;
   border: none;
   border-radius: 8px;
@@ -273,7 +267,7 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   text-transform: uppercase;
   letter-spacing: 1px;
   grid-column: 1 / -1;
@@ -281,9 +275,9 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: var(--secondary-color);
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .submit-button:active:not(:disabled) {
@@ -324,8 +318,9 @@
   grid-column: 1 / -1;
   text-align: center;
   font-size: 0.9rem;
-  color: var(--text-gray);
+  color: #666666;
   margin-top: 1rem;
+  font-weight: 400;
 }
 
 /* Breakpoints Responsivos - Mobile First */

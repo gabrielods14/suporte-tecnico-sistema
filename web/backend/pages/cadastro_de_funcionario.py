@@ -1,5 +1,4 @@
 from flask import request, jsonify
-from app import app
 import requests 
 # Não usamos o bcrypt aqui, pois enviamos a senha para a API do Azure validar.
 
@@ -16,7 +15,6 @@ ADMIN_USER = {
 }
 
 # Rota para o Cadastro. O front-end envia todos os dados do novo funcionário para este endpoint.
-@app.route('/register', methods=['POST'])
 def register_user():
     data = request.json
     
@@ -82,19 +80,3 @@ def register_user():
         # Erro de conexão com a API do Azure
         print(f"Erro ao conectar à API do Azure: {e}")
         return jsonify({"message": "Erro de conexão com o serviço de dados."}), 503
-
-# Endpoint especial para criar usuário administrador
-@app.route('/create-admin', methods=['POST'])
-def create_admin():
-    """Endpoint para criar o usuário administrador padrão"""
-    try:
-        return jsonify({
-            "message": "Usuário administrador criado com sucesso!",
-            "credentials": {
-                "email": ADMIN_USER['email'],
-                "senha": ADMIN_USER['senha'],
-                "nome": ADMIN_USER['nome']
-            }
-        }), 201
-    except Exception as e:
-        return jsonify({"message": f"Erro ao criar administrador: {str(e)}"}), 500

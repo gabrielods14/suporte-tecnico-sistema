@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import '../styles/newticket.css';
 
-const NewTicketPage = ({ onLogout, onNavigateToHome, userInfo }) => {
+const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo }) => {
   const [formData, setFormData] = useState({
     tipoChamado: '',
     titulo: '',
@@ -106,35 +106,52 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, userInfo }) => {
     setIsLoading(true);
 
     try {
-      // Aqui seria feita a requisição para o backend
-      // const response = await fetch('http://localhost:5000/tickets', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     ...formData,
-      //     usuarioId: userInfo?.id,
-      //     status: 'aberto'
-      //   }),
-      // });
-
-      // Simulando uma requisição bem-sucedida
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      showToast('Chamado criado com sucesso!', 'success');
-      
-      // Limpa o formulário
-      setFormData({
-        tipoChamado: '',
-        titulo: '',
-        descricao: ''
+      // Criar o chamado no backend
+      const response = await fetch('http://localhost:5000/chamados', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tipoChamado: formData.tipoChamado,
+          titulo: formData.titulo,
+          descricao: formData.descricao,
+          prioridade: 'MÉDIA'
+        }),
       });
-      setErrors({});
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonError) {
+        data = { message: 'Erro ao processar resposta do servidor.' };
+      }
+
+      if (response.ok || response.status === 201) {
+        showToast('Chamado criado com sucesso!', 'success');
+        
+        // Limpa o formulário
+        setFormData({
+          tipoChamado: '',
+          titulo: '',
+          descricao: ''
+        });
+        setErrors({});
+        
+        // Navega para a página de chamados em andamento após 1.5s
+        setTimeout(() => {
+          if (onNavigateToPage) {
+            onNavigateToPage('pending-tickets');
+          }
+        }, 1500);
+        
+      } else {
+        showToast(data.message || 'Erro ao criar chamado.', 'error');
+      }
       
     } catch (error) {
       console.error('Erro ao criar chamado:', error);
-      showToast('Erro ao criar chamado. Tente novamente.', 'error');
+      showToast('Erro de conexão. Verifique se o servidor está rodando.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -145,9 +162,6 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, userInfo }) => {
       <Header onLogout={onLogout} userName={userInfo?.nome} />
       <Sidebar />
       <main className="newticket-main-content">
-        <div className="newticket-header">
-          <h1>NOVO CHAMADO</h1>
-        </div>
         <button 
           className="back-button" 
           onClick={onNavigateToHome}
@@ -155,6 +169,9 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, userInfo }) => {
         >
           ← Voltar
         </button>
+        <div className="newticket-header">
+          <h1>NOVO CHAMADO</h1>
+        </div>
         
         <form className="newticket-form" onSubmit={handleSubmit} noValidate>
           {/* Campo Tipo de Chamado */}

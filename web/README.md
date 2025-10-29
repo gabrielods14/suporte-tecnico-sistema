@@ -1,91 +1,256 @@
-# Frontend - Sistema de Suporte Técnico HelpWave
+# HelpWave - Sistema de Suporte Técnico
 
-Este é o frontend do sistema HelpWave, desenvolvido em React com Vite, que fornece uma interface moderna e responsiva para o sistema de suporte técnico.
+Sistema completo de suporte técnico com interface moderna e integração backend/frontend.
 
-## 🛠️ Instalação Rápida
+## 🚀 Funcionalidades
+
+- **Autenticação Segura**: Login com validação de credenciais
+- **Dashboard Interativo**: Interface moderna com cards responsivos
+- **Gestão de Usuários**: Cadastro e gerenciamento de funcionários
+- **Sistema de Tickets**: Criação e acompanhamento de chamados
+- **Design Responsivo**: Funciona perfeitamente em mobile, tablet e desktop
+- **Heurísticas de UX**: Interface intuitiva seguindo princípios de usabilidade
+
+## 🎨 Sistema de Design
+
+### Paleta de Cores
+- **Primária**: #A93226 (Vermelho HelpWave)
+- **Secundária**: #2C3E50 (Azul Escuro)
+- **Acento**: #F39C12 (Laranja)
+- **Neutras**: Escala de cinzas do #FAFAFA ao #171717
+
+### Tipografia
+- **Fonte Principal**: Inter (Google Fonts)
+- **Pesos**: 300, 400, 500, 600, 700
+- **Hierarquia**: Títulos, subtítulos, corpo, legendas
+
+### Componentes
+- **Botões**: Gradientes com efeitos hover e estados
+- **Cards**: Sombras suaves com animações
+- **Formulários**: Validação em tempo real
+- **Navegação**: Sidebar responsiva com indicadores visuais
+
+## 🛠️ Tecnologias
+
+### Frontend
+- **React 19.1.1**: Framework principal
+- **Vite**: Build tool e dev server
+- **React Icons**: Ícones SVG
+- **CSS Grid & Flexbox**: Layouts responsivos
+- **CSS Custom Properties**: Sistema de design tokens
+
+### Backend
+- **Flask 3.0.0**: Framework web
+- **Flask-CORS**: Cross-origin resource sharing
+- **Flask-Bcrypt**: Hash de senhas
+- **Requests**: Cliente HTTP para APIs externas
+
+## 📦 Instalação
 
 ### Pré-requisitos
-- Node.js 18.0+
-- npm ou yarn
+- Node.js 18+ 
+- Python 3.8+
+- pip (gerenciador de pacotes Python)
 
-### Passos de Instalação
+### Frontend (React)
 
-1. **Navegar para a pasta do projeto:**
 ```bash
+# Navegar para o diretório do frontend
 cd web/my-project
-```
 
-2. **Instalar dependências:**
-```bash
+# Instalar dependências
 npm install
-```
 
-3. **Executar servidor de desenvolvimento:**
-```bash
+# Executar em modo desenvolvimento
 npm run dev
 ```
 
-O aplicativo estará disponível em `http://localhost:5173`
+### Backend (Flask)
 
-## 🚀 Scripts Disponíveis
+```bash
+# Navegar para o diretório do backend
+cd web/backend
 
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Cria build de produção
-- `npm run lint` - Executa o linter ESLint
-- `npm run preview` - Visualiza o build de produção
+# Criar ambiente virtual (recomendado)
+python -m venv venv
 
-## 🎨 Funcionalidades
+# Ativar ambiente virtual
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
 
-### Páginas Disponíveis
-- **Login** - Autenticação de usuários
-- **Home** - Dashboard principal do sistema
-- **Cadastro de Funcionário** - Interface para registro de novos funcionários
+# Instalar dependências
+pip install -r requirements.txt
 
-### Componentes
-- **Header** - Cabeçalho com navegação e informações do usuário
-- **Sidebar** - Menu lateral de navegação
-- **Toast** - Notificações de feedback para o usuário
-- **Modal** - Componentes modais para funcionalidades específicas
+# Executar servidor
+python app.py
+```
 
 ## 🔧 Configuração
 
-O frontend está configurado para se comunicar com o backend:
-- **URL Base:** `http://localhost:5000`
-- **Endpoint de Login:** `/login`
-- **Endpoint de Cadastro:** `/register`
+### Variáveis de Ambiente
 
-## 📦 Dependências Principais
+Crie um arquivo `.env` na raiz do projeto:
 
-### Dependências de Produção
-- **React 19.1.1** - Biblioteca principal para interface de usuário
-- **React DOM 19.1.1** - Renderização do React no DOM
-- **React Icons 5.5.0** - Biblioteca de ícones para React
+```env
+# Backend
+SECRET_KEY=sua-chave-secreta-aqui
+JWT_SECRET_KEY=sua-jwt-secreta-aqui
+API_URL_BASE=https://sua-api-externa.com
 
-### Dependências de Desenvolvimento
-- **Vite 7.1.2** - Build tool e servidor de desenvolvimento
-- **ESLint 9.33.0** - Linter para qualidade de código
-- **@vitejs/plugin-react 5.0.0** - Plugin do Vite para React
+# Frontend (opcional)
+VITE_API_URL=http://localhost:5000
+```
 
-## 🎯 Tecnologias Utilizadas
+### Configuração da API Externa
 
-- **React** - Framework principal
-- **Vite** - Build tool e bundler
-- **CSS3** - Estilização com variáveis CSS e Flexbox/Grid
-- **ESLint** - Linting e qualidade de código
-- **React Icons** - Biblioteca de ícones
+O sistema está configurado para integrar com uma API externa. Para configurar:
 
-## 📱 Design Responsivo
+1. Edite o arquivo `web/backend/config.py`
+2. Atualize a variável `API_URL_BASE`
+3. Configure os endpoints necessários
 
-O sistema foi desenvolvido com abordagem mobile-first, garantindo:
-- Compatibilidade com dispositivos móveis
-- Interface adaptável para tablets e desktops
-- Acessibilidade seguindo padrões WCAG
-- Performance otimizada
+## 🚀 Uso
 
-## 🔄 Integração com Backend
+### Acesso ao Sistema
 
-O frontend se comunica com o backend Flask através de:
-- Requisições HTTP para autenticação
-- Formulários com validação em tempo real
-- Gerenciamento de estado local
-- Feedback visual para o usuário
+1. **Frontend**: http://localhost:5173
+2. **Backend**: http://localhost:5000
+
+### Credenciais de Teste
+
+```
+Usuário: admin@helpwave.com
+Senha: admin123
+```
+
+### Navegação
+
+1. **Login**: Página de autenticação com validação
+2. **Dashboard**: Cards de navegação para funcionalidades
+3. **Cadastro**: Formulário para novos funcionários
+4. **Tickets**: Criação e gestão de chamados
+
+## 📱 Responsividade
+
+### Breakpoints
+- **Mobile**: < 768px
+- **Tablet**: 768px - 1023px
+- **Desktop**: 1024px+
+- **Large Desktop**: 1400px+
+
+### Adaptações
+- **Mobile**: Layout em coluna única, sidebar oculta
+- **Tablet**: Layout híbrido com sidebar reduzida
+- **Desktop**: Layout completo com sidebar fixa
+
+## 🎯 Heurísticas de UX Implementadas
+
+### 1. Visibilidade do Status
+- Indicadores de carregamento
+- Mensagens de feedback
+- Estados visuais dos formulários
+
+### 2. Controle e Liberdade
+- Botões de navegação
+- Possibilidade de cancelar ações
+- Histórico de navegação
+
+### 3. Consistência e Padrões
+- Paleta de cores unificada
+- Componentes reutilizáveis
+- Padrões de interação consistentes
+
+### 4. Prevenção de Erros
+- Validação em tempo real
+- Confirmações para ações críticas
+- Placeholders informativos
+
+### 5. Reconhecimento vs. Recordação
+- Ícones intuitivos
+- Labels descritivos
+- Navegação clara
+
+### 6. Flexibilidade e Eficiência
+- Atalhos de teclado
+- Campos de busca
+- Ações rápidas
+
+### 7. Design Estético e Minimalista
+- Interface limpa
+- Hierarquia visual clara
+- Foco no conteúdo essencial
+
+## 🔍 Estrutura do Projeto
+
+```
+web/
+├── backend/                 # API Flask
+│   ├── app.py              # Aplicação principal
+│   ├── config.py           # Configurações
+│   ├── pages/              # Rotas da API
+│   └── requirements.txt    # Dependências Python
+├── my-project/             # Frontend React
+│   ├── src/
+│   │   ├── components/     # Componentes reutilizáveis
+│   │   ├── hooks/          # Hooks personalizados
+│   │   ├── pages/          # Páginas da aplicação
+│   │   ├── styles/         # Arquivos CSS
+│   │   ├── utils/          # Utilitários
+│   │   └── App.jsx         # Componente principal
+│   ├── package.json        # Dependências Node.js
+│   └── vite.config.js      # Configuração Vite
+└── README.md               # Este arquivo
+```
+
+## 🧪 Testes
+
+### Frontend
+```bash
+cd web/my-project
+npm run lint    # Verificar código
+npm run build   # Build de produção
+```
+
+### Backend
+```bash
+cd web/backend
+python -m pytest  # Executar testes (se implementados)
+```
+
+## 🚀 Deploy
+
+### Frontend (Vercel/Netlify)
+```bash
+npm run build
+# Deploy da pasta dist/
+```
+
+### Backend (Heroku/Railway)
+```bash
+# Configurar Procfile
+# Deploy do código Python
+```
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature
+3. Commit suas mudanças
+4. Push para a branch
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
+
+## 📞 Suporte
+
+Para suporte técnico ou dúvidas:
+- Email: suporte@helpwave.com
+- Documentação: [docs.helpwave.com](https://docs.helpwave.com)
+
+---
+
+**HelpWave** - Simplificando o seu suporte técnico 🚀

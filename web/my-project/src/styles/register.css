@@ -1,6 +1,6 @@
-/* src/styles/register.css */
+/* src/styles/register.css - Página de Cadastro Unificada */
 
-/* CSS Grid Layout Principal - Mobile First */
+/* ===== LAYOUT PRINCIPAL COM GRID ===== */
 .register-layout {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -8,94 +8,96 @@
     "header"
     "main-content";
   min-height: 100vh;
-  background-color: var(--bg-dark);
+  background-color: #F8F9FA;
 }
 
 /* Layout para desktop com sidebar */
 @media (min-width: 768px) {
   .register-layout {
-    grid-template-columns: 250px 1fr;
-    grid-template-rows: 60px 1fr;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 70px 1fr;
     grid-template-areas:
       "sidebar header"
       "sidebar main-content";
   }
 }
 
-/* Container principal usando Flexbox */
+/* ===== CONTAINER PRINCIPAL ===== */
 .register-main-content {
   grid-area: main-content;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  padding: clamp(1rem, 3vw, 2rem);
-  background-color: var(--bg-dark);
-  color: var(--text-light);
+  padding: var(--space-2xl);
+  background-color: #F8F9FA;
+  color: var(--text-primary);
   overflow-y: auto;
 }
 
-/* Header do formulário */
+/* ===== HEADER DO FORMULÁRIO ===== */
 .register-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
   width: 100%;
   max-width: 600px;
   align-self: center;
 }
 
 .register-header h2 {
-  font-size: clamp(1.5rem, 4vw, 2rem);
-  color: var(--text-light);
+  font-size: var(--font-size-3xl);
+  color: #333333;
   margin: 0;
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   text-align: center;
+  letter-spacing: 1px;
 }
 
-/* Botão de voltar com melhor UX */
+/* ===== BOTÃO DE VOLTAR ===== */
 .back-button {
-  background: linear-gradient(135deg, var(--primary-color), #dc3545);
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
   border: none;
-  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px);
-  border-radius: 8px;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  font-size: clamp(0.9rem, 2vw, 1rem);
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
   align-self: flex-start;
-  margin-bottom: 2rem;
+  margin-bottom: var(--space-xl);
   margin-left: 0;
+  margin-right: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .back-button:hover {
-  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-md);
 }
 
 .back-button:active {
   transform: translateY(0);
 }
 
-/* Formulário com Grid Layout para campos */
+/* ===== FORMULÁRIO DE CADASTRO ===== */
 .register-form {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  background: #FFFFFF;
+  border: 2px solid #F5F5F5;
+  padding: var(--space-2xl);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 600px;
+  max-width: 700px;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1.5rem;
+  gap: var(--space-lg);
   align-self: center;
 }
 
@@ -103,7 +105,7 @@
 @media (min-width: 768px) {
   .register-form {
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem 2rem;
+    gap: var(--space-lg) var(--space-xl);
   }
   
   /* Campos que ocupam duas colunas */
@@ -112,59 +114,64 @@
   }
 }
 
-/* Form Groups com Flexbox e validação visual */
+/* ===== GRUPOS DE FORMULÁRIO ===== */
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   position: relative;
 }
 
 .form-group label {
-  font-size: clamp(0.9rem, 2vw, 1rem);
-  color: var(--text-light);
-  font-weight: 600;
-  margin-bottom: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: #333333;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xs);
 }
 
 .form-group input {
   width: 100%;
-  padding: clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px);
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  color: var(--text-light);
-  font-size: clamp(0.9rem, 2.5vw, 1rem);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(5px);
+  padding: var(--space-md) var(--space-lg);
+  background-color: #FFFFFF;
+  border: 2px solid #E5E5E5;
+  border-radius: var(--radius-lg);
+  color: #1A1A1A;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .form-group input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: #666666;
+  font-weight: 400;
 }
 
 .form-group input:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
-  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
 }
 
-/* Estados de validação - Heurística de Nielsen: Visibilidade do Status */
+/* ===== ESTADOS DE VALIDAÇÃO ===== */
 .form-group input:valid {
-  border-color: #28a745;
+  border-color: var(--success-color);
+  background-color: #FFFFFF;
 }
 
 .form-group input:invalid:not(:placeholder-shown) {
-  border-color: #dc3545;
+  border-color: var(--error-color);
+  background-color: #FFFFFF;
 }
 
 /* Mensagens de erro */
 .form-group .error-message {
-  color: #dc3545;
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-xs);
   display: none;
+  font-weight: 500;
 }
 
 .form-group.error .error-message {
@@ -172,33 +179,50 @@
 }
 
 .form-group.error input {
-  border-color: #dc3545;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.2);
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  background-color: #FFFFFF;
 }
 
-/* Botão de submit com melhor UX - Heurística de Nielsen: Controle e Liberdade */
+/* ===== BOTÃO DE SUBMIT ===== */
 .submit-button {
   width: 100%;
-  padding: clamp(12px, 3vw, 16px) 20px;
-  background: linear-gradient(135deg, var(--primary-color), #dc3545);
-  color: white;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
   border: none;
-  border-radius: 8px;
-  font-size: clamp(1rem, 2.5vw, 1.1rem);
-  font-weight: 700;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-md);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  grid-column: 1 / -1; /* Ocupa toda a largura do grid */
-  margin-top: 1rem;
+  grid-column: 1 / -1;
+  margin-top: var(--space-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
 }
 
 .submit-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--secondary-color), #8B0000);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
+}
+
+.submit-button:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .submit-button:active:not(:disabled) {
@@ -206,23 +230,23 @@
 }
 
 .submit-button:disabled {
-  background: #666;
+  background: var(--neutral-400);
   cursor: not-allowed;
   opacity: 0.7;
   transform: none;
   box-shadow: none;
 }
 
-/* Indicador de progresso - Heurística de Nielsen: Visibilidade do Status */
+/* ===== INDICADOR DE CARREGAMENTO ===== */
 .loading-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .loading-spinner {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top: 2px solid white;
   border-radius: 50%;
@@ -234,17 +258,21 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Breakpoints Responsivos - Mobile First */
+/* ===== RESPONSIVIDADE ===== */
 
 /* Mobile Small */
 @media (max-width: 375px) {
   .register-form {
-    padding: 1rem;
-    gap: 1rem;
+    padding: var(--space-lg);
+    gap: var(--space-md);
   }
   
   .register-header {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-lg);
+  }
+  
+  .register-main-content {
+    padding: var(--space-lg);
   }
 }
 
@@ -258,61 +286,27 @@
 /* Desktop Large */
 @media (min-width: 1024px) {
   .register-form {
-    max-width: 800px;
+    max-width: 900px;
     grid-template-columns: 1fr 1fr;
-    gap: 2rem 3rem;
+    gap: var(--space-xl) var(--space-2xl);
   }
   
   .register-main-content {
-    padding: 3rem;
+    padding: var(--space-3xl);
   }
 }
 
-/* Melhorias de Acessibilidade - Heurística de Nielsen: Flexibilidade e Eficiência */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Suporte para modo escuro/claro */
-@media (prefers-color-scheme: light) {
-  .register-layout {
-    background-color: #f8f9fa;
-  }
-  
-  .register-main-content {
-    background-color: #f8f9fa;
-    color: #333;
-  }
-  
-  .register-form {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.8));
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
-  
-  .form-group input {
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 2px solid rgba(0, 0, 0, 0.1);
-    color: #333;
-  }
-  
-  .form-group input::placeholder {
-    color: rgba(0, 0, 0, 0.6);
-  }
-}
+/* ===== ACESSIBILIDADE ===== */
 
 /* Melhorias para dispositivos touch */
 @media (hover: none) and (pointer: coarse) {
   .submit-button,
   .back-button {
-    min-height: 44px;
+    min-height: 48px;
   }
   
   .form-group input {
-    min-height: 44px;
+    min-height: 48px;
   }
 }
 

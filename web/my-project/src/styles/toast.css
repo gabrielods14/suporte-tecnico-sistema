@@ -7,27 +7,28 @@
   min-width: 300px;
   max-width: 500px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   animation: slideIn 0.3s ease-out;
+  border: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .toast-error {
-  background-color: #ff4444;
+  background-color: var(--error-color);
   color: white;
 }
 
 .toast-success {
-  background-color: #44ff44;
-  color: #333;
+  background-color: var(--success-color);
+  color: white;
 }
 
 .toast-warning {
-  background-color: #ffaa00;
+  background-color: var(--warning-color);
   color: white;
 }
 
 .toast-info {
-  background-color: #4444ff;
+  background-color: var(--info-color);
   color: white;
 }
 

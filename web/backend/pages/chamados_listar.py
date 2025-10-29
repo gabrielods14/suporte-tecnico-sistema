@@ -1,11 +1,9 @@
 from flask import request, jsonify
-from app import app
 import requests
 
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
 
 
-@app.route('/chamados', methods=['GET'])
 def listar_chamados():
     status_param = request.args.get('status')
     solicitante_id = request.args.get('solicitanteId')
@@ -33,7 +31,6 @@ def listar_chamados():
         return jsonify({'message': 'Serviço de chamados indisponível.'}), 503
 
 
-@app.route('/chamados/andamento', methods=['GET'])
 def listar_chamados_em_andamento():
     try:
         url = f"{API_URL_BASE}/api/Chamados"

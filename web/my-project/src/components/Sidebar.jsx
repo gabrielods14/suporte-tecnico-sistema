@@ -1,34 +1,52 @@
 // src/components/Sidebar.jsx
 import React from 'react';
 // Importando os ícones
-import { FaHome, FaQuestionCircle, FaEnvelopeOpenText } from 'react-icons/fa';
+import { 
+  FaHome, 
+  FaQuestionCircle, 
+  FaEnvelopeOpenText, 
+  FaClipboardList, 
+  FaPlus, 
+  FaCheckCircle, 
+  FaChartBar,
+  FaPhone
+} from 'react-icons/fa';
 
-// Para ícones, você pode usar uma biblioteca como react-icons
-// Ex: import { FaHome, FaQuestionCircle, FaEnvelopeOpenText, FaBars } from 'react-icons/fa';
-// Para este exemplo, vou usar texto ou emojis para simular os ícones.
+function Sidebar({ currentPage, onNavigate }) {
+  const handleMenuClick = (itemId) => {
+    if (onNavigate) {
+      onNavigate(itemId);
+    }
+  };
 
-function Sidebar() {
   return (
     <aside className="home-sidebar">
       <div className="sidebar-logo">LOGO</div>
       <nav className="sidebar-nav">
         <ul>
           <li>
-            {/* Ícone substituído */}
-            <a href="#" className="active">
+            <a href="#" onClick={(e) => { e.preventDefault(); handleMenuClick('home'); }}>
               <FaHome className="nav-icon" /> HOME
             </a>
           </li>
           <li>
-            {/* Ícone substituído */}
-            <a href="#">
+            <a href="#" className={currentPage === 'pending-tickets' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('pending-tickets'); }}>
+              <FaClipboardList className="nav-icon" /> CHAMADO
+            </a>
+          </li>
+          <li>
+            <a href="#" className={currentPage === 'reports' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('reports'); }}>
+              <FaChartBar className="nav-icon" /> RELATÓRIOS
+            </a>
+          </li>
+          <li>
+            <a href="#" className={currentPage === 'faq' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('faq'); }}>
               <FaQuestionCircle className="nav-icon" /> FQA
             </a>
           </li>
           <li>
-            {/* Ícone substituído */}
-            <a href="#">
-              <FaEnvelopeOpenText className="nav-icon" /> CONTATO
+            <a href="#" className={currentPage === 'contact' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('contact'); }}>
+              <FaPhone className="nav-icon" /> CONTATO
             </a>
           </li>
         </ul>

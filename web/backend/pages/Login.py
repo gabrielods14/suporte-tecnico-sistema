@@ -1,6 +1,8 @@
-from flask import request, jsonify
-from app import app
-import requests 
+from flask import request, jsonify, current_app
+import requests
+
+# Importação será feita dinamicamente
+app = None 
 # Não usamos o bcrypt aqui, pois enviamos a senha para a API do Azure validar.
 
 # ENDPOINT BASE da sua API externa (Azure)
@@ -16,7 +18,6 @@ ADMIN_USER = {
 }
 
 # Rota para o Login. O front-end envia email e senha para este endpoint.
-@app.route('/login', methods=['POST'])
 def login_user():
     data = request.json
     

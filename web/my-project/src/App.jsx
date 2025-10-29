@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import RegisterEmployeePage from './pages/RegisterEmployeePage';
 import NewTicketPage from './pages/NewTicketPage';
+import PendingTicketsPage from './pages/PendingTicketsPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,6 +23,10 @@ function App() {
     setIsLoggedIn(false);
     setCurrentPage('home');
     setUserInfo(null);
+  };
+
+  const navigateToPage = (pageId) => {
+    setCurrentPage(pageId);
   };
 
   const navigateToRegister = () => {
@@ -47,6 +52,8 @@ function App() {
           onLogout={handleLogout} 
           onNavigateToRegister={navigateToRegister}
           onNavigateToNewTicket={navigateToNewTicket}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
           userInfo={userInfo}
         />
       )}
@@ -61,6 +68,16 @@ function App() {
         <NewTicketPage 
           onLogout={handleLogout}
           onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          userInfo={userInfo}
+        />
+      )}
+      {currentPage === 'pending-tickets' && (
+        <PendingTicketsPage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
           userInfo={userInfo}
         />
       )}

@@ -8,14 +8,15 @@
   position: absolute;
   top: 100%; /* Posiciona logo abaixo do ícone */
   right: 0;
-  background-color: white;
-  color: var(--text-dark);
-  border-radius: 4px;
-  box-shadow: var(--shadow-dark);
+  background-color: #FFFFFF;
+  color: #333333;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   z-index: 100;
   width: 150px; /* Largura do menu */
   overflow: hidden;
   animation: fadeIn 0.2s ease-out;
+  border: 2px solid #F5F5F5;
 }
 
 .dropdown-menu ul {
@@ -31,16 +32,22 @@
   padding: 10px 15px;
   cursor: pointer;
   font-size: 0.9rem;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  color: #333333;
 }
 
 .dropdown-item:hover {
-  background-color: var(--bg-light); /* Cor de fundo ao passar o mouse */
+  background-color: #F8F9FA; /* Cor de fundo ao passar o mouse */
+  color: var(--primary-color);
 }
 
 .dropdown-item .item-icon {
   font-size: 1rem;
-  color: #555;
+  color: #666666;
+}
+
+.dropdown-item:hover .item-icon {
+  color: var(--primary-color);
 }
 
 /* Reutilizando a animação do modal */
