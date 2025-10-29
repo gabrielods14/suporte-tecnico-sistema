@@ -29,17 +29,20 @@ app = create_app()
 def register_routes():
     try:
         from pages.Login import login_user
-        app.add_url_rule('/login', 'login_user', login_user, methods=['POST'])
+        app.add_url_rule('/login', view_func=login_user, methods=['POST'])
         
         from pages.cadastro_de_funcionario import register_user
-        app.add_url_rule('/register', 'register_user', register_user, methods=['POST'])
+        app.add_url_rule('/register', view_func=register_user, methods=['POST'])
         
         from pages.chamados_criar import criar_chamado
-        app.add_url_rule('/chamados', 'criar_chamado', criar_chamado, methods=['POST'], endpoint='create_ticket')
+        app.add_url_rule('/chamados', view_func=criar_chamado, methods=['POST'])
         
         from pages.chamados_listar import listar_chamados, listar_chamados_em_andamento
-        app.add_url_rule('/chamados', 'listar_chamados', listar_chamados, methods=['GET'], endpoint='list_tickets')
-        app.add_url_rule('/chamados/andamento', 'listar_chamados_em_andamento', listar_chamados_em_andamento, methods=['GET'])
+        app.add_url_rule('/chamados', view_func=listar_chamados, methods=['GET'])
+        app.add_url_rule('/chamados/andamento', view_func=listar_chamados_em_andamento, methods=['GET'])
+
+        # Garante o registro das rotas de detalhar e atualizar
+        import pages.chamados_detalhar_atualizar  # noqa: F401
         
         print("Rotas registradas com sucesso!")
     except Exception as e:

@@ -10,13 +10,19 @@ def listar_chamados():
 
     try:
         url = f"{API_URL_BASE}/api/Chamados"
+        headers = {
+            'Accept': 'application/json'
+        }
+        auth = request.headers.get('Authorization')
+        if auth:
+            headers['Authorization'] = auth
         params = {}
         if status_param:
             params['status'] = status_param
         if solicitante_id:
             params['solicitanteId'] = solicitante_id
 
-        resp = requests.get(url, params=params)
+        resp = requests.get(url, params=params, headers=headers)
         if resp.status_code == 200:
             return jsonify(resp.json())
 
@@ -34,8 +40,14 @@ def listar_chamados():
 def listar_chamados_em_andamento():
     try:
         url = f"{API_URL_BASE}/api/Chamados"
+        headers = {
+            'Accept': 'application/json'
+        }
+        auth = request.headers.get('Authorization')
+        if auth:
+            headers['Authorization'] = auth
         params = {'status': 'andamento'}
-        resp = requests.get(url, params=params)
+        resp = requests.get(url, params=params, headers=headers)
         if resp.status_code == 200:
             return jsonify(resp.json())
 

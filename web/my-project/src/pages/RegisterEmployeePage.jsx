@@ -161,6 +161,24 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo }) => {
         <div className="register-header">
           <h2>CADASTRO DE FUNCIONÁRIO</h2>
         </div>
+
+        {/* Permissões do usuário */}
+        <div className={`form-group`}>
+          <label htmlFor="permissao">Permissão</label>
+          <div className="select-container">
+            <select
+              id="permissao"
+              name="permissao"
+              value={formData.permissao}
+              onChange={(e) => handleInputChange({ target: { name: 'permissao', value: Number(e.target.value) } })}
+            >
+              <option value={1}>Colaborador</option>
+              <option value={2}>Suporte Técnico</option>
+              <option value={3}>Administrador</option>
+            </select>
+            <div className="select-arrow">▼</div>
+          </div>
+        </div>
         <form className="register-form" onSubmit={handleSubmit} noValidate>
           {/* Campos do formulário com validação em tempo real */}
           <div className={`form-group ${errors.nome ? 'error' : ''}`}>
@@ -190,7 +208,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo }) => {
               name="email" 
               value={formData.email}
               onChange={handleInputChange}
-              placeholder="exemplo@empresa.com"
+              placeholder="exemplo@helpwave.com"
               required 
               aria-describedby={errors.email ? 'email-error' : undefined}
             />
@@ -209,7 +227,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo }) => {
               name="cargo" 
               value={formData.cargo}
               onChange={handleInputChange}
-              placeholder="Ex: Desenvolvedor, Analista"
+              placeholder="Ex: Administrador, Gestor, Técnico"
               required 
               aria-describedby={errors.cargo ? 'cargo-error' : undefined}
             />

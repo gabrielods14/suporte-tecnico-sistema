@@ -14,7 +14,7 @@ ADMIN_USER = {
     'senha': 'admin123',
     'nome': 'Administrador',
     'cargo': 'Administrador',
-    'permissao': 1
+    'permissao': 3
 }
 
 # Rota para o Login. O front-end envia email e senha para este endpoint.
@@ -69,11 +69,51 @@ def login_user():
         # 1. Login BEM-SUCEDIDO (Geralmente retorna 200)
         # ----------------------------------------------------
         if response.status_code == 200:
-            # A API do Azure deve retornar o Token de Autenticação (JWT) e dados do usuário
-            token_data = response.json()
-            
-            # Repassa a resposta completa (incluindo o token) de volta para o front-end
-            return jsonify(token_data), 200
+            # A API do Azure deve retornar o Token de Autenticação (JWT)
+            token_payload = response.json() or {}
+            # Normaliza a chave do token para minúsculo para o front-end
+            token_value = token_payload.get('token') or token_payload.get('Token')
+
+            user_info = None
+            try:
+                # Decodifica o payload do JWT sem validação (apenas para obter o ID)
+                # O formato é header.payload.signature (base64url)
+                import base64, json
+                parts = (token_value or '').split('.')
+                if len(parts) >= 2:
+                    padded = parts[1] + '==='  # padding para base64url
+                    decoded = base64.urlsafe_b64decode(padded)
+                    payload_obj = json.loads(decoded.decode('utf-8'))
+                    user_id = payload_obj.get('sub')
+                    user_role = payload_obj.get('role')
+
+                    if user_id:
+                        # Busca dados do usuário para obter nome e permissão
+                        usuario_resp = requests.get(f"{API_URL_BASE}/api/Usuarios/{user_id}")
+                        if usuario_resp.status_code == 200:
+                            usuario_json = usuario_resp.json() or {}
+                            user_info = {
+                                'id': usuario_json.get('id') or user_id,
+                                'nome': usuario_json.get('nome') or '',
+                                'email': usuario_json.get('email') or '',
+                                'permissao': usuario_json.get('permissao') if usuario_json.get('permissao') is not None else user_role
+                            }
+                        else:
+                            # Fallback: retorna apenas dados do token
+                            user_info = {
+                                'id': user_id,
+                                'nome': '',
+                                'email': '',
+                                'permissao': user_role
+                            }
+            except Exception as e:
+                print(f"Falha ao enriquecer dados do usuário pós-login: {e}")
+
+            # Monta resposta unificada
+            return jsonify({
+                'token': token_value,
+                'user': user_info
+            }), 200
         
         # ----------------------------------------------------
         # 2. Login FALHOU (Credenciais Inválidas)

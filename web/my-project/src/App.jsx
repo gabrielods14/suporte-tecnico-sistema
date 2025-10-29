@@ -5,11 +5,13 @@ import HomePage from './pages/HomePage';
 import RegisterEmployeePage from './pages/RegisterEmployeePage';
 import NewTicketPage from './pages/NewTicketPage';
 import PendingTicketsPage from './pages/PendingTicketsPage';
+import TicketDetailPage from './pages/TicketDetailPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentPage, setCurrentPage] = useState('home');
   const [userInfo, setUserInfo] = useState(null);
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
 
   const handleLoginSuccess = (userData) => {
     setIsLoggedIn(true);
@@ -39,6 +41,11 @@ function App() {
 
   const navigateToHome = () => {
     setCurrentPage('home');
+  };
+
+  const navigateToTicketDetail = (ticketId) => {
+    setSelectedTicketId(ticketId);
+    setCurrentPage('ticket-detail');
   };
 
   if (!isLoggedIn) {
@@ -79,6 +86,16 @@ function App() {
           onNavigateToPage={navigateToPage}
           currentPage={currentPage}
           userInfo={userInfo}
+          onNavigateToTicketDetail={navigateToTicketDetail}
+        />
+      )}
+      {currentPage === 'ticket-detail' && (
+        <TicketDetailPage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          userInfo={userInfo}
+          ticketId={selectedTicketId}
         />
       )}
     </React.Fragment>

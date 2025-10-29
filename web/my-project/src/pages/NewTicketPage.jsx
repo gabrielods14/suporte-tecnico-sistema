@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import '../styles/newticket.css';
+import { ticketService } from '../utils/api';
 
 const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo }) => {
   const [formData, setFormData] = useState({
@@ -19,11 +20,11 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo 
   // Opções para o dropdown de tipo de chamado
   const tiposChamado = [
     { value: '', label: 'Selecione o tipo de chamado' },
-    { value: 'suporte', label: 'Suporte Técnico' },
-    { value: 'manutencao', label: 'Manutenção' },
-    { value: 'instalacao', label: 'Instalação' },
-    { value: 'consultoria', label: 'Consultoria' },
-    { value: 'emergencia', label: 'Emergência' }
+    { value: 'Suporte', label: 'Suporte' },
+    { value: 'Manutenção', label: 'Manutenção' },
+    { value: 'Instalação', label: 'Instalação' },
+    { value: 'Consultoria', label: 'Consultoria' },
+    { value: 'Emergência', label: 'Emergência' }
   ];
 
   // Validação em tempo real - Heurística de Nielsen: Prevenção de Erros
@@ -106,28 +107,28 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo 
     setIsLoading(true);
 
     try {
-      // Criar o chamado no backend
-      const response = await fetch('http://localhost:5000/chamados', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tipoChamado: formData.tipoChamado,
-          titulo: formData.titulo,
-          descricao: formData.descricao,
-          prioridade: 'MÉDIA'
-        }),
-      });
+      const solicitanteId = (userInfo?.id && Number(userInfo.id)) || (() => {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (!token) return undefined;
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          return payload?.sub ? Number(payload.sub) : undefined;
+        } catch {
+          return undefined;
+        }
+      })();
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (jsonError) {
-        data = { message: 'Erro ao processar resposta do servidor.' };
-      }
+      const payload = {
+        tipo: formData.tipoChamado,
+        titulo: formData.titulo,
+        descricao: formData.descricao,
+        prioridade: 2, // Média
+        solicitanteId: solicitanteId
+      };
 
-      if (response.ok || response.status === 201) {
+      const data = await ticketService.createTicket(payload);
+
+      if (data) {
         showToast('Chamado criado com sucesso!', 'success');
         
         // Limpa o formulário
@@ -145,8 +146,6 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo 
           }
         }, 1500);
         
-      } else {
-        showToast(data.message || 'Erro ao criar chamado.', 'error');
       }
       
     } catch (error) {

@@ -9,7 +9,11 @@ API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurew
 def detalhar_chamado(chamado_id: int):
     try:
         url = f"{API_URL_BASE}/api/Chamados/{chamado_id}"
-        resp = requests.get(url)
+        headers = { 'Accept': 'application/json' }
+        auth = request.headers.get('Authorization')
+        if auth:
+            headers['Authorization'] = auth
+        resp = requests.get(url, headers=headers)
         if resp.status_code == 200:
             return jsonify(resp.json())
 
@@ -29,16 +33,12 @@ def atualizar_chamado(chamado_id: int):
     dados = request.json or {}
 
     payload_api = {
-        'tipo': dados.get('tipo'),
+        'status': dados.get('status'),
+        'tecnicoResponsavelId': dados.get('tecnicoResponsavelId'),
+        'dataFechamento': dados.get('dataFechamento'),
         'titulo': dados.get('titulo'),
         'descricao': dados.get('descricao'),
-        'prioridade': dados.get('prioridade'),
-        'dataMaximaConclusao': dados.get('dataMaximaConclusao'),
-        'emailContato': dados.get('emailContato'),
-        'telefoneContato': dados.get('telefoneContato'),
-        'sugestaoResolucao': dados.get('sugestaoResolucao'),
-        'resolucao': dados.get('resolucao'),
-        'status': dados.get('status')
+        'prioridade': dados.get('prioridade')
     }
     payload_api = {k: v for k, v in payload_api.items() if v is not None}
 
@@ -47,7 +47,11 @@ def atualizar_chamado(chamado_id: int):
 
     try:
         url = f"{API_URL_BASE}/api/Chamados/{chamado_id}"
-        resp = requests.put(url, json=payload_api)
+        headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        auth = request.headers.get('Authorization')
+        if auth:
+            headers['Authorization'] = auth
+        resp = requests.put(url, json=payload_api, headers=headers)
         if resp.status_code in [200, 204]:
             return jsonify(resp.json() if resp.content else {'message': 'Chamado atualizado com sucesso.'})
 

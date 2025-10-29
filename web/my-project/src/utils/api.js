@@ -231,35 +231,35 @@ export const ticketService = {
    * Cria um novo ticket
    */
   async createTicket(ticketData) {
-    return await apiClient.post('/tickets', ticketData);
+    return await apiClient.post('/chamados', ticketData);
   },
 
   /**
    * Obtém lista de tickets
    */
   async getTickets() {
-    return await apiClient.get('/tickets');
+    return await apiClient.get('/chamados');
   },
 
   /**
    * Obtém um ticket específico
    */
   async getTicket(ticketId) {
-    return await apiClient.get(`/tickets/${ticketId}`);
+    return await apiClient.get(`/chamados/${ticketId}`);
   },
 
   /**
    * Atualiza um ticket
    */
   async updateTicket(ticketId, ticketData) {
-    return await apiClient.put(`/tickets/${ticketId}`, ticketData);
+    return await apiClient.put(`/chamados/${ticketId}`, ticketData);
   },
 
   /**
    * Remove um ticket
    */
   async deleteTicket(ticketId) {
-    return await apiClient.delete(`/tickets/${ticketId}`);
+    return await apiClient.delete(`/chamados/${ticketId}`);
   }
 };
 

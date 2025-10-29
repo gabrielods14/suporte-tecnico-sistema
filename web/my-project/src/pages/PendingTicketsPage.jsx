@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo }) {
+function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,73 +14,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   const [sortBy, setSortBy] = useState('codigo'); // codigo, titulo, prioridade, dataLimite
   const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
 
-  // Dados mockados baseados nas imagens
-  const mockTickets = [
-    {
-      id: 1,
-      codigo: '000001',
-      titulo: 'Instalação do Microsoft Office',
-      prioridade: 'ALTA',
-      dataLimite: '2025-06-10',
-      status: 'ABERTO'
-    },
-    {
-      id: 2,
-      codigo: '000002',
-      titulo: 'Atualização de sistema ERP',
-      prioridade: 'MÉDIA',
-      dataLimite: '2025-06-10',
-      status: 'EM_ANDAMENTO'
-    },
-    {
-      id: 3,
-      codigo: '000003',
-      titulo: 'Troca de toner de impressora',
-      prioridade: 'BAIXA',
-      dataLimite: '2025-05-22',
-      status: 'ABERTO'
-    },
-    {
-      id: 4,
-      codigo: '000004',
-      titulo: 'Configuração de rede Wi-Fi',
-      prioridade: 'MÉDIA',
-      dataLimite: '2025-05-25',
-      status: 'ABERTO'
-    },
-    {
-      id: 5,
-      codigo: '000005',
-      titulo: 'Manutenção preventiva servidor',
-      prioridade: 'ALTA',
-      dataLimite: '2025-05-20',
-      status: 'EM_ANDAMENTO'
-    },
-    {
-      id: 6,
-      codigo: '000006',
-      titulo: 'Instalação de antivírus',
-      prioridade: 'BAIXA',
-      dataLimite: '2025-05-18',
-      status: 'ABERTO'
-    },
-    {
-      id: 7,
-      codigo: '000007',
-      titulo: 'Backup de dados críticos',
-      prioridade: 'ALTA',
-      dataLimite: '2025-05-08',
-      status: 'ABERTO'
-    },
-    {
-      id: 8,
-      codigo: '000008',
-      titulo: 'Configuração de email corporativo',
-      prioridade: 'MÉDIA',
-      dataLimite: '2025-05-13',
-      status: 'ABERTO'
-    }
-  ];
+  
 
   useEffect(() => {
     loadTickets();
@@ -97,7 +31,30 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
       try {
         const apiTickets = await ticketService.getTickets();
         if (apiTickets && apiTickets.length > 0) {
-          setTickets(apiTickets);
+          const mapPriority = (p) => {
+            if (typeof p === 'number') {
+              return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
+            }
+            const val = (p || '').toString().toLowerCase();
+            if (val.includes('alta')) return 'ALTA';
+            if (val.includes('medi')) return 'MÉDIA';
+            if (val.includes('baix')) return 'BAIXA';
+            return 'MÉDIA';
+          };
+          const mapped = apiTickets.map(item => {
+            const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
+            const limite = new Date(abertura);
+            limite.setDate(limite.getDate() + 7);
+            return {
+              id: item.id,
+              codigo: String(item.id).padStart(6, '0'),
+              titulo: item.titulo || '',
+              prioridade: mapPriority(item.prioridade),
+              dataLimite: limite.toISOString(),
+              status: item.status || 'ABERTO'
+            };
+          });
+          setTickets(mapped);
           return;
         }
       } catch (apiError) {
@@ -289,7 +246,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                   const isOverdue = daysToExpire.includes('Vencido');
                   
                   return (
-                    <tr key={ticket.id}>
+                    <tr key={ticket.id} onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} style={{ cursor: 'pointer' }}>
                       <td className="code-cell">{ticket.codigo}</td>
                       <td className="title-cell">{ticket.titulo}</td>
                       <td>
