@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTickets } from '../context/TicketContext';
+import AIService from '../services/AIService';
 import ConfirmationModal from '../components/ConfirmationModal';
 import Toast from '../components/Toast';
 import LoadingOverlay from '../components/LoadingOverlay';

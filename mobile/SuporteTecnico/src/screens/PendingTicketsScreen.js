@@ -98,20 +98,34 @@ const PendingTicketsScreen = ({ navigation }) => {
     }
   };
 
-  const generateAutoResponse = (suggestion, ticket) => {
-    const responses = {
-      hardware: `Identifiquei o problema de hardware relatado. ${suggestion.steps.slice(0, 2).join(' ')} Problema resolvido com sucesso.`,
-      software: `Analisei o problema de software. ${suggestion.steps.slice(0, 2).join(' ')} Aplicação funcionando normalmente.`,
-      network: `Verifiquei a conectividade de rede. ${suggestion.steps.slice(0, 2).join(' ')} Conexão restabelecida.`,
-      printer: `Resolvi o problema da impressora. ${suggestion.steps.slice(0, 2).join(' ')} Impressão funcionando corretamente.`,
-      email: `Corrigi as configurações de email. ${suggestion.steps.slice(0, 2).join(' ')} Serviço de email operacional.`,
-      password: `Reset de senha realizado com sucesso. ${suggestion.steps.slice(0, 2).join(' ')} Usuário pode fazer login normalmente.`,
-      access: `Solicitação de acesso processada. ${suggestion.steps.slice(0, 2).join(' ')} Permissões configuradas corretamente.`,
-      other: `Problema analisado e resolvido. ${suggestion.steps.slice(0, 2).join(' ')} Situação normalizada.`,
-    };
-    
-    return responses[ticket.type] || responses.other;
-  };
+      const generateAutoResponse = (suggestion, ticket) => {
+        if (!suggestion || !suggestion.stepByStepSolution) {
+          return 'Problema analisado e solução técnica aplicada com sucesso.';
+        }
+
+        // Criar resposta técnica baseada no passo-a-passo específico
+        const stepByStepResponse = suggestion.stepByStepSolution.slice(0, 2).join(' ');
+        
+        // Adicionar informações de verificação se disponíveis
+        let verificationInfo = '';
+        if (suggestion.verificationSteps && suggestion.verificationSteps.length > 0) {
+          verificationInfo = ` Verificação realizada: ${suggestion.verificationSteps[0]}`;
+        }
+
+        // Adicionar informações de comandos específicos se disponíveis
+        let commandInfo = '';
+        if (suggestion.specificCommands && suggestion.specificCommands.length > 0) {
+          commandInfo = ` Comandos executados: ${suggestion.specificCommands[0]}`;
+        }
+
+        // Adicionar causa raiz se disponível
+        let rootCauseInfo = '';
+        if (suggestion.rootCause) {
+          rootCauseInfo = ` Causa identificada: ${suggestion.rootCause}`;
+        }
+
+        return `SOLUÇÃO TÉCNICA APLICADA: ${stepByStepResponse}.${rootCauseInfo}${commandInfo}${verificationInfo} Problema resolvido com sucesso.`;
+      };
 
 
   const handleFinalizeTicket = () => {
@@ -299,32 +313,140 @@ const PendingTicketsScreen = ({ navigation }) => {
                   <Text style={styles.detailDescription}>{selectedTicket.description}</Text>
                 </View>
 
-                {/* AI Suggestion */}
-                {selectedTicket.aiSuggestion && (
-                  <View style={styles.aiSuggestion}>
-                    <View style={styles.aiHeader}>
-                      <Icon name="bulb-outline" size={20} color="#ffc107" />
-                      <Text style={styles.aiTitle}>Sugestão da IA</Text>
-                    </View>
-                    {(() => {
-                      try {
-                        const suggestion = JSON.parse(selectedTicket.aiSuggestion);
-                        return (
-                          <View>
-                            <Text style={styles.aiAnalysis}>{suggestion.analysis}</Text>
-                            <Text style={styles.aiStepsTitle}>Etapas sugeridas:</Text>
-                            {suggestion.steps.map((step, index) => (
-                              <Text key={index} style={styles.aiStep}>{step}</Text>
-                            ))}
-                            <Text style={styles.aiAdditional}>{suggestion.additional}</Text>
-                          </View>
-                        );
-                      } catch {
-                        return <Text style={styles.aiText}>{selectedTicket.aiSuggestion}</Text>;
-                      }
-                    })()}
-                  </View>
-                )}
+                    {/* AI Suggestion */}
+                    {selectedTicket.aiSuggestion && (
+                      <View style={styles.aiSuggestion}>
+                        <View style={styles.aiHeader}>
+                          <Icon name="bulb-outline" size={20} color="#ffc107" />
+                          <Text style={styles.aiTitle}>Análise Técnica Detalhada</Text>
+                        </View>
+                        {(() => {
+                          try {
+                            const suggestion = JSON.parse(selectedTicket.aiSuggestion);
+                            return (
+                              <View>
+                                <Text style={styles.aiAnalysis}>{suggestion.analysis}</Text>
+                                
+                                {/* Sintomas Identificados */}
+                                {suggestion.symptoms && suggestion.symptoms.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>🔍 Sintomas Identificados:</Text>
+                                    {suggestion.symptoms.map((symptom, index) => (
+                                      <Text key={index} style={styles.aiStep}>• {symptom}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Causa Raiz */}
+                                {suggestion.rootCause && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>🎯 Causa Raiz:</Text>
+                                    <Text style={styles.aiRootCause}>{suggestion.rootCause}</Text>
+                                  </View>
+                                )}
+
+                                {/* Passo-a-Passo da Solução */}
+                                {suggestion.stepByStepSolution && suggestion.stepByStepSolution.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>📋 Passo-a-Passo da Solução:</Text>
+                                    {suggestion.stepByStepSolution.map((step, index) => (
+                                      <Text key={index} style={styles.aiStepNumber}>
+                                        {index + 1}. {step}
+                                      </Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Comandos Específicos */}
+                                {suggestion.specificCommands && suggestion.specificCommands.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>💻 Comandos Específicos:</Text>
+                                    {suggestion.specificCommands.map((command, index) => (
+                                      <Text key={index} style={styles.aiCommandStep}>• {command}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Arquivos de Configuração */}
+                                {suggestion.configurationFiles && suggestion.configurationFiles.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>📁 Arquivos de Configuração:</Text>
+                                    {suggestion.configurationFiles.map((file, index) => (
+                                      <Text key={index} style={styles.aiConfigStep}>• {file}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Logs para Verificar */}
+                                {suggestion.logsToCheck && suggestion.logsToCheck.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>📋 Logs para Verificar:</Text>
+                                    {suggestion.logsToCheck.map((log, index) => (
+                                      <Text key={index} style={styles.aiLogStep}>• {log}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Ferramentas Necessárias */}
+                                {suggestion.toolsNeeded && suggestion.toolsNeeded.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>🔧 Ferramentas Necessárias:</Text>
+                                    {suggestion.toolsNeeded.map((tool, index) => (
+                                      <Text key={index} style={styles.aiToolStep}>• {tool}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Problemas Comuns */}
+                                {suggestion.commonIssues && suggestion.commonIssues.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>⚠️ Problemas Comuns:</Text>
+                                    {suggestion.commonIssues.map((issue, index) => (
+                                      <Text key={index} style={styles.aiErrorStep}>• {issue}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Verificação */}
+                                {suggestion.verificationSteps && suggestion.verificationSteps.length > 0 && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>✅ Verificação:</Text>
+                                    {suggestion.verificationSteps.map((step, index) => (
+                                      <Text key={index} style={styles.aiStep}>• {step}</Text>
+                                    ))}
+                                  </View>
+                                )}
+
+                                {/* Informações Adicionais */}
+                                {suggestion.additional && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>ℹ️ Informações Adicionais:</Text>
+                                    <Text style={styles.aiAdditional}>{suggestion.additional}</Text>
+                                  </View>
+                                )}
+
+                                {/* Critérios de Escalação */}
+                                {suggestion.escalationCriteria && (
+                                  <View style={styles.aiSection}>
+                                    <Text style={styles.aiSectionTitle}>🚨 Escalação:</Text>
+                                    <Text style={styles.aiEscalation}>{suggestion.escalationCriteria}</Text>
+                                  </View>
+                                )}
+
+                                {/* Metadados */}
+                                <View style={styles.aiMetadata}>
+                                  <Text style={styles.aiConfidence}>Confiança: {suggestion.confidence}</Text>
+                                  <Text style={styles.aiTime}>Tempo estimado: {suggestion.estimatedTime}</Text>
+                                  <Text style={styles.aiPriority}>Prioridade: {suggestion.priority}</Text>
+                                </View>
+                              </View>
+                            );
+                          } catch {
+                            return <Text style={styles.aiText}>{selectedTicket.aiSuggestion}</Text>;
+                          }
+                        })()}
+                      </View>
+                    )}
 
                 <View style={styles.responseSection}>
                   <Text style={styles.responseLabel}>Sua resposta:</Text>
@@ -683,6 +805,111 @@ const styles = StyleSheet.create({
   aiText: {
     fontSize: 16,
     color: '#856404',
+  },
+  aiSection: {
+    marginBottom: 12,
+  },
+  aiSectionTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#856404',
+    marginBottom: 6,
+  },
+  aiLogStep: {
+    fontSize: 12,
+    color: '#6c757d',
+    marginBottom: 3,
+    marginLeft: 10,
+    fontFamily: 'monospace',
+    backgroundColor: '#f8f9fa',
+    padding: 4,
+    borderRadius: 4,
+  },
+  aiErrorStep: {
+    fontSize: 12,
+    color: '#dc3545',
+    marginBottom: 3,
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+  aiToolStep: {
+    fontSize: 12,
+    color: '#007bff',
+    marginBottom: 3,
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+  aiEscalation: {
+    fontSize: 13,
+    color: '#dc3545',
+    fontWeight: '500',
+    marginTop: 5,
+    lineHeight: 18,
+  },
+  aiMetadata: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 15,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ffeaa7',
+  },
+  aiConfidence: {
+    fontSize: 12,
+    color: '#28a745',
+    fontWeight: 'bold',
+  },
+  aiTime: {
+    fontSize: 12,
+    color: '#007bff',
+    fontWeight: 'bold',
+  },
+  aiPriority: {
+    fontSize: 12,
+    color: '#dc3545',
+    fontWeight: 'bold',
+  },
+  aiRootCause: {
+    fontSize: 14,
+    color: '#856404',
+    fontWeight: '600',
+    marginTop: 5,
+    lineHeight: 20,
+    backgroundColor: '#fff8e1',
+    padding: 10,
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#ff9800',
+  },
+  aiStepNumber: {
+    fontSize: 14,
+    color: '#856404',
+    marginBottom: 6,
+    marginLeft: 10,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  aiCommandStep: {
+    fontSize: 12,
+    color: '#007bff',
+    marginBottom: 3,
+    marginLeft: 10,
+    fontFamily: 'monospace',
+    backgroundColor: '#e3f2fd',
+    padding: 6,
+    borderRadius: 4,
+    fontWeight: '500',
+  },
+  aiConfigStep: {
+    fontSize: 12,
+    color: '#6f42c1',
+    marginBottom: 3,
+    marginLeft: 10,
+    fontFamily: 'monospace',
+    backgroundColor: '#f3e5f5',
+    padding: 4,
+    borderRadius: 4,
+    fontWeight: '500',
   },
   responseSection: {
     marginBottom: 20,
