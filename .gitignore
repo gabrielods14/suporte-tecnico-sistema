@@ -60,3 +60,4 @@ coverage/
 # Outros
 # ==================
 *.swp
+*.env

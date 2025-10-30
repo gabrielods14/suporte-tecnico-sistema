@@ -40,6 +40,10 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   const hideToast = () => {
     setToast({ isVisible: false, message: '', type: 'error' });
   };
+  //inclusao
+  const [sugestao, setSugestao] = useState('');
+
+  const [carregandoSugestao, setCarregandoSugestao] = useState(false);
 
   const handleSolutionChange = (e) => {
     setSolution(e.target.value);

@@ -1,7 +1,26 @@
+import sys
+import os
+
+# Adiciona o diretório raiz do projeto (duas pastas acima) ao sys.path
+root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+if root_path not in sys.path:
+    sys.path.insert(0, root_path)
+
+print("📁 Caminho raiz adicionado ao sys.path:", root_path)
+
+# Import absoluto a partir do diretório raiz do projeto
+# O pacote IAAPI está dentro da pasta `web/IAAPI`, portanto importamos via `web.IAAPI`.
+from web.IAAPI.GeminiController import gemini_bp
 from flask import Flask
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from config import config
+from dotenv import load_dotenv
+
+
+
+
+load_dotenv()
 
 # ----------------------------------------------------
 # 1. Configuração e Inicialização do Aplicativo Flask
@@ -56,6 +75,8 @@ def register_routes():
 # Registra as rotas após criar o app
 register_routes()
 
+# Registra as rotas da IA Gemini
+app.register_blueprint(gemini_bp, url_prefix='/api/gemini')
 
 # ----------------------------------------------------
 # 3. Execução do Servidor
