@@ -1,20 +1,18 @@
-// src/pages/PendingTicketsPage.jsx
+// src/pages/CompletedTicketsPage.jsx
 import React, { useState, useEffect } from 'react';
-import '../styles/pending-tickets.css';
+import '../styles/completed-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
+function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('codigo'); // codigo, titulo, prioridade, dataLimite
-  const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
-
-  
+  const [sortBy, setSortBy] = useState('dataFechamento'); // codigo, titulo, prioridade, dataFechamento
+  const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
 
   useEffect(() => {
     loadTickets();
@@ -27,41 +25,35 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   const loadTickets = async () => {
     try {
       setLoading(true);
-      // Tentar carregar da API real primeiro
-      try {
-        const apiTickets = await ticketService.getTickets();
-        if (apiTickets && apiTickets.length > 0) {
-          const mapPriority = (p) => {
-            if (typeof p === 'number') {
-              return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
-            }
-            const val = (p || '').toString().toLowerCase();
-            if (val.includes('alta')) return 'ALTA';
-            if (val.includes('medi')) return 'MÉDIA';
-            if (val.includes('baix')) return 'BAIXA';
-            return 'MÉDIA';
-          };
-          const mapped = apiTickets.map(item => {
-            const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
-            const limite = new Date(abertura);
-            limite.setDate(limite.getDate() + 7);
-            return {
-              id: item.id,
-              codigo: String(item.id).padStart(6, '0'),
-              titulo: item.titulo || '',
-              prioridade: mapPriority(item.prioridade),
-              dataLimite: limite.toISOString(),
-              status: item.status || 'ABERTO'
-            };
-          });
-          setTickets(mapped);
-          return;
-        }
-      } catch (apiError) {
-        console.log('API não disponível, usando array vazio:', apiError);
+      const apiTickets = await ticketService.getTickets();
+      if (apiTickets && apiTickets.length > 0) {
+        const mapPriority = (p) => {
+          if (typeof p === 'number') {
+            return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
+          }
+          const val = (p || '').toString().toLowerCase();
+          if (val.includes('alta')) return 'ALTA';
+          if (val.includes('medi')) return 'MÉDIA';
+          if (val.includes('baix')) return 'BAIXA';
+          return 'MÉDIA';
+        };
+        
+        // Filtrar apenas chamados com status Resolvido (4) ou Fechado (5)
+        const mapped = apiTickets
+          .filter(item => item.status === 4 || item.status === 5)
+          .map(item => ({
+            id: item.id,
+            codigo: String(item.id).padStart(6, '0'),
+            titulo: item.titulo || '',
+            prioridade: mapPriority(item.prioridade),
+            dataFechamento: item.dataFechamento || item.dataAbertura,
+            status: item.status,
+            tecnico: item.tecnicoResponsavel?.nome || 'N/A'
+          }));
+        
+        setTickets(mapped);
+        return;
       }
-      
-      // Se a API falhar, usar array vazio
       setTickets([]);
     } catch (error) {
       console.error('Erro ao carregar tickets:', error);
@@ -101,9 +93,9 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
           aValue = priorityOrder[a.prioridade] || 4;
           bValue = priorityOrder[b.prioridade] || 4;
           break;
-        case 'dataLimite':
-          aValue = new Date(a.dataLimite);
-          bValue = new Date(b.dataLimite);
+        case 'dataFechamento':
+          aValue = new Date(a.dataFechamento);
+          bValue = new Date(b.dataFechamento);
           break;
         default:
           return 0;
@@ -122,24 +114,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortBy(column);
-      setSortOrder('asc');
-    }
-  };
-
-  const calculateDaysToExpire = (dataLimite) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const limitDate = new Date(dataLimite);
-    limitDate.setHours(0, 0, 0, 0);
-    const diffTime = limitDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) {
-      return `Vencido há ${Math.abs(diffDays)} dias`;
-    } else if (diffDays === 0) {
-      return 'Vence hoje';
-    } else {
-      return `Faltam ${diffDays} dias`;
+      setSortOrder('desc');
     }
   };
 
@@ -157,15 +132,31 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
     return date.toLocaleDateString('pt-BR');
   };
 
+  const getStatusText = (status) => {
+    switch (status) {
+      case 4: return 'RESOLVIDO';
+      case 5: return 'FECHADO';
+      default: return 'N/A';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 4: return '#28a745';
+      case 5: return '#6c757d';
+      default: return '#6c757d';
+    }
+  };
+
   if (loading) {
     return (
-      <div className="pending-tickets-page">
+      <div className="completed-tickets-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
         <Header onLogout={onLogout} userName={userInfo?.nome} />
-        <main className="pending-tickets-main">
+        <main className="completed-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando chamados...</p>
+            <p>Carregando chamados concluídos...</p>
           </div>
         </main>
       </div>
@@ -173,14 +164,14 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   }
 
   return (
-    <div className="pending-tickets-page">
+    <div className="completed-tickets-page">
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
       <Header onLogout={onLogout} userName={userInfo?.nome} />
       
-      <main className="pending-tickets-main">
+      <main className="completed-tickets-main">
         {/* Header da página */}
         <div className="page-header">
-          <h1>CHAMADOS ABERTOS</h1>
+          <h1>CHAMADOS CONCLUÍDOS</h1>
         </div>
 
         {/* Filtros */}
@@ -204,11 +195,11 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
               <option value="codigo">Código</option>
               <option value="titulo">Título</option>
               <option value="prioridade">Prioridade</option>
-              <option value="dataLimite">Data Limite</option>
+              <option value="dataFechamento">Data de Fechamento</option>
             </select>
             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-              <option value="asc">Crescente</option>
-              <option value="desc">Decrescente</option>
+              <option value="desc">Mais Recente</option>
+              <option value="asc">Mais Antigo</option>
             </select>
           </div>
         </div>
@@ -227,43 +218,49 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                 <th onClick={() => handleSort('prioridade')} className="sortable">
                   PRIORIDADE {sortBy === 'prioridade' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
-                <th onClick={() => handleSort('dataLimite')} className="sortable">
-                  DATA LIMITE {sortBy === 'dataLimite' && (sortOrder === 'asc' ? '▲' : '▼')}
+                <th>STATUS</th>
+                <th>TÉCNICO</th>
+                <th onClick={() => handleSort('dataFechamento')} className="sortable">
+                  DATA FECHAMENTO {sortBy === 'dataFechamento' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
-                <th>DIAS P/ VENCER</th>
               </tr>
             </thead>
             <tbody>
               {filteredTickets.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="no-data">
-                    <p>Nenhum chamado encontrado</p>
+                  <td colSpan="6" className="no-data">
+                    <p>Nenhum chamado concluído encontrado</p>
                   </td>
                 </tr>
               ) : (
-                filteredTickets.map((ticket) => {
-                  const daysToExpire = calculateDaysToExpire(ticket.dataLimite);
-                  const isOverdue = daysToExpire.includes('Vencido');
-                  
-                  return (
-                    <tr key={ticket.id} onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} style={{ cursor: 'pointer' }}>
-                      <td className="code-cell">{ticket.codigo}</td>
-                      <td className="title-cell">{ticket.titulo}</td>
-                      <td>
-                        <span 
-                          className="priority-badge"
-                          style={{ backgroundColor: getPriorityColor(ticket.prioridade) }}
-                        >
-                          {ticket.prioridade}
-                        </span>
-                      </td>
-                      <td className="date-cell">{formatDate(ticket.dataLimite)}</td>
-                      <td className={isOverdue ? 'overdue' : ''}>
-                        {daysToExpire}
-                      </td>
-                    </tr>
-                  );
-                })
+                filteredTickets.map((ticket) => (
+                  <tr 
+                    key={ticket.id} 
+                    onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <td className="code-cell">{ticket.codigo}</td>
+                    <td className="title-cell">{ticket.titulo}</td>
+                    <td>
+                      <span 
+                        className="priority-badge"
+                        style={{ backgroundColor: getPriorityColor(ticket.prioridade) }}
+                      >
+                        {ticket.prioridade}
+                      </span>
+                    </td>
+                    <td>
+                      <span 
+                        className="status-badge"
+                        style={{ backgroundColor: getStatusColor(ticket.status) }}
+                      >
+                        {getStatusText(ticket.status)}
+                      </span>
+                    </td>
+                    <td className="tecnico-cell">{ticket.tecnico}</td>
+                    <td className="date-cell">{formatDate(ticket.dataFechamento)}</td>
+                  </tr>
+                ))
               )}
             </tbody>
           </table>
@@ -273,4 +270,5 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   );
 }
 
-export default PendingTicketsPage;
+export default CompletedTicketsPage;
+

@@ -135,6 +135,11 @@ namespace ApiParaBD.Controllers
                 chamado.Descricao = atualizacaoDto.Descricao;
             }
 
+            if (!string.IsNullOrEmpty(atualizacaoDto.Solucao))
+            {
+                chamado.Solucao = atualizacaoDto.Solucao;
+            }
+
             if (atualizacaoDto.Prioridade.HasValue)
             {
                 chamado.Prioridade = (PrioridadeChamado)atualizacaoDto.Prioridade.Value;

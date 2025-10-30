@@ -1,4 +1,4 @@
-.pending-tickets-page {
+.completed-tickets-page {
   display: grid;
   grid-template-areas: "sidebar header" "sidebar main";
   grid-template-columns: 280px 1fr;
@@ -7,7 +7,7 @@
   background-color: #F8F9FA;
 }
 
-.pending-tickets-main {
+.completed-tickets-main {
   grid-area: main;
   padding: 2rem;
   overflow-y: auto;
@@ -91,7 +91,7 @@
 .table-section {
   background: white;
   border-radius: 1rem;
-  box-shadow:.swing);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
@@ -112,6 +112,10 @@
 
 .tickets-table th.sortable {
   cursor: pointer;
+}
+
+.tickets-table th.sortable:hover {
+  background-color: #8B2635;
 }
 
 .tickets-table td {
@@ -146,15 +150,24 @@
   color: white;
 }
 
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.tecnico-cell {
+  font-style: italic;
+  color: #737373;
+}
+
 .date-cell {
   font-family: monospace;
   font-size: 0.875rem;
   color: #737373;
-}
-
-.overdue {
-  color: #DC3545;
-  font-weight: 600;
 }
 
 .no-data {
@@ -186,7 +199,7 @@
 }
 
 @media (max-width: 768px) {
-  .pending-tickets-page {
+  .completed-tickets-page {
     grid-template-columns: 1fr;
     grid-template-areas: "header" "main";
   }
@@ -195,6 +208,4 @@
     flex-direction: column;
   }
 }
-
-
 

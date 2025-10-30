@@ -24,7 +24,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
       setLoading(true);
       const ticketData = await ticketService.getTicket(ticketId);
       setTicket(ticketData);
-      setSolution(ticketData.descricao || '');
+      setSolution(''); // Limpa o campo de solução ao carregar um novo chamado
     } catch (error) {
       console.error('Erro ao carregar chamado:', error);
       showToast('Erro ao carregar detalhes do chamado.', 'error');
@@ -56,7 +56,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
       
       // Atualiza o chamado com a solução e marca como concluído
       const updateData = {
-        descricao: solution,
+        solucao: solution,
         status: 4, // StatusChamado.Resolvido
         tecnicoResponsavelId: userInfo?.id ? Number(userInfo.id) : null,
         dataFechamento: new Date().toISOString()
@@ -270,10 +270,20 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
             </div>
           </div>
 
-          {/* Campo de solução (apenas para técnicos) */}
-          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && (
+          {/* Solução (se já foi registrada) */}
+          {ticket.solucao && (
+            <div className="solution-display-section">
+              <h2>Solução Registrada</h2>
+              <div className="description-box" style={{ backgroundColor: '#e8f5e9' }}>
+                {ticket.solucao}
+              </div>
+            </div>
+          )}
+
+          {/* Campo de solução (apenas para técnicos e se ainda não foi resolvido) */}
+          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && ticket.status !== 4 && ticket.status !== 5 && (
             <div className="solution-section">
-              <h2>Solução do Problema</h2>
+              <h2>Registrar Solução</h2>
               <textarea
                 value={solution}
                 onChange={handleSolutionChange}

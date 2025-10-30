@@ -10,6 +10,18 @@ var configuration = builder.Configuration; // Atalho para acessar as configuraç
 // --- SEÇÃO DE SERVIÇOS ---
 builder.Services.AddControllers();
 
+// Configuração CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000", "http://127.0.0.1:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // Configuração do Entity Framework Core (seu código existente)
 var connectionString = builder.Configuration.GetConnectionString("AzureSql");
 builder.Services.AddDbContext<AppContext>(options => options.UseSqlServer(connectionString));
@@ -86,6 +98,9 @@ else // Em produção, também queremos ver o Swagger UI
 
 
 app.UseHttpsRedirection();
+
+// CORS deve ser chamado antes de UseAuthentication
+app.UseCors("AllowFrontend");
 
 // Adicionamos os middlewares de autenticação e autorização.
 // A API primeiro verifica a autenticação (UseAuthentication)

@@ -5,6 +5,8 @@ import HomePage from './pages/HomePage';
 import RegisterEmployeePage from './pages/RegisterEmployeePage';
 import NewTicketPage from './pages/NewTicketPage';
 import PendingTicketsPage from './pages/PendingTicketsPage';
+import CompletedTicketsPage from './pages/CompletedTicketsPage';
+import ReportsPage from './pages/ReportsPage';
 import TicketDetailPage from './pages/TicketDetailPage';
 
 function App() {
@@ -87,6 +89,25 @@ function App() {
           currentPage={currentPage}
           userInfo={userInfo}
           onNavigateToTicketDetail={navigateToTicketDetail}
+        />
+      )}
+      {currentPage === 'completed-tickets' && (
+        <CompletedTicketsPage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
+          userInfo={userInfo}
+          onNavigateToTicketDetail={navigateToTicketDetail}
+        />
+      )}
+      {currentPage === 'reports' && (
+        <ReportsPage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
+          userInfo={userInfo}
         />
       )}
       {currentPage === 'ticket-detail' && (
