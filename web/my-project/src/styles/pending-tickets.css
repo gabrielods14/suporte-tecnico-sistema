@@ -51,20 +51,24 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #737373;
+  color: var(--neutral-700);
 }
 
-.search-box input {
+ .search-box input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   font-size: 1rem;
+  background: var(--neutral-100);
+  color: var(--neutral-800);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .search-box input:focus {
   outline: none;
-  border-color: #A93226;
+  border-color: var(--primary-color);
 }
 
 .sort-options {
@@ -77,21 +81,37 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--neutral-800);
 }
 
 .sort-options select {
   padding: 1rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-light);
   border-radius: 0.5rem;
   font-size: 1rem;
   min-width: 150px;
+  background: var(--neutral-100);
+  color: var(--neutral-800);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* Placeholder da barra de busca mais claro, texto digitado bem escuro */
+.search-box input::placeholder {
+  color: var(--neutral-500);
+  font-weight: var(--font-weight-normal);
+}
+
+/* Ícone de filtro (faFilter) usado no label 'Ordenar por' */
+.sort-options .filter-icon {
+  color: var(--neutral-800);
 }
 
 .table-section {
   background: white;
   border-radius: 1rem;
-  box-shadow:.swing);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -137,6 +157,11 @@
   font-weight: 500;
 }
 
+.title-cell {
+  /* Texto do título em tom escuro que combina com a paleta (variável global) */
+  color: var(--secondary-color);
+}
+
 .priority-badge {
   padding: 0.25rem 0.75rem;
   border-radius: 9999px;
@@ -149,12 +174,19 @@
 .date-cell {
   font-family: monospace;
   font-size: 0.875rem;
-  color: #737373;
+  color: var(--text-secondary);
+}
+
+/* Dias para vencer - usar cor mais escura para legibilidade */
+.days-cell {
+  color: var(--neutral-800);
+  font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .overdue {
-  color: #DC3545;
-  font-weight: 600;
+  color: var(--error-color);
+  font-weight: 700;
 }
 
 .no-data {
@@ -169,6 +201,11 @@
   justify-content: center;
   height: 400px;
   gap: 1.5rem;
+}
+
+.loading-container p {
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .loading-spinner {

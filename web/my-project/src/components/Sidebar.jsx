@@ -21,7 +21,17 @@ function Sidebar({ currentPage, onNavigate }) {
 
   return (
     <aside className="home-sidebar">
-      <div className="sidebar-logo">LOGO</div>
+      <div className="sidebar-logo">
+        {/* Renderiza logo se existir em /public/logo.png, senão exibe texto */}
+        <img
+          src="\logo.png"
+          alt="HelpWave"
+          className="sidebar-logo-img"
+          onError={(e) => { e.target.style.display = 'none'; }}
+          onLoad={(e) => { const txt = e.target.nextElementSibling; if (txt) txt.style.display = 'none'; }}
+        />
+        <span className="sidebar-logo-text">HELPWAVE</span>
+      </div>
       <nav className="sidebar-nav">
         <ul>
           <li>

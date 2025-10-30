@@ -1,7 +1,7 @@
 // src/pages/LoginPage.jsx
 import React, { useState } from 'react';
 import '../styles/login.css';
-import { FaUser, FaLock } from 'react-icons/fa';
+import { FaUser, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import Toast from '../components/Toast';
 
@@ -12,6 +12,7 @@ function LoginPage({ onLoginSuccess }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
   const [showAdminCredentials, setShowAdminCredentials] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const showToast = (message, type = 'error') => {
     setToast({ isVisible: true, message, type });
@@ -104,13 +105,22 @@ function LoginPage({ onLoginSuccess }) {
             <div className="form-group">
               <FaLock className="input-icon" />
               <input
-                type="password"
+                className="password-input"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 placeholder="SENHA"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
             <div className="form-options">
               <label htmlFor="remember" className="remember-me">

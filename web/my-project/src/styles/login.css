@@ -74,7 +74,8 @@
 .login-form h1 {
   font-size: var(--font-size-3xl);
   margin-bottom: var(--space-md);
-  color: var(--text-primary);
+  /* For clarity and alignment with the app palette, use the secondary (dark) tone */
+  color: var(--secondary-color);
   text-transform: uppercase;
   font-weight: var(--font-weight-bold);
   text-align: center;
@@ -104,7 +105,8 @@
   border: 2px solid #E5E5E5;
   border-radius: var(--radius-lg);
   color: #1A1A1A;
-  padding: var(--space-md) var(--space-lg) var(--space-md) 3rem;
+  /* aumentar o padding à direita para acomodar o botão de mostrar/ocultar senha */
+  padding: var(--space-md) 3.5rem var(--space-md) 3rem;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   transition: var(--transition-fast);
@@ -174,6 +176,29 @@
 .form-options a:hover {
   color: var(--primary-color);
   text-decoration: underline;
+}
+
+/* ===== BOTÃO MOSTRAR/OCULTAR SENHA ===== */
+.password-toggle {
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--neutral-600);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  z-index: 2;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
 }
 
 /* ===== BOTÃO DE LOGIN ===== */

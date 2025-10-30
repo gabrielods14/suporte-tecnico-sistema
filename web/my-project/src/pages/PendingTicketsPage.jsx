@@ -258,7 +258,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                         </span>
                       </td>
                       <td className="date-cell">{formatDate(ticket.dataLimite)}</td>
-                      <td className={isOverdue ? 'overdue' : ''}>
+                      <td className={`days-cell ${isOverdue ? 'overdue' : ''}`}>
                         {daysToExpire}
                       </td>
                     </tr>
