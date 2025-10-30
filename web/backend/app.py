@@ -6,7 +6,7 @@ root_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 if root_path not in sys.path:
     sys.path.insert(0, root_path)
 
-print("📁 Caminho raiz adicionado ao sys.path:", root_path)
+print("[INFO] Caminho raiz adicionado ao sys.path:", root_path)
 
 # Import absoluto a partir do diretório raiz do projeto
 # O pacote IAAPI está dentro da pasta `web/IAAPI`, portanto importamos via `web.IAAPI`.

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
-import { ticketService } from '../utils/api';
+import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
 const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId }) => {
@@ -40,10 +40,54 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   const hideToast = () => {
     setToast({ isVisible: false, message: '', type: 'error' });
   };
-  //inclusao
-  const [sugestao, setSugestao] = useState('');
 
+  // Estados para sugestão de IA
+  const [sugestao, setSugestao] = useState('');
   const [carregandoSugestao, setCarregandoSugestao] = useState(false);
+
+  /**
+   * Gera uma sugestão de resposta usando a IA (Gemini)
+   */
+  const handleGerarSugestao = async () => {
+    if (!ticket || !ticket.descricao) {
+      showToast('Não é possível gerar sugestão sem a descrição do problema.', 'error');
+      return;
+    }
+
+    try {
+      setCarregandoSugestao(true);
+      
+      const response = await aiService.gerarSugestao(
+        ticket.titulo || '',
+        ticket.descricao
+      );
+
+      if (response.sugestao) {
+        setSugestao(response.sugestao);
+        // Preenche automaticamente o campo de solução com a sugestão
+        setSolution(response.sugestao);
+        showToast('Sugestão gerada com sucesso! Você pode editá-la antes de concluir.', 'success');
+      } else {
+        showToast('Não foi possível gerar uma sugestão. Tente novamente.', 'error');
+      }
+    } catch (error) {
+      console.error('Erro ao gerar sugestão:', error);
+      const errorMessage = error.data?.erro || error.message || 'Erro ao gerar sugestão. Verifique se a API do Gemini está configurada.';
+      showToast(errorMessage, 'error');
+    } finally {
+      setCarregandoSugestao(false);
+    }
+  };
+
+  /**
+   * Usa a sugestão gerada no campo de solução
+   */
+  const handleUsarSugestao = () => {
+    if (sugestao) {
+      setSolution(sugestao);
+      showToast('Sugestão aplicada ao campo de solução.', 'success');
+    }
+  };
 
   const handleSolutionChange = (e) => {
     setSolution(e.target.value);
@@ -287,11 +331,59 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           {/* Campo de solução (apenas para técnicos e se ainda não foi resolvido) */}
           {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && ticket.status !== 4 && ticket.status !== 5 && (
             <div className="solution-section">
-              <h2>Registrar Solução</h2>
+              <div className="solution-header">
+                <h2>Registrar Solução</h2>
+                <button 
+                  onClick={handleGerarSugestao}
+                  disabled={carregandoSugestao}
+                  className="ai-suggestion-button"
+                  title="Gerar sugestão de resposta usando IA"
+                >
+                  {carregandoSugestao ? (
+                    <>
+                      <span className="loading-spinner-small"></span>
+                      Gerando Sugestão...
+                    </>
+                  ) : (
+                    <>
+                      🤖 Gerar Sugestão com IA
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Exibir sugestão gerada (se houver) */}
+              {sugestao && (
+                <div className="ai-suggestion-box">
+                  <div className="ai-suggestion-header">
+                    <span className="ai-label">💡 Sugestão gerada pela IA:</span>
+                    <div className="ai-suggestion-actions">
+                      <button 
+                        onClick={handleUsarSugestao}
+                        className="use-suggestion-button"
+                        title="Usar esta sugestão no campo de solução"
+                      >
+                        Usar Sugestão
+                      </button>
+                      <button 
+                        onClick={() => setSugestao('')}
+                        className="close-suggestion-button"
+                        title="Fechar sugestão"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div className="ai-suggestion-content">
+                    {sugestao}
+                  </div>
+                </div>
+              )}
+
               <textarea
                 value={solution}
                 onChange={handleSolutionChange}
-                placeholder="Descreva aqui a solução para o problema..."
+                placeholder="Descreva aqui a solução para o problema ou use o botão acima para gerar uma sugestão com IA..."
                 className="solution-textarea"
                 rows="8"
               />

@@ -6,16 +6,48 @@ gemini_bp = Blueprint('gemini', __name__)
 
 @gemini_bp.route('/sugerir-resposta', methods=['POST'])
 def sugerir_resposta():
+    """
+    Endpoint para gerar sugestão de resposta técnica usando Gemini AI.
+    
+    Espera um JSON com:
+    - descricao (obrigatório): Descrição do problema do chamado
+    - titulo (opcional): Título do chamado
+    
+    Retorna:
+    - 200: {"sugestao": "texto da sugestão"}
+    - 400: {"erro": "mensagem de erro"}
+    - 500: {"erro": "mensagem de erro do servidor"}
+    """
     try:
+        # Valida se há dados JSON na requisição
+        if not request.is_json:
+            return jsonify({"erro": "Content-Type deve ser application/json"}), 400
+        
         data = request.json
-        descricao = data.get('descricao', '')
-        titulo = data.get('titulo', '')
+        if not data:
+            return jsonify({"erro": "Corpo da requisição vazio"}), 400
+        
+        descricao = data.get('descricao', '').strip()
+        titulo = data.get('titulo', '').strip()
 
+        # Valida se a descrição foi fornecida
         if not descricao:
             return jsonify({"erro": "Descrição do chamado é obrigatória"}), 400
 
+        # Gera a sugestão usando o Gemini AI
         sugestao = gerar_sugestao(titulo, descricao)
+        
         return jsonify({"sugestao": sugestao}), 200
 
+    except ValueError as e:
+        # Erros de validação (ex: chave de API não configurada)
+        error_msg = str(e)
+        if "GEMINI_API_KEY" in error_msg.upper():
+            error_msg = "GEMINI_API_KEY não configurada. Configure a chave no arquivo .env em web/backend/.env"
+        return jsonify({"erro": error_msg}), 400
     except Exception as e:
-        return jsonify({"erro": str(e)}), 500
+        # Outros erros (ex: erro de comunicação com API)
+        error_msg = str(e)
+        if "GEMINI_API_KEY" in error_msg.upper():
+            error_msg = "GEMINI_API_KEY não configurada. Execute: python configurar_chave_api.py ou configure manualmente no arquivo .env"
+        return jsonify({"erro": f"Erro ao processar solicitação: {error_msg}"}), 500

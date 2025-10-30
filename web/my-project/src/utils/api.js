@@ -263,5 +263,23 @@ export const ticketService = {
   }
 };
 
+/**
+ * Serviço para integração com IA (Gemini)
+ */
+export const aiService = {
+  /**
+   * Gera uma sugestão de resposta técnica usando Gemini AI
+   * @param {string} titulo - Título do chamado
+   * @param {string} descricao - Descrição do problema
+   * @returns {Promise<{sugestao: string}>} Sugestão gerada pela IA
+   */
+  async gerarSugestao(titulo, descricao) {
+    return await apiClient.post('/api/gemini/sugerir-resposta', {
+      titulo: titulo || '',
+      descricao: descricao
+    }, false); // Não requer autenticação
+  }
+};
+
 export default apiClient;
 
