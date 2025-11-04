@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ApiParaBD.DTOs;
 // Adicione o using para a biblioteca de hashing
 using BCrypt.Net;
 
@@ -9,9 +10,9 @@ namespace ApiParaBD.Controllers
     [Route("api/[controller]")]
     public class UsuariosController : ControllerBase
     {
-        private readonly AppContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public UsuariosController(AppContext context)
+        public UsuariosController(ApplicationDbContext context)
         {
             _context = context;
         }

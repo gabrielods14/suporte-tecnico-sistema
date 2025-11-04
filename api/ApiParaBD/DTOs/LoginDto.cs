@@ -1,6 +1,10 @@
 // DTOs/LoginDto.cs
-public class LoginDto
+namespace ApiParaBD.DTOs
 {
-    public required string Email { get; set; }
-    public required string Senha { get; set; }
+    // Define os dados que um cliente deve enviar para fazer login
+    public class LoginDto
+    {
+        public required string Email { get; set; }
+        public required string Senha { get; set; }
+    }
 }

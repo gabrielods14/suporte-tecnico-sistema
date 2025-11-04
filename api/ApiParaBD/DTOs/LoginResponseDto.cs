@@ -1,5 +1,9 @@
 // DTOs/LoginResponseDto.cs
-public class LoginResponseDto
+namespace ApiParaBD.DTOs
 {
-    public required string Token { get; set; }
+    // Define os dados que o servidor retorna ao cliente após um login bem-sucedido
+    public class LoginResponseDto
+    {
+        public required string Token { get; set; }
+    }
 }
