@@ -7,7 +7,7 @@ import Header from '../components/Header';
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
 
-function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNavigateToPage, currentPage, userInfo }) {
+function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const permissao = userInfo?.permissao; // 3=Admin, 2=SuporteTecnico, 1=Colaborador
   const firstName = (() => {
     if (userInfo?.nome && typeof userInfo.nome === 'string') {
@@ -43,7 +43,11 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
 
   return (
     <div className="home-page-layout">
-      <Header onLogout={onLogout} userName={firstName} /> {/* Adicionado ao grid area 'header' */}
+      <Header 
+        onLogout={onLogout} 
+        userName={firstName}
+        onNavigateToProfile={onNavigateToProfile}
+      /> {/* Adicionado ao grid area 'header' */}
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} /> {/* Adicionado ao grid area 'sidebar' */}
 
       <main className="home-main-content">

@@ -1,0 +1,408 @@
+/* src/styles/profile.css - Página de Perfil do Usuário */
+
+/* ===== LAYOUT PRINCIPAL COM GRID ===== */
+.profile-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "header"
+    "main-content";
+  min-height: 100vh;
+  background-color: #F8F9FA;
+}
+
+/* Layout para desktop com sidebar */
+@media (min-width: 768px) {
+  .profile-layout {
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 70px 1fr;
+    grid-template-areas:
+      "sidebar header"
+      "sidebar main-content";
+  }
+}
+
+/* ===== CONTAINER PRINCIPAL ===== */
+.profile-main-content {
+  grid-area: main-content;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding: var(--space-2xl);
+  background-color: #F8F9FA;
+  color: var(--text-primary);
+  overflow-y: auto;
+}
+
+/* ===== HEADER DO PERFIL ===== */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-2xl);
+  width: 100%;
+  max-width: 800px;
+  align-self: center;
+}
+
+.profile-header h2 {
+  font-size: var(--font-size-3xl);
+  color: #333333;
+  margin: 0;
+  text-transform: uppercase;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* ===== BOTÃO DE VOLTAR ===== */
+.back-button {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  border: none;
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  align-self: flex-start;
+  margin-bottom: var(--space-xl);
+  margin-left: 0;
+  margin-right: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.back-button:active {
+  transform: translateY(0);
+}
+
+/* ===== CARD DE PERFIL ===== */
+.profile-card {
+  background: #FFFFFF;
+  border: 2px solid #F5F5F5;
+  padding: var(--space-2xl);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 800px;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xl);
+}
+
+/* ===== SEÇÃO DE AVATAR ===== */
+.profile-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-xl);
+  border-bottom: 2px solid #F5F5F5;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(169, 50, 38, 0.3);
+}
+
+.profile-avatar span {
+  font-size: var(--font-size-4xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-inverse);
+  text-transform: uppercase;
+}
+
+.profile-name {
+  font-size: var(--font-size-2xl);
+  color: #333333;
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+}
+
+.profile-role {
+  font-size: var(--font-size-base);
+  color: #666666;
+  margin: 0;
+  text-align: center;
+}
+
+/* ===== FORMULÁRIO DE PERFIL ===== */
+.profile-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+}
+
+/* Layout em duas colunas para desktop */
+@media (min-width: 768px) {
+  .profile-form {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg) var(--space-xl);
+  }
+  
+  /* Campos que ocupam duas colunas */
+  .form-group.full-width {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ===== GRUPOS DE FORMULÁRIO ===== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  position: relative;
+}
+
+.form-group label {
+  font-size: var(--font-size-sm);
+  color: #333333;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: var(--space-xs);
+}
+
+.form-group input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background-color: #FFFFFF;
+  border: 2px solid #E5E5E5;
+  border-radius: var(--radius-lg);
+  color: #1A1A1A;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group input:disabled {
+  background-color: #F8F9FA;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group input::placeholder {
+  color: #666666;
+  font-weight: 400;
+}
+
+.form-group input:focus:not(:disabled) {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
+}
+
+/* ===== ESTADOS DE VALIDAÇÃO ===== */
+.form-group input:valid:not(:disabled) {
+  border-color: var(--success-color);
+  background-color: #FFFFFF;
+}
+
+.form-group input:invalid:not(:placeholder-shown):not(:disabled) {
+  border-color: var(--error-color);
+  background-color: #FFFFFF;
+}
+
+/* Mensagens de erro */
+.form-group .error-message {
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-xs);
+  display: none;
+  font-weight: 500;
+}
+
+.form-group.error .error-message {
+  display: block;
+}
+
+.form-group.error input {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+  background-color: #FFFFFF;
+}
+
+/* ===== AÇÕES DO PERFIL ===== */
+.profile-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-top: var(--space-lg);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 500px;
+}
+
+.edit-button,
+.save-button,
+.cancel-button {
+  padding: var(--space-md) var(--space-xl);
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+
+.edit-button {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-md);
+  max-width: 300px;
+}
+
+.edit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.save-button {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-md);
+}
+
+.save-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.save-button:disabled {
+  background: var(--neutral-400);
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
+
+.cancel-button {
+  background: #E5E5E5;
+  color: #333333;
+  box-shadow: var(--shadow-sm);
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #D5D5D5;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ===== INDICADOR DE CARREGAMENTO ===== */
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+/* Mobile Small */
+@media (max-width: 375px) {
+  .profile-card {
+    padding: var(--space-lg);
+    gap: var(--space-lg);
+  }
+  
+  .profile-header {
+    margin-bottom: var(--space-lg);
+  }
+  
+  .profile-main-content {
+    padding: var(--space-lg);
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .profile-card {
+    max-width: 700px;
+  }
+}
+
+/* Desktop Large */
+@media (min-width: 1024px) {
+  .profile-card {
+    max-width: 900px;
+  }
+  
+  .profile-main-content {
+    padding: var(--space-3xl);
+  }
+}
+
+/* ===== ACESSIBILIDADE ===== */
+
+/* Melhorias para dispositivos touch */
+@media (hover: none) and (pointer: coarse) {
+  .edit-button,
+  .save-button,
+  .cancel-button,
+  .back-button {
+    min-height: 48px;
+  }
+  
+  .form-group input {
+    min-height: 48px;
+  }
+}
+
+/* Foco visível para navegação por teclado */
+.form-group input:focus-visible,
+.edit-button:focus-visible,
+.save-button:focus-visible,
+.cancel-button:focus-visible,
+.back-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+

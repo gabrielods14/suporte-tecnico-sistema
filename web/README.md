@@ -118,13 +118,6 @@ O sistema está configurado para integrar com uma API externa. Para configurar:
 1. **Frontend**: http://localhost:5173
 2. **Backend**: http://localhost:5000
 
-### Credenciais de Teste
-
-```
-Usuário: admin@helpwave.com
-Senha: admin123
-```
-
 ### Navegação
 
 1. **Login**: Página de autenticação com validação

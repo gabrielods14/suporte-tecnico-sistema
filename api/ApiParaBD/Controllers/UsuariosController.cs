@@ -68,6 +68,58 @@ namespace ApiParaBD.Controllers
 
             return CreatedAtAction(nameof(GetUsuario), new { id = novoUsuario.Id }, novoUsuario);
         }
+
+        // PUT /api/Usuarios/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioDto usuarioDto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+
+            if (usuario == null)
+            {
+                return NotFound(new { message = "Usuário não encontrado." });
+            }
+
+            // Atualiza apenas os campos fornecidos (que não são null)
+            if (usuarioDto.Nome != null)
+            {
+                usuario.Nome = usuarioDto.Nome;
+            }
+            if (usuarioDto.Email != null)
+            {
+                usuario.Email = usuarioDto.Email;
+            }
+            if (usuarioDto.Telefone != null)
+            {
+                usuario.Telefone = usuarioDto.Telefone;
+            }
+            if (usuarioDto.Cargo != null)
+            {
+                usuario.Cargo = usuarioDto.Cargo;
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Perfil atualizado com sucesso!", user = usuario });
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UsuarioExists(id))
+                {
+                    return NotFound(new { message = "Usuário não encontrado." });
+                }
+                else
+                {
+                    throw;
+                }
+            }
+        }
+
+        private bool UsuarioExists(int id)
+        {
+            return _context.Usuarios.Any(e => e.Id == id);
+        }
     }
 }
 

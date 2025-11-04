@@ -8,15 +8,6 @@ app = None
 # ENDPOINT BASE da sua API externa (Azure)
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
 
-# Usuário administrador padrão para testes
-ADMIN_USER = {
-    'email': 'admin@helpwave.com',
-    'senha': 'admin123',
-    'nome': 'Administrador',
-    'cargo': 'Administrador',
-    'permissao': 3
-}
-
 # Rota para o Login. O front-end envia email e senha para este endpoint.
 def login_user():
     data = request.json
@@ -27,19 +18,6 @@ def login_user():
     
     if not email or not senha:
         return jsonify({"message": "Email e senha são obrigatórios para login."}), 400
-
-    # Verifica se é o usuário administrador padrão
-    if email == ADMIN_USER['email'] and senha == ADMIN_USER['senha']:
-        return jsonify({
-            "message": "Login realizado com sucesso!",
-            "token": "admin_token_12345",
-            "user": {
-                "nome": ADMIN_USER['nome'],
-                "email": ADMIN_USER['email'],
-                "cargo": ADMIN_USER['cargo'],
-                "permissao": ADMIN_USER['permissao']
-            }
-        }), 200
 
     # Prepara os dados no formato que a API do Azure espera para login
     # CORREÇÃO: A API C# espera Email e Senha com maiúsculas

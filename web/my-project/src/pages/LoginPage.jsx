@@ -11,7 +11,6 @@ function LoginPage({ onLoginSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
-  const [showAdminCredentials, setShowAdminCredentials] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const showToast = (message, type = 'error') => {
@@ -137,35 +136,6 @@ function LoginPage({ onLoginSuccess }) {
             <button type="submit" className="login-button" disabled={isLoading}>
               {isLoading ? 'Entrando...' : 'Entrar'}
             </button>
-            
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
-              <button 
-                type="button"
-                onClick={() => setShowAdminCredentials(!showAdminCredentials)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                  fontSize: '0.9rem',
-                  fontWeight: '500',
-                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
-                }}
-              >
-                {showAdminCredentials ? 'Ocultar' : 'Mostrar'} credenciais de teste
-              </button>
-              
-              {showAdminCredentials && (
-                <div className="credentials-info">
-                  <p><strong>Usuário:</strong> admin@helpwave.com</p>
-                  <p><strong>Senha:</strong> admin123</p>
-                  <p>
-                    Use estas credenciais para fazer o primeiro login
-                  </p>
-                </div>
-              )}
-            </div>
           </form>
         </section>
       </main>

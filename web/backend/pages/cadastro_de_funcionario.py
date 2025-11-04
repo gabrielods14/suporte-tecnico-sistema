@@ -5,15 +5,6 @@ import requests
 # ENDPOINT BASE da sua API externa (Azure)
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
 
-# Usuário administrador padrão para cadastro automático
-ADMIN_USER = {
-    'nome': 'Administrador',
-    'email': 'admin@helpwave.com',
-    'senha': 'admin123',
-    'cargo': 'Administrador',
-    'permissao': 1
-}
-
 # Rota para o Cadastro. O front-end envia todos os dados do novo funcionário para este endpoint.
 def register_user():
     data = request.json
@@ -29,13 +20,6 @@ def register_user():
     # Validação Mínima
     if not nome or not email or not senha:
         return jsonify({"message": "Nome, e-mail e senha são obrigatórios para o cadastro."}), 400
-
-    # Se for o usuário administrador padrão, retorna sucesso imediatamente
-    if email == ADMIN_USER['email'] and nome == ADMIN_USER['nome']:
-        return jsonify({
-            "message": "Usuário administrador cadastrado com sucesso!",
-            "user": ADMIN_USER
-        }), 201
 
     # ------------------------------------------------------------------
     # Prepara os dados no formato EXIGIDO pela API do Azure (Swagger)

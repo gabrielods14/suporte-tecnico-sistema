@@ -236,9 +236,19 @@ export const ticketService = {
 
   /**
    * Obtém lista de tickets
+   * @param {Object} filters - Filtros opcionais (ex: { solicitanteId: 1 })
    */
-  async getTickets() {
-    return await apiClient.get('/chamados');
+  async getTickets(filters = {}) {
+    const queryParams = new URLSearchParams();
+    if (filters.solicitanteId) {
+      queryParams.append('solicitanteId', filters.solicitanteId);
+    }
+    if (filters.status) {
+      queryParams.append('status', filters.status);
+    }
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/chamados?${queryString}` : '/chamados';
+    return await apiClient.get(endpoint);
   },
 
   /**

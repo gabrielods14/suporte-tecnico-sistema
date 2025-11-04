@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import { FaServer, FaDatabase, FaRobot, FaUsers, FaCheckCircle, FaClock, FaSpinner } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo }) {
+function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState({
     totalUsuarios: 0,
@@ -142,7 +142,7 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
     return (
       <div className="reports-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
+        <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
         <main className="reports-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>

@@ -5,23 +5,6 @@ import requests
 # ENDPOINT BASE da sua API externa (Azure)
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
 
-# Credenciais de teste para login local sem chamar a API externa
-ADMIN_USER_MOCK = {
-    'email': 'admin@helpwave.com',
-    'senha': 'admin123'
-}
-
-ADMIN_USER_DATA_MOCK = {
-    "token": "mock-token-for-admin-user",
-    "user": {
-        "id": 0,
-        "nome": "Administrador Local",
-        "email": "admin@helpwave.com",
-        "cargo": "Administrador",
-        "permissao": 3 
-    }
-}
-
 def login_user():
     data = request.json
     email = data.get('email')
@@ -29,10 +12,6 @@ def login_user():
 
     if not email or not senha:
         return jsonify({"message": "Email e senha são obrigatórios."}), 400
-
-    # Simula o login do admin local para testes, conforme visto no frontend
-    if email == ADMIN_USER_MOCK['email'] and senha == ADMIN_USER_MOCK['senha']:
-        return jsonify(ADMIN_USER_DATA_MOCK), 200
 
     # Prepara os dados para a API do Azure
     dados_para_api = {

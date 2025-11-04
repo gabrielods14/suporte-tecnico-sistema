@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import '../styles/register.css';
 
-const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo }) => {
+const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigateToProfile }) => {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -148,7 +148,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo }) => {
 
   return (
     <div className="register-layout">
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
       <Sidebar />
       <main className="register-main-content">
         <button 

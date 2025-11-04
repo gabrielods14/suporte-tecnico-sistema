@@ -6,7 +6,7 @@ import Toast from '../components/Toast';
 import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
-const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId }) => {
+const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId, previousPage, onNavigateToProfile }) => {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -66,7 +66,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         setSugestao(response.sugestao);
         // Preenche automaticamente o campo de solução com a sugestão
         setSolution(response.sugestao);
-        showToast('Sugestão gerada com sucesso! Você pode editá-la antes de concluir.', 'success');
+        showToast('Sugestão gerada com sucesso! Você pode editá-la antes de enviar.', 'success');
       } else {
         showToast('Não foi possível gerar uma sugestão. Tente novamente.', 'error');
       }
@@ -93,35 +93,36 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     setSolution(e.target.value);
   };
 
-  const handleConcludeTicket = async () => {
+  const handleSendSolution = async () => {
     if (!solution.trim()) {
-      showToast('Por favor, descreva a solução antes de concluir o chamado.', 'error');
+      showToast('Por favor, descreva a solução antes de enviar.', 'error');
       return;
     }
 
     try {
       setSaving(true);
       
-      // Atualiza o chamado com a solução e marca como concluído
+      // Atualiza o chamado apenas com a solução (sugestão do técnico)
+      // O usuário decidirá se vai aderir ou não à solução
       const updateData = {
         solucao: solution,
-        status: 4, // StatusChamado.Resolvido
-        tecnicoResponsavelId: userInfo?.id ? Number(userInfo.id) : null,
-        dataFechamento: new Date().toISOString()
+        // Define o técnico responsável apenas se ainda não estiver definido
+        tecnicoResponsavelId: ticket.tecnicoResponsavelId || (userInfo?.id ? Number(userInfo.id) : null)
       };
 
       await ticketService.updateTicket(ticketId, updateData);
       
-      showToast('Chamado concluído com sucesso!', 'success');
+      showToast('Solução enviada com sucesso! O usuário será notificado.', 'success');
       
-      // Volta para a lista após 1.5s
-      setTimeout(() => {
-        onNavigateToPage('pending-tickets');
-      }, 1500);
+      // Recarrega o chamado para mostrar a solução registrada
+      await loadTicket();
+      
+      // Limpa o campo de solução após o envio
+      setSolution('');
 
     } catch (error) {
-      console.error('Erro ao concluir chamado:', error);
-      showToast('Erro ao concluir chamado. Tente novamente.', 'error');
+      console.error('Erro ao enviar solução:', error);
+      showToast('Erro ao enviar solução. Tente novamente.', 'error');
     } finally {
       setSaving(false);
     }
@@ -174,8 +175,8 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   if (loading) {
     return (
       <div className="ticket-detail-layout">
-        <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
+        <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} />
+        <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -189,12 +190,15 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   if (!ticket) {
     return (
       <div className="ticket-detail-layout">
-        <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
+        <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} />
+        <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
           <div className="error-container">
             <p>Chamado não encontrado.</p>
-            <button onClick={() => onNavigateToPage('pending-tickets')}>
+            <button onClick={() => {
+              const pageToReturn = previousPage || 'pending-tickets';
+              onNavigateToPage(pageToReturn);
+            }}>
               Voltar para lista
             </button>
           </div>
@@ -212,7 +216,24 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         <div className="ticket-detail-header">
           <button 
             className="back-button" 
-            onClick={() => onNavigateToPage('pending-tickets')}
+            onClick={() => {
+              // Determina a página de retorno baseado no status do chamado ou previousPage
+              // Se o chamado está concluído (status 5) ou se veio de completed-tickets, volta para completed-tickets
+              // Caso contrário, volta para pending-tickets
+              let pageToReturn = previousPage;
+              
+              // Se não houver previousPage, tenta determinar pelo status do chamado
+              if (!pageToReturn && ticket) {
+                const isConcluido = ticket.status === 5; // Status 5 = Fechado
+                pageToReturn = isConcluido ? 'completed-tickets' : 'pending-tickets';
+              } else {
+                // Se houver previousPage, usa ela (pode ser completed-tickets ou pending-tickets)
+                pageToReturn = pageToReturn || 'pending-tickets';
+              }
+              
+              console.log('Voltando para:', pageToReturn, '(status do chamado:', ticket?.status, ')');
+              onNavigateToPage(pageToReturn);
+            }}
           >
             ← Voltar para lista
           </button>
@@ -321,15 +342,18 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           {/* Solução (se já foi registrada) */}
           {ticket.solucao && (
             <div className="solution-display-section">
-              <h2>Solução Registrada</h2>
+              <h2>Solução Sugerida pelo Técnico</h2>
               <div className="description-box" style={{ backgroundColor: '#e8f5e9' }}>
                 {ticket.solucao}
               </div>
+              <p style={{ marginTop: '10px', fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                Esta é uma sugestão de solução. O usuário decidirá se vai aderir ou não a esta solução.
+              </p>
             </div>
           )}
 
-          {/* Campo de solução (apenas para técnicos e se ainda não foi resolvido) */}
-          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && ticket.status !== 4 && ticket.status !== 5 && (
+          {/* Campo de solução (apenas para técnicos) */}
+          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && (
             <div className="solution-section">
               <div className="solution-header">
                 <h2>Registrar Solução</h2>
@@ -383,18 +407,18 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
               <textarea
                 value={solution}
                 onChange={handleSolutionChange}
-                placeholder="Descreva aqui a solução para o problema ou use o botão acima para gerar uma sugestão com IA..."
+                placeholder="Descreva aqui a solução sugerida para o problema. O usuário decidirá se vai aderir ou não à solução. Use o botão acima para gerar uma sugestão com IA..."
                 className="solution-textarea"
                 rows="8"
               />
               
               <div className="solution-actions">
                 <button 
-                  onClick={handleConcludeTicket}
+                  onClick={handleSendSolution}
                   disabled={saving || !solution.trim()}
                   className="conclude-button"
                 >
-                  {saving ? 'Concluindo...' : 'Concluir Chamado'}
+                  {saving ? 'Enviando...' : 'Enviar Solução'}
                 </button>
               </div>
             </div>

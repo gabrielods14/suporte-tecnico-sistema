@@ -6,7 +6,12 @@ import Header from '../components/Header';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
+function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
+  const handleTicketClick = (ticketId) => {
+    if (onNavigateToTicketDetail) {
+      onNavigateToTicketDetail(ticketId, 'pending-tickets');
+    }
+  };
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +23,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
 
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [userInfo?.id, userInfo?.permissao]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -27,10 +32,56 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   const loadTickets = async () => {
     try {
       setLoading(true);
+      
+      // Debug: verificar informações do usuário
+      console.log('=== DEBUG PendingTicketsPage ===');
+      console.log('userInfo completo:', userInfo);
+      console.log('userInfo.id:', userInfo?.id);
+      console.log('userInfo.permissao:', userInfo?.permissao);
+      
+      // Determinar se é usuário comum (permissão 1) que deve ver apenas seus chamados
+      // Técnicos (2) e Admins (3) veem todos os chamados
+      const isColaborador = userInfo?.permissao === 1;
+      const filters = {};
+      
+      // Apenas colaboradores devem ter seus chamados filtrados
+      // Técnicos e Admins veem todos os chamados (sem filtro)
+      if (isColaborador) {
+        // Tentar obter o ID do userInfo ou do token como fallback
+        let userId = userInfo?.id;
+        if (!userId) {
+          // Tentar obter do token JWT como fallback
+          try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              userId = payload?.sub || payload?.id;
+              console.log('⚠️ userInfo.id não encontrado, usando ID do token:', userId);
+            }
+          } catch (e) {
+            console.error('Erro ao decodificar token:', e);
+          }
+        }
+        
+        if (userId) {
+          filters.solicitanteId = Number(userId);
+          console.log('✅ Filtrando chamados para colaborador ID:', filters.solicitanteId);
+        } else {
+          console.error('❌ ERRO: Não foi possível obter o ID do usuário para filtrar chamados!');
+          console.error('userInfo completo:', userInfo);
+          console.error('Token disponível:', !!localStorage.getItem('authToken'));
+        }
+      } else if (!isColaborador) {
+        console.log('✅ Usuário é técnico/admin (permissão:', userInfo?.permissao, ') - mostrando todos os chamados');
+      }
+      
       // Tentar carregar da API real primeiro
       try {
-        const apiTickets = await ticketService.getTickets();
+        console.log('Buscando chamados com filtros:', filters);
+        const apiTickets = await ticketService.getTickets(filters);
+        console.log('Chamados recebidos da API:', apiTickets?.length || 0, 'chamados');
         if (apiTickets && apiTickets.length > 0) {
+          console.log('Primeiro chamado (exemplo):', apiTickets[0]);
           const mapPriority = (p) => {
             if (typeof p === 'number') {
               return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
@@ -41,7 +92,67 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
             if (val.includes('baix')) return 'BAIXA';
             return 'MÉDIA';
           };
-          const mapped = apiTickets.map(item => {
+          // Filtrar chamados com status: Aberto (1), Em Andamento (2) ou Resolvido (4)
+          // Colaboradores precisam ver seus chamados abertos também!
+          let filteredTickets = apiTickets.filter(item => {
+            const status = item.status;
+            // Status válidos: 1 (Aberto), 2 (Em Andamento), 4 (Resolvido)
+            const isValidStatus = status === 1 || status === 2 || status === 4;
+            if (!isValidStatus) {
+              console.log(`Chamado ${item.id} com status ${status} foi filtrado (não está aberto/em andamento/resolvido)`);
+            }
+            return isValidStatus;
+          });
+          console.log(`Chamados após filtro de status (1, 2 ou 4): ${filteredTickets.length}`);
+          
+          // IMPORTANTE: Se for colaborador (permissão 1), garantir que só vê seus próprios chamados
+          // Este é um filtro de segurança adicional no frontend (o backend já filtra, mas garantimos aqui também)
+          // Técnicos (permissão 2) e Admins (permissão 3) veem TODOS os chamados
+          if (isColaborador) {
+            // Obter userId (do userInfo ou do token como fallback)
+            let userId = userInfo?.id;
+            if (!userId) {
+              try {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                  const payload = JSON.parse(atob(token.split('.')[1]));
+                  userId = payload?.sub || payload?.id;
+                }
+              } catch (e) {
+                console.error('Erro ao obter userId do token:', e);
+              }
+            }
+            
+            if (userId) {
+              userId = Number(userId);
+              const beforeFilter = filteredTickets.length;
+              filteredTickets = filteredTickets.filter(item => {
+                // A API pode retornar SolicitanteId (C#) ou solicitanteId (JSON)
+                const solicitanteId = item.solicitanteId || item.SolicitanteId;
+                const solicitanteIdNum = Number(solicitanteId);
+                const match = solicitanteIdNum === userId;
+                if (!match) {
+                  console.log(`❌ Chamado ${item.id} não pertence ao usuário ${userId} (solicitanteId: ${solicitanteId})`);
+                } else {
+                  console.log(`✅ Chamado ${item.id} pertence ao usuário ${userId} (status: ${item.status})`);
+                }
+                return match;
+              });
+              console.log(`✅ Colaborador ID ${userId}: ${beforeFilter} → ${filteredTickets.length} chamados após filtro por solicitanteId`);
+              if (filteredTickets.length === 0 && beforeFilter > 0) {
+                console.warn(`⚠️ ATENÇÃO: ${beforeFilter} chamados foram filtrados por solicitanteId. Verifique se o ID está correto: ${userId}`);
+                console.warn('Primeiro chamado exemplo:', apiTickets[0]);
+              }
+            } else {
+              console.error('❌ ERRO: Não foi possível obter userId para filtrar chamados!');
+            }
+          } else {
+            // Técnicos e Admins veem TODOS os chamados
+            console.log(`✅ Técnico/Admin vê todos os ${filteredTickets.length} chamados`);
+          }
+        
+        const mapped = filteredTickets
+          .map(item => {
             const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
             const limite = new Date(abertura);
             limite.setDate(limite.getDate() + 7);
@@ -55,13 +166,23 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
             };
           });
           setTickets(mapped);
+          console.log(`✅ Total de ${mapped.length} chamados exibidos na lista`);
           return;
+        } else {
+          console.log('⚠️ Nenhum chamado retornado da API ou array vazio');
+          console.log('Isso pode significar:');
+          console.log('1. Não há chamados no banco de dados');
+          console.log('2. Os chamados não pertencem a este usuário (se for colaborador)');
+          console.log('3. Os chamados não têm status 1, 2 ou 4');
+          console.log('userInfo atual:', userInfo);
         }
       } catch (apiError) {
-        console.log('API não disponível, usando array vazio:', apiError);
+        console.error('❌ Erro ao carregar chamados da API:', apiError);
+        console.error('Detalhes do erro:', apiError.message);
       }
       
       // Se a API falhar, usar array vazio
+      console.log('⚠️ Definindo lista de chamados como vazia');
       setTickets([]);
     } catch (error) {
       console.error('Erro ao carregar tickets:', error);
@@ -161,7 +282,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
     return (
       <div className="pending-tickets-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
+        <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
         <main className="pending-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -180,7 +301,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
       <main className="pending-tickets-main">
         {/* Header da página */}
         <div className="page-header">
-          <h1>CHAMADOS ABERTOS</h1>
+          <h1>CHAMADOS EM ANDAMENTO</h1>
         </div>
 
         {/* Filtros */}
@@ -246,7 +367,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                   const isOverdue = daysToExpire.includes('Vencido');
                   
                   return (
-                    <tr key={ticket.id} onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} style={{ cursor: 'pointer' }}>
+                    <tr key={ticket.id} onClick={() => handleTicketClick(ticket.id)} style={{ cursor: 'pointer' }}>
                       <td className="code-cell">{ticket.codigo}</td>
                       <td className="title-cell">{ticket.titulo}</td>
                       <td>

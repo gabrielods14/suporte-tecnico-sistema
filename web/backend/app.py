@@ -68,6 +68,10 @@ def register_routes():
         from pages.chamados_detalhar_atualizar import detalhar_chamado
         app.add_url_rule('/chamados/<int:chamado_id>', view_func=detalhar_chamado, methods=['GET', 'PUT', 'OPTIONS'])
         
+        # Importa e registra rota de atualizar usuário
+        from pages.atualizar_usuario import atualizar_usuario
+        app.add_url_rule('/usuarios/<int:usuario_id>', view_func=atualizar_usuario, methods=['PUT', 'OPTIONS'])
+        
         print("Rotas registradas com sucesso!")
     except Exception as e:
         print(f"Erro ao registrar rotas: {e}")
