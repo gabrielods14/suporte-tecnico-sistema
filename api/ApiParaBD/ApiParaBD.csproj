@@ -10,7 +10,11 @@
     <PackageReference Include="Azure.Identity" Version="1.11.0" /> <!-- Versão compatível com .NET 8 -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" /> <!-- VERSÃO .NET 8 -->
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" /> <!-- VERSÃO .NET 8 -->
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference> <!-- VERSÃO .NET 8 -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" /> <!-- VERSÃO .NET 8 -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0"> <!-- VERSÃO .NET 8 -->
       <PrivateAssets>all</PrivateAssets>

@@ -34,7 +34,6 @@ namespace ApiParaBD // Verifique se este é o namespace raiz do projeto
         Baixa = 1,
         Media = 2,
         Alta = 3,
-        Urgente = 4
     }
 
     public enum StatusChamado

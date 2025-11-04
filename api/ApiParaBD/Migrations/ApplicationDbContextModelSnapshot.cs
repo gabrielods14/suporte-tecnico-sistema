@@ -4,19 +4,16 @@ using ApiParaBD;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace ApiParaBD.Migrations
 {
-    [DbContext(typeof(AppContext))]
-    [Migration("20251102013925_AdicionarColunaSolucao")]
-    partial class AdicionarColunaSolucao
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,7 +22,7 @@ namespace ApiParaBD.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Chamado", b =>
+            modelBuilder.Entity("ApiParaBD.Chamado", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -75,7 +72,7 @@ namespace ApiParaBD.Migrations
                     b.ToTable("Chamados");
                 });
 
-            modelBuilder.Entity("HistoricoChamado", b =>
+            modelBuilder.Entity("ApiParaBD.HistoricoChamado", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -108,7 +105,7 @@ namespace ApiParaBD.Migrations
                     b.ToTable("Historicos");
                 });
 
-            modelBuilder.Entity("Usuario", b =>
+            modelBuilder.Entity("ApiParaBD.Usuario", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -143,15 +140,15 @@ namespace ApiParaBD.Migrations
                     b.ToTable("Usuarios");
                 });
 
-            modelBuilder.Entity("Chamado", b =>
+            modelBuilder.Entity("ApiParaBD.Chamado", b =>
                 {
-                    b.HasOne("Usuario", "Solicitante")
+                    b.HasOne("ApiParaBD.Usuario", "Solicitante")
                         .WithMany()
                         .HasForeignKey("SolicitanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Usuario", "TecnicoResponsavel")
+                    b.HasOne("ApiParaBD.Usuario", "TecnicoResponsavel")
                         .WithMany()
                         .HasForeignKey("TecnicoResponsavelId");
 
@@ -160,15 +157,15 @@ namespace ApiParaBD.Migrations
                     b.Navigation("TecnicoResponsavel");
                 });
 
-            modelBuilder.Entity("HistoricoChamado", b =>
+            modelBuilder.Entity("ApiParaBD.HistoricoChamado", b =>
                 {
-                    b.HasOne("Chamado", "Chamado")
+                    b.HasOne("ApiParaBD.Chamado", "Chamado")
                         .WithMany()
                         .HasForeignKey("ChamadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Usuario", "Usuario")
+                    b.HasOne("ApiParaBD.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId");
 

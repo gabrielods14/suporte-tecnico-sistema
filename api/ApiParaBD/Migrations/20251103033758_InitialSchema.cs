@@ -5,24 +5,18 @@
 namespace ApiParaBD.Migrations
 {
     /// <inheritdoc />
-    public partial class AdicionarColunaSolucao : Migration
+    public partial class InitialSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Solucao",
-                table: "Chamados",
-                type: "nvarchar(max)",
-                nullable: true);
+
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Solucao",
-                table: "Chamados");
+
         }
     }
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ApiParaBD.Migrations
 {
     /// <inheritdoc />
-    public partial class CriacaoModeloInicialSuporte : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,6 +39,7 @@ namespace ApiParaBD.Migrations
                     Descricao = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DataAbertura = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataFechamento = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Solucao = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SolicitanteId = table.Column<int>(type: "int", nullable: false),
                     TecnicoResponsavelId = table.Column<int>(type: "int", nullable: true),
                     Prioridade = table.Column<int>(type: "int", nullable: false),
