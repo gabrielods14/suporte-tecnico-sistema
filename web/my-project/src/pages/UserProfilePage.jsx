@@ -19,15 +19,68 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
 
   // Carrega os dados do usuário quando o componente é montado ou userInfo muda
   useEffect(() => {
-    if (userInfo) {
-      setFormData({
-        nome: userInfo.nome || '',
-        email: userInfo.email || '',
-        telefone: userInfo.telefone || '',
-        cargo: userInfo.cargo || ''
-      });
-    }
-  }, [userInfo]);
+    const loadUserData = async () => {
+      // Se userInfo não tiver nome ou estiver incompleto, busca da API
+      if (!userInfo?.nome || !userInfo?.id) {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (!token) return;
+          
+          // Tenta obter o ID do token se não estiver no userInfo
+          let userId = userInfo?.id;
+          if (!userId) {
+            try {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              userId = payload?.sub || payload?.id;
+            } catch (e) {
+              console.error('Erro ao decodificar token:', e);
+              return;
+            }
+          }
+          
+          if (userId) {
+            const response = await fetch(`http://localhost:5000/usuarios/${userId}`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (response.ok) {
+              const userData = await response.json();
+              console.log('UserProfilePage - Dados do usuário carregados:', userData);
+              
+              // Atualiza o formData com os dados recebidos
+              setFormData({
+                nome: userData.nome || '',
+                email: userData.email || '',
+                telefone: userData.telefone || '',
+                cargo: userData.cargo || ''
+              });
+              
+              // Atualiza o userInfo no App se houver callback
+              if (onUpdateUserInfo) {
+                onUpdateUserInfo(userData);
+              }
+            } else {
+              console.warn('UserProfilePage - Erro ao buscar dados do usuário:', response.status);
+            }
+          }
+        } catch (error) {
+          console.error('UserProfilePage - Erro ao carregar dados do usuário:', error);
+        }
+      } else {
+        // Se userInfo já tiver dados, usa eles
+        setFormData({
+          nome: userInfo.nome || '',
+          email: userInfo.email || '',
+          telefone: userInfo.telefone || '',
+          cargo: userInfo.cargo || ''
+        });
+      }
+    };
+    
+    loadUserData();
+  }, [userInfo, onUpdateUserInfo]);
 
   // Validação em tempo real
   const validateField = (name, value) => {
@@ -178,7 +231,12 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
     }
   };
 
-  const firstName = userInfo?.nome?.split(' ')[0] || 'Usuário';
+  const firstName = userInfo?.nome?.split(' ')[0] || formData.nome?.split(' ')[0] || 'Usuário';
+  
+  // Debug: verificar dados
+  console.log('UserProfilePage - userInfo:', userInfo);
+  console.log('UserProfilePage - formData:', formData);
+  console.log('UserProfilePage - firstName:', firstName);
 
   return (
     <div className="profile-layout">
@@ -201,8 +259,8 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
             <div className="profile-avatar">
               <span>{firstName.charAt(0).toUpperCase()}</span>
             </div>
-            <h3 className="profile-name">{userInfo?.nome || 'Usuário'}</h3>
-            <p className="profile-role">{userInfo?.cargo || 'Cargo não informado'}</p>
+            <h3 className="profile-name">{formData.nome || userInfo?.nome || 'Usuário'}</h3>
+            <p className="profile-role">{formData.cargo || userInfo?.cargo || 'Cargo não informado'}</p>
           </div>
 
           <form className="profile-form" onSubmit={handleSubmit} noValidate>

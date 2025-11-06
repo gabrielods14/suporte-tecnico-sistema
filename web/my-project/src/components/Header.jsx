@@ -7,6 +7,16 @@ import DropdownMenu from './DropdownMenu';
 function Header({ onLogout, userName = 'Administrador', onNavigateToProfile }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
+  // Normaliza o userName para garantir que sempre tenha um valor válido
+  const displayName = (() => {
+    if (userName && typeof userName === 'string' && userName.trim()) {
+      // Se for um nome completo, pega apenas o primeiro nome
+      const parts = userName.trim().split(/\s+/);
+      return parts[0];
+    }
+    return 'Usuário';
+  })();
+
   const handleUserIconClick = () => {
     if (onNavigateToProfile) {
       onNavigateToProfile();
@@ -31,7 +41,7 @@ function Header({ onLogout, userName = 'Administrador', onNavigateToProfile }) {
           onClick={handleUserIconClick}
           style={{ cursor: onNavigateToProfile ? 'pointer' : 'default' }}
         />
-        <span>BEM-VINDO(A) {userName.toUpperCase()}</span>
+        <span>BEM-VINDO(A) {displayName.toUpperCase()}</span>
         <div className="dropdown-container">
           <FaCog 
             className="settings-icon" 

@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import '../styles/newticket.css';
-import { ticketService } from '../utils/api';
+import { ticketService, getUserDisplayName } from '../utils/api';
 
 const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, onNavigateToProfile }) => {
   const [formData, setFormData] = useState({
@@ -158,7 +158,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
 
   return (
     <div className="newticket-layout">
-      <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
+      <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
       <Sidebar />
       <main className="newticket-main-content">
         <button 

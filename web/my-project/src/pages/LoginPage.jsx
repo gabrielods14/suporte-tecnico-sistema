@@ -50,8 +50,35 @@ function LoginPage({ onLoginSuccess }) {
         if (data.token) {
           localStorage.setItem('authToken', data.token);
         }
+        
+        // Busca dados completos do usuário após login bem-sucedido
+        let userData = data.user || { email: username };
+        
+        // Se não tiver nome completo, busca da API
+        if (!userData.nome || !userData.id) {
+          try {
+            const userId = userData.id || data.user?.id;
+            if (userId) {
+              const userResponse = await fetch(`http://localhost:5000/usuarios/${userId}`, {
+                headers: {
+                  'Authorization': `Bearer ${data.token}`
+                }
+              });
+              
+              if (userResponse.ok) {
+                const fullUserData = await userResponse.json();
+                console.log('LoginPage - Dados completos do usuário:', fullUserData);
+                userData = fullUserData;
+              }
+            }
+          } catch (error) {
+            console.error('LoginPage - Erro ao buscar dados completos:', error);
+          }
+        }
+        
+        console.log('LoginPage - Dados do usuário para onLoginSuccess:', userData);
         // Passa os dados do usuário para o App
-        onLoginSuccess(data.user || { nome: 'Usuário', email: username });
+        onLoginSuccess(userData);
       } else {
         // Trata diferentes tipos de erro
         let errorMessage = 'Usuário ou senha incorretos.';

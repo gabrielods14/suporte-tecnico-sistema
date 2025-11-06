@@ -153,6 +153,26 @@ class ApiClient {
 export const apiClient = new ApiClient();
 
 /**
+ * Utilitários para manipulação de dados do usuário
+ */
+
+/**
+ * Extrai o primeiro nome do usuário de forma segura
+ * @param {Object} userInfo - Objeto com informações do usuário
+ * @returns {string} Primeiro nome do usuário ou 'Usuário' como fallback
+ */
+export const getUserDisplayName = (userInfo) => {
+  if (userInfo?.nome && typeof userInfo.nome === 'string' && userInfo.nome.trim()) {
+    const parts = userInfo.nome.trim().split(/\s+/);
+    return parts[0];
+  }
+  if (userInfo?.email && typeof userInfo.email === 'string') {
+    return userInfo.email.split('@')[0];
+  }
+  return 'Usuário';
+};
+
+/**
  * Serviços específicos da API
  */
 export const authService = {

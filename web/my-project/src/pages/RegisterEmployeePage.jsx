@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
+import { getUserDisplayName } from '../utils/api';
 import '../styles/register.css';
 
 const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigateToProfile }) => {
@@ -148,7 +149,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
 
   return (
     <div className="register-layout">
-      <Header onLogout={onLogout} userName={userInfo?.nome} onNavigateToProfile={onNavigateToProfile} />
+      <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
       <Sidebar />
       <main className="register-main-content">
         <button 

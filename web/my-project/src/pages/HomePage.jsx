@@ -3,22 +3,19 @@ import React from 'react';
 import '../styles/home.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import { getUserDisplayName } from '../utils/api';
 // Importando os ícones para os cards
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
 
 function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const permissao = userInfo?.permissao; // 3=Admin, 2=SuporteTecnico, 1=Colaborador
-  const firstName = (() => {
-    if (userInfo?.nome && typeof userInfo.nome === 'string') {
-      const parts = userInfo.nome.trim().split(/\s+/);
-      return parts[0] || '';
-    }
-    if (userInfo?.email && typeof userInfo.email === 'string') {
-      return userInfo.email.split('@')[0];
-    }
-    return '';
-  })();
+  
+  // Debug: verificar dados do usuário
+  console.log('HomePage - userInfo:', userInfo);
+  console.log('HomePage - permissao:', permissao);
+  
+  const firstName = getUserDisplayName(userInfo);
   const handleCardClick = (cardType) => {
     switch (cardType) {
       case 'new-ticket':
@@ -54,47 +51,38 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
         <h2 className="main-welcome">BEM-VINDO (A){firstName ? `, ${firstName}` : ''}</h2>
 
         <section className="dashboard-cards">
-          {/* Colaborador (1) tem somente Novo Chamado */}
-          {(permissao === 1 || permissao === 2 || permissao === 3 || permissao == null) && (
+          {/* Card "NOVO CHAMADO" - sempre visível para todos */}
           <article className="card" onClick={() => handleCardClick('new-ticket')}>
-            {/* Ícone substituído */}
             <FaEdit className="card-icon" />
             <span>NOVO CHAMADO</span>
           </article>
-          )}
 
-          {/* Suporte (2) e Admin (3) visualizam demais cards */}
+          {/* Cards para Suporte (2) e Admin (3) */}
           {(permissao === 2 || permissao === 3) && (
-          <article className="card" onClick={() => handleCardClick('pending-tickets')}>
-            {/* Ícone substituído */}
-            <FaClipboardList className="card-icon" />
-            <span>CHAMADOS EM ANDAMENTO</span>
-          </article>
+            <>
+              <article className="card" onClick={() => handleCardClick('pending-tickets')}>
+                <FaClipboardList className="card-icon" />
+                <span>CHAMADOS EM ANDAMENTO</span>
+              </article>
+
+              <article className="card" onClick={() => handleCardClick('completed-tickets')}>
+                <FaCheckCircle className="card-icon" />
+                <span>CHAMADOS CONCLUÍDOS</span>
+              </article>
+
+              <article className="card" onClick={() => handleCardClick('reports')}>
+                <FaChartBar className="card-icon" />
+                <span>RELATÓRIOS</span>
+              </article>
+            </>
           )}
 
-          {(permissao === 2 || permissao === 3) && (
-          <article className="card" onClick={() => handleCardClick('completed-tickets')}>
-            {/* Ícone substituído */}
-            <FaCheckCircle className="card-icon" />
-            <span>CHAMADOS CONCLUÍDOS</span>
-          </article>
-          )}
-
-          {(permissao === 2 || permissao === 3) && (
-          <article className="card" onClick={() => handleCardClick('reports')}>
-            {/* Ícone substituído */}
-            <FaChartBar className="card-icon" />
-            <span>RELATÓRIOS</span>
-          </article>
-          )}
-
-          {/* Admin (3) tem cadastro de funcionário */}
+          {/* Card para Admin (3) - Cadastro de Funcionário */}
           {permissao === 3 && (
-          <article className="card" onClick={() => handleCardClick('register')}>
-            {/* Ícone substituído */}
-            <FaUserPlus className="card-icon" />
-            <span>CADASTRO DE FUNCIONÁRIO</span>
-          </article>
+            <article className="card" onClick={() => handleCardClick('register')}>
+              <FaUserPlus className="card-icon" />
+              <span>CADASTRO DE FUNCIONÁRIO</span>
+            </article>
           )}
         </section>
 
