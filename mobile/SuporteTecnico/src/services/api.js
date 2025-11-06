@@ -32,9 +32,17 @@ class ApiService {
       console.log('Senha:', senha ? '***' : 'vazia');
       console.log('URL da API:', `${API_BASE_URL}/api/Auth/login`);
       
-      const requestBody = { email, senha };
+      // A API C# espera "Email" e "Senha" com maiúsculas (conforme DTO da API C#)
+      const requestBody = { 
+        Email: email,  // Com maiúscula
+        Senha: senha   // Com maiúscula
+      };
       console.log('Corpo da requisição:', JSON.stringify(requestBody));
       
+      // Timeout de 30 segundos para a requisição
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(`${API_BASE_URL}/api/Auth/login`, {
         method: 'POST',
         headers: {
@@ -42,7 +50,10 @@ class ApiService {
           'Accept': 'application/json',
         },
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
       
       console.log('Status da resposta:', response.status);
       console.log('Status Text:', response.statusText);
@@ -85,8 +96,19 @@ class ApiService {
       console.log('Mensagem do erro:', error.message);
       console.log('Stack trace:', error.stack);
       
-      if (error.message.includes('Network request failed') || error.message.includes('fetch')) {
+      // Tratamento específico de erros
+      if (error.name === 'AbortError') {
+        throw new Error('Tempo de conexão excedido. Verifique sua internet e tente novamente.');
+      }
+      
+      if (error.message.includes('Network request failed') || 
+          error.message.includes('fetch') ||
+          error.message.includes('Failed to connect')) {
         throw new Error('Erro de conexão. Verifique sua internet e tente novamente.');
+      }
+      
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        throw new Error('E-mail ou senha inválidos. Verifique suas credenciais.');
       }
       
       throw new Error(error.message || 'Erro desconhecido ao fazer login');

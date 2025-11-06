@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ConfirmationModal from '../components/ConfirmationModal';
+import LoadingOverlay from '../components/LoadingOverlay';
 import ApiService from '../services/api';
 
 const LoginScreen = ({ navigation }) => {
@@ -174,6 +175,12 @@ const LoginScreen = ({ navigation }) => {
         iconName="shield-checkmark-outline"
         iconColor="#28a745"
         type="info"
+      />
+
+      {/* Loading Overlay */}
+      <LoadingOverlay
+        visible={isLoading}
+        message="Fazendo login..."
       />
     </ScrollView>
   );

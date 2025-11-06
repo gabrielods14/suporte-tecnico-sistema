@@ -32,11 +32,23 @@ def create_app(config_name='default'):
     app.config.from_object(config[config_name])
     
     # Inicializa as extensões
-    CORS(app, 
-         origins=app.config['CORS_ORIGINS'], 
-         supports_credentials=True,
-         allow_headers=['Content-Type', 'Authorization'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+    # CORS: Em desenvolvimento, permitir todas as origens para facilitar testes com mobile
+    # Em produção, remover o '*' e especificar apenas as origens permitidas
+    cors_origins = app.config.get('CORS_ORIGINS', [])
+    
+    # Se contém "*", permitir todas as origens (apenas em desenvolvimento)
+    if '*' in cors_origins:
+        CORS(app, 
+             origins='*',  # Permite todas as origens
+             supports_credentials=False,  # Não funciona com origins='*'
+             allow_headers=['Content-Type', 'Authorization'],
+             methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+    else:
+        CORS(app, 
+             origins=cors_origins,
+             supports_credentials=True,
+             allow_headers=['Content-Type', 'Authorization'],
+             methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
     bcrypt = Bcrypt(app)
     
     return app
