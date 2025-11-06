@@ -10,7 +10,7 @@ namespace ApiParaBD.Controllers
     [Route("api/[controller]")]
     public class ChamadosController : ControllerBase
     {
-        // Usando o nome do DbContext que você corrigiu
+        // Usando o nome do DbContext corrigido
         private readonly ApplicationDbContext _context;
 
         public ChamadosController(ApplicationDbContext context)
@@ -26,10 +26,10 @@ namespace ApiParaBD.Controllers
                 .Include(c => c.Solicitante) // Inclui dados do usuário
                 .Include(c => c.TecnicoResponsavel) // Inclui dados do técnico
                 .ToListAsync();
-            
+
             return Ok(chamados);
         }
-        
+
         // --- ENDPOINT PARA BUSCAR UM CHAMADO POR ID ---
         [HttpGet("{id}")]
         public async Task<IActionResult> GetChamado(int id)
@@ -70,7 +70,7 @@ namespace ApiParaBD.Controllers
                 SolicitanteId = chamadoDto.SolicitanteId,
                 DataAbertura = DateTime.UtcNow,
                 Status = StatusChamado.Aberto,
-                Prioridade = chamadoDto.Prioridade ?? PrioridadeChamado.Baixa 
+                Prioridade = chamadoDto.Prioridade ?? PrioridadeChamado.Baixa
             };
 
             _context.Chamados.Add(novoChamado);
@@ -143,3 +143,4 @@ namespace ApiParaBD.Controllers
         }
     }
 }
+
