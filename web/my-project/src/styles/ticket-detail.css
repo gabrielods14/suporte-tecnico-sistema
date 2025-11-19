@@ -279,6 +279,8 @@
   min-height: 150px;
   font-family: inherit;
   transition: border-color 0.3s;
+  background-color: white;
+  color: #333;
 }
 
 .solution-textarea:focus {

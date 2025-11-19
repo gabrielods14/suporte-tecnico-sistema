@@ -1,5 +1,4 @@
 from flask import request, jsonify
-from app import app
 import requests
 
 API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'

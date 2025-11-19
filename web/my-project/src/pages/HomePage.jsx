@@ -3,7 +3,6 @@ import React from 'react';
 import '../styles/home.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { getUserDisplayName } from '../utils/api';
 // Importando os ícones para os cards
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
@@ -15,7 +14,8 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
   console.log('HomePage - userInfo:', userInfo);
   console.log('HomePage - permissao:', permissao);
   
-  const firstName = getUserDisplayName(userInfo);
+  // Usa o nome completo diretamente do userInfo (já normalizado no App.jsx)
+  const userName = userInfo?.nome || 'Usuário';
   const handleCardClick = (cardType) => {
     switch (cardType) {
       case 'new-ticket':
@@ -42,13 +42,14 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
     <div className="home-page-layout">
       <Header 
         onLogout={onLogout} 
-        userName={firstName}
+        userName={userName}
+        userInfo={userInfo}
         onNavigateToProfile={onNavigateToProfile}
       /> {/* Adicionado ao grid area 'header' */}
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} /> {/* Adicionado ao grid area 'sidebar' */}
 
       <main className="home-main-content">
-        <h2 className="main-welcome">BEM-VINDO (A){firstName ? `, ${firstName}` : ''}</h2>
+        <h2 className="main-welcome">BEM-VINDO(A), {userName}</h2>
 
         <section className="dashboard-cards">
           {/* Card "NOVO CHAMADO" - sempre visível para todos */}

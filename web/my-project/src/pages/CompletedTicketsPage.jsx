@@ -4,7 +4,7 @@ import '../styles/completed-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
-import { ticketService, getUserDisplayName } from '../utils/api';
+import { ticketService } from '../utils/api';
 
 function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
   const [tickets, setTickets] = useState([]);
@@ -207,7 +207,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
     return (
       <div className="completed-tickets-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="completed-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -221,7 +221,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   return (
     <div className="completed-tickets-page">
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="completed-tickets-main">
         {/* Header da página */}

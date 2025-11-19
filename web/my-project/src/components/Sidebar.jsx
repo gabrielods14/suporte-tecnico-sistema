@@ -45,6 +45,11 @@ function Sidebar({ currentPage, onNavigate }) {
             </a>
           </li>
           <li>
+            <a href="#" className={currentPage === 'completed-tickets' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('completed-tickets'); }}>
+              <FaCheckCircle className="nav-icon" /> CONCLUÍDOS
+            </a>
+          </li>
+          <li>
             <a href="#" className={currentPage === 'reports' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('reports'); }}>
               <FaChartBar className="nav-icon" /> RELATÓRIOS
             </a>

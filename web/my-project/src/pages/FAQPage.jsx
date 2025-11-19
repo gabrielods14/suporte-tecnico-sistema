@@ -21,7 +21,7 @@ import {
 
 function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const [openSection, setOpenSection] = useState(null);
-  const firstName = userInfo?.nome?.split(' ')[0] || 'Usuário';
+  const userName = userInfo?.nome || 'Usuário';
   const permissao = userInfo?.permissao; // 3=Admin, 2=SuporteTecnico, 1=Colaborador
 
   const toggleSection = (sectionId) => {
@@ -420,7 +420,7 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
 
   return (
     <div className="faq-layout">
-      <Header onLogout={onLogout} userName={firstName} onNavigateToProfile={onNavigateToProfile} />
+      <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
       
       <main className="faq-main-content">

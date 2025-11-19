@@ -84,6 +84,14 @@ def register_routes():
         from pages.atualizar_usuario import gerenciar_usuario
         app.add_url_rule('/usuarios/<int:usuario_id>', view_func=gerenciar_usuario, methods=['GET', 'PUT', 'OPTIONS'])
         
+        # Importa e registra rota para gerenciar meu próprio perfil (GET e PUT)
+        from pages.meu_perfil import gerenciar_meu_perfil
+        app.add_url_rule('/api/Usuarios/meu-perfil', view_func=gerenciar_meu_perfil, methods=['GET', 'PUT', 'OPTIONS'])
+        
+        # Importa e registra rota para listar usuários e estatísticas
+        from pages.listar_usuarios_relatorios import listar_usuarios
+        app.add_url_rule('/api/Usuarios', view_func=listar_usuarios, methods=['GET', 'OPTIONS'])
+        
         print("Rotas registradas com sucesso!")
     except Exception as e:
         print(f"Erro ao registrar rotas: {e}")

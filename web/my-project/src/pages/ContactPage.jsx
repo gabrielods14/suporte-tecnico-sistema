@@ -10,7 +10,7 @@ import {
 } from 'react-icons/fa';
 
 function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
-  const firstName = userInfo?.nome?.split(' ')[0] || 'Usuário';
+  const userName = userInfo?.nome || 'Usuário';
 
   // Informações de contato do administrador
   const adminContact = {
@@ -28,7 +28,7 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
 
   return (
     <div className="contact-layout">
-      <Header onLogout={onLogout} userName={firstName} onNavigateToProfile={onNavigateToProfile} />
+      <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
       
       <main className="contact-main-content">

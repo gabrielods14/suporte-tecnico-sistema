@@ -4,7 +4,7 @@ import '../styles/reports.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { FaServer, FaDatabase, FaRobot, FaUsers, FaCheckCircle, FaClock, FaSpinner } from 'react-icons/fa';
-import { ticketService, getUserDisplayName } from '../utils/api';
+import { ticketService, userService } from '../utils/api';
 
 function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const [loading, setLoading] = useState(true);
@@ -35,21 +35,44 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
       // Buscar todos os chamados da API
       const tickets = await ticketService.getTickets();
       
-      // Calcular estatísticas
+      // Calcular estatísticas dos chamados
       const totalChamados = tickets.length;
       const chamadosResolvidos = tickets.filter(t => t.status === 4 || t.status === 5).length;
       const chamadosEmAndamento = tickets.filter(t => t.status === 1 || t.status === 2 || t.status === 3).length;
       
-      // Simular dados de usuários (será substituído quando houver endpoint)
-      const totalUsuarios = 0;
-      const usuariosPorNivel = {
+      // Buscar dados de usuários com estatísticas
+      let totalUsuarios = 0;
+      let usuariosPorNivel = {
         colaboradores: 0,
         suporteTecnico: 0,
         administradores: 0
       };
       
-      // Verificar status da API de banco de dados
-      const databaseStatus = await checkApiStatus();
+      try {
+        const usuariosData = await userService.getUsers();
+        
+        if (usuariosData && typeof usuariosData === 'object') {
+          totalUsuarios = usuariosData.total || 0;
+          
+          // Mapear resposta da API para o formato esperado
+          if (usuariosData.porPermissao) {
+            usuariosPorNivel = {
+              colaboradores: usuariosData.porPermissao.colaborador || 0,
+              suporteTecnico: usuariosData.porPermissao.suporte || 0,
+              administradores: usuariosData.porPermissao.admin || 0
+            };
+          }
+          
+          console.log('Dados de usuários carregados:', { totalUsuarios, usuariosPorNivel });
+        }
+      } catch (error) {
+        console.warn('Erro ao buscar usuários:', error);
+        // Continuar mesmo se falhar ao buscar usuários
+      }
+      
+      // Verificar status da API de banco de dados e IA
+      const databaseStatus = await checkDatabaseApiStatus();
+      const iaStatus = await checkIaApiStatus();
       
       setReports({
         totalUsuarios,
@@ -59,13 +82,71 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
         usuariosPorNivel,
         apiStatus: {
           database: databaseStatus,
-          ai: { status: 'not-implemented', responseTime: null }
+          ai: iaStatus
         }
       });
     } catch (error) {
       console.error('Erro ao carregar relatórios:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkDatabaseApiStatus = async () => {
+    try {
+      const startTime = performance.now();
+      await ticketService.getTickets();
+      const endTime = performance.now();
+      const responseTime = Math.round(endTime - startTime);
+      
+      return {
+        status: 'online',
+        responseTime: responseTime < 1000 ? responseTime : Math.round(responseTime / 1000)
+      };
+    } catch (error) {
+      return {
+        status: 'offline',
+        responseTime: null
+      };
+    }
+  };
+
+  const checkIaApiStatus = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const startTime = performance.now();
+      
+      const response = await fetch('/api/gemini/sugerir-resposta', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          descricaoChamado: 'Test'
+        })
+      });
+      
+      const endTime = performance.now();
+      const responseTime = Math.round(endTime - startTime);
+      
+      if (response.ok) {
+        return {
+          status: 'online',
+          responseTime: responseTime < 1000 ? responseTime : Math.round(responseTime / 1000)
+        };
+      } else {
+        return {
+          status: 'offline',
+          responseTime: null
+        };
+      }
+    } catch (error) {
+      console.warn('Erro ao verificar status da IA:', error);
+      return {
+        status: 'offline',
+        responseTime: null
+      };
     }
   };
 
@@ -142,7 +223,7 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
     return (
       <div className="reports-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="reports-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -156,7 +237,7 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
   return (
     <div className="reports-page">
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="reports-main">
         <div className="page-header">

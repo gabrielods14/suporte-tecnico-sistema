@@ -162,13 +162,85 @@ export const apiClient = new ApiClient();
  * @returns {string} Primeiro nome do usuário ou 'Usuário' como fallback
  */
 export const getUserDisplayName = (userInfo) => {
+  const capitalizeWords = (s) => {
+    return s.split(/\s+/).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+  };
+
+  // Se o objeto userInfo tem nome completo, retorna primeiro + último nome
   if (userInfo?.nome && typeof userInfo.nome === 'string' && userInfo.nome.trim()) {
     const parts = userInfo.nome.trim().split(/\s+/);
-    return parts[0];
+    if (parts.length >= 2) {
+      return capitalizeWords(`${parts[0]} ${parts[parts.length - 1]}`);
+    }
+    return capitalizeWords(parts[0]);
   }
+
+  // Se não, tenta extrair do token (claims comuns)
+  try {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const nomeFromToken = payload.nome || payload.Nome || payload.name || payload.Name || payload.unique_name || payload.preferred_username || payload.upn || payload.email;
+      if (nomeFromToken && typeof nomeFromToken === 'string' && nomeFromToken.trim()) {
+        const parts = nomeFromToken.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          return capitalizeWords(`${parts[0]} ${parts[parts.length - 1]}`);
+        }
+        // se for apenas um identificador (ex: email), tenta extrair prefixo antes do @
+        if (nomeFromToken.includes('@')) {
+          const prefix = nomeFromToken.split('@')[0];
+          const prefixParts = prefix.split(/[._-]+/);
+          return capitalizeWords(prefixParts[0]);
+        }
+        return capitalizeWords(nomeFromToken);
+      }
+    }
+  } catch (e) {
+    console.error('getUserDisplayName - erro ao extrair do token:', e);
+  }
+
+  // Fallback: se houver email em userInfo, usa prefixo
   if (userInfo?.email && typeof userInfo.email === 'string') {
-    return userInfo.email.split('@')[0];
+    const prefix = userInfo.email.split('@')[0];
+    const prefixParts = prefix.split(/[._-]+/);
+    return capitalizeWords(prefixParts[0]);
   }
+
+  return 'Usuário';
+};
+
+/**
+ * Obtém o nome completo do usuário de forma segura, verificando múltiplas fontes
+ * @param {Object} userInfo - Objeto com informações do usuário
+ * @returns {string} Nome completo do usuário ou 'Usuário' como fallback
+ */
+export const getUserFullName = (userInfo) => {
+  // Primeiro tenta obter do userInfo passado
+  if (userInfo) {
+    const nome = userInfo.nome || userInfo.Nome || userInfo.name || userInfo.Name;
+    if (nome && typeof nome === 'string' && nome.trim() && nome.trim() !== 'Usuário' && nome.trim() !== '') {
+      console.log('getUserFullName - Nome encontrado no userInfo:', nome.trim());
+      return nome.trim();
+    }
+  }
+  
+  // Se não encontrou, tenta obter do token JWT
+  try {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Suporta várias chaves possíveis que podem representar o nome do usuário
+      const nomeFromToken = payload.nome || payload.Nome || payload.name || payload.Name || payload.unique_name || payload.preferred_username || payload.upn || payload.email;
+      if (nomeFromToken && typeof nomeFromToken === 'string' && nomeFromToken.trim() && nomeFromToken.trim() !== 'Usuário' && nomeFromToken.trim() !== '') {
+        console.log('getUserFullName - Nome encontrado no token:', nomeFromToken.trim());
+        return nomeFromToken.trim();
+      }
+    }
+  } catch (error) {
+    console.error('getUserFullName - Erro ao obter nome do token:', error);
+  }
+  
+  console.warn('getUserFullName - Nome não encontrado, usando fallback "Usuário"');
   return 'Usuário';
 };
 
@@ -225,10 +297,10 @@ export const userService = {
   },
 
   /**
-   * Obtém lista de usuários
+   * Obtém lista de usuários e estatísticas
    */
   async getUsers() {
-    return await apiClient.get('/users');
+    return await apiClient.get('/api/Usuarios');
   },
 
   /**

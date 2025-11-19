@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
-import { ticketService, aiService, getUserDisplayName } from '../utils/api';
+import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
 const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId, previousPage, onNavigateToProfile }) => {
@@ -176,7 +176,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     return (
       <div className="ticket-detail-layout">
         <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -191,7 +191,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     return (
       <div className="ticket-detail-layout">
         <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
           <div className="error-container">
             <p>Chamado não encontrado.</p>
@@ -210,7 +210,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   return (
     <div className="ticket-detail-layout">
       <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="ticket-detail-main">
         <div className="ticket-detail-header">

@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import '../styles/profile.css';
 
-const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInfo }) => {
+const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavigateToProfile, userInfo, onUpdateUserInfo }) => {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -17,70 +17,85 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
 
-  // Carrega os dados do usuário quando o componente é montado ou userInfo muda
+  // Carrega os dados do usuário quando o componente é montado
   useEffect(() => {
     const loadUserData = async () => {
-      // Se userInfo não tiver nome ou estiver incompleto, busca da API
-      if (!userInfo?.nome || !userInfo?.id) {
-        try {
-          const token = localStorage.getItem('authToken');
-          if (!token) return;
-          
-          // Tenta obter o ID do token se não estiver no userInfo
-          let userId = userInfo?.id;
-          if (!userId) {
-            try {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              userId = payload?.sub || payload?.id;
-            } catch (e) {
-              console.error('Erro ao decodificar token:', e);
-              return;
-            }
-          }
-          
-          if (userId) {
-            const response = await fetch(`http://localhost:5000/usuarios/${userId}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`
-              }
-            });
-            
-            if (response.ok) {
-              const userData = await response.json();
-              console.log('UserProfilePage - Dados do usuário carregados:', userData);
-              
-              // Atualiza o formData com os dados recebidos
-              setFormData({
-                nome: userData.nome || '',
-                email: userData.email || '',
-                telefone: userData.telefone || '',
-                cargo: userData.cargo || ''
-              });
-              
-              // Atualiza o userInfo no App se houver callback
-              if (onUpdateUserInfo) {
-                onUpdateUserInfo(userData);
-              }
-            } else {
-              console.warn('UserProfilePage - Erro ao buscar dados do usuário:', response.status);
-            }
-          }
-        } catch (error) {
-          console.error('UserProfilePage - Erro ao carregar dados do usuário:', error);
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          console.warn('UserProfilePage - Token não encontrado');
+          return;
         }
-      } else {
-        // Se userInfo já tiver dados, usa eles
-        setFormData({
-          nome: userInfo.nome || '',
-          email: userInfo.email || '',
-          telefone: userInfo.telefone || '',
-          cargo: userInfo.cargo || ''
+        
+        console.log('UserProfilePage - Buscando dados via /api/Usuarios/meu-perfil');
+        const response = await fetch(`http://localhost:5000/api/Usuarios/meu-perfil`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
         });
+        
+        console.log('UserProfilePage - Resposta da API:', response.status, response.statusText);
+        
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('UserProfilePage - Dados do perfil carregados:', userData);
+          
+          // Atualiza o formData com os dados recebidos
+          const newFormData = {
+            nome: userData.nome || userData.Nome || '',
+            email: userData.email || userData.Email || '',
+            telefone: userData.telefone || userData.Telefone || '',
+            cargo: userData.cargo || userData.Cargo || ''
+          };
+          
+          setFormData(newFormData);
+          
+          // Atualiza o userInfo no App se houver callback
+          if (onUpdateUserInfo) {
+            const updatedUserInfo = {
+              id: userData.id || userData.Id,
+              nome: newFormData.nome,
+              email: newFormData.email,
+              telefone: newFormData.telefone,
+              cargo: newFormData.cargo,
+              permissao: userData.permissao || userData.Permissao || userInfo?.permissao
+            };
+            console.log('UserProfilePage - Atualizando userInfo no App:', updatedUserInfo);
+            onUpdateUserInfo(updatedUserInfo);
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.warn('UserProfilePage - Erro ao buscar dados do perfil:', response.status, errorData);
+          
+          // Se falhar, tenta usar os dados do userInfo se existirem
+          if (userInfo && (userInfo.nome || userInfo.email)) {
+            setFormData({
+              nome: userInfo.nome || '',
+              email: userInfo.email || '',
+              telefone: userInfo.telefone || '',
+              cargo: userInfo.cargo || ''
+            });
+          }
+        }
+      } catch (error) {
+        console.error('UserProfilePage - Erro ao carregar dados do perfil:', error);
+        
+        // Se falhar, tenta usar os dados do userInfo se existirem
+        if (userInfo && (userInfo.nome || userInfo.email)) {
+          setFormData({
+            nome: userInfo.nome || '',
+            email: userInfo.email || '',
+            telefone: userInfo.telefone || '',
+            cargo: userInfo.cargo || ''
+          });
+        }
       }
     };
     
     loadUserData();
-  }, [userInfo, onUpdateUserInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Executa apenas uma vez ao montar o componente
 
   // Validação em tempo real
   const validateField = (name, value) => {
@@ -186,19 +201,20 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
 
     try {
       const token = localStorage.getItem('authToken');
-      const userId = userInfo?.id;
 
-      if (!userId) {
-        showToast('ID do usuário não encontrado.', 'error');
+      if (!token) {
+        showToast('Token de autenticação não encontrado.', 'error');
         setIsLoading(false);
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/usuarios/${userId}`, {
+      console.log('UserProfilePage - Atualizando perfil via /api/Usuarios/meu-perfil');
+      const response = await fetch(`http://localhost:5000/api/Usuarios/meu-perfil`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           nome: formData.nome,
@@ -208,7 +224,7 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
         showToast('Perfil atualizado com sucesso!', 'success');
@@ -231,17 +247,18 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, userInfo, onUpdateUserInf
     }
   };
 
-  const firstName = userInfo?.nome?.split(' ')[0] || formData.nome?.split(' ')[0] || 'Usuário';
+  const userName = userInfo?.nome || formData.nome || 'Usuário';
+  const firstName = userName?.split(' ')[0] || 'Usuário';
   
   // Debug: verificar dados
   console.log('UserProfilePage - userInfo:', userInfo);
   console.log('UserProfilePage - formData:', formData);
-  console.log('UserProfilePage - firstName:', firstName);
+  console.log('UserProfilePage - userName:', userName);
 
   return (
     <div className="profile-layout">
-      <Header onLogout={onLogout} userName={firstName} />
-      <Sidebar />
+      <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
+      <Sidebar currentPage="profile" onNavigate={onNavigateToPage} />
       <main className="profile-main-content">
         <button 
           className="back-button" 

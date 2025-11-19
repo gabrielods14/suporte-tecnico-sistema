@@ -4,7 +4,7 @@ import '../styles/pending-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
-import { ticketService, getUserDisplayName } from '../utils/api';
+import { ticketService } from '../utils/api';
 
 function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
   const handleTicketClick = (ticketId) => {
@@ -217,7 +217,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
     return (
       <div className="pending-tickets-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={getUserDisplayName(userInfo)} onNavigateToProfile={onNavigateToProfile} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="pending-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -231,7 +231,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   return (
     <div className="pending-tickets-page">
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="pending-tickets-main">
         {/* Header da página */}

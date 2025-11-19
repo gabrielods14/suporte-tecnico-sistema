@@ -18,17 +18,12 @@ namespace ApiParaBD.Controllers
         }
 
         // --- ENDPOINT DE CADASTRO (PÚBLICO) ---
-        // POST /api/Usuarios
-        [AllowAnonymous] // Permite que qualquer um se cadastre
+        [AllowAnonymous] // Permite cadastro sem estar logado
         [HttpPost]
         public async Task<IActionResult> CriarUsuario([FromBody] CriarUsuarioDto usuarioDto)
         {
-            // (Lógica de hashing de senha e criação de usuário...)
-            // ... (seu código existente de CriarUsuario) ...
-            
-            // Lógica de exemplo (assumindo que seu código existente está aqui)
-            var usuarioExistente = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == usuarioDto.Email.ToLower());
-            if (usuarioExistente != null)
+            // Verifica se o e-mail já existe
+            if (await _context.Usuarios.AnyAsync(u => u.Email == usuarioDto.Email))
             {
                 return BadRequest(new { message = "E-mail já cadastrado." });
             }
@@ -36,7 +31,8 @@ namespace ApiParaBD.Controllers
             var novoUsuario = new Usuario
             {
                 Nome = usuarioDto.Nome,
-                Email = usuarioDto.Email.ToLower(),
+                Email = usuarioDto.Email,
+                // Hash da senha (segurança)
                 SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioDto.Senha),
                 Telefone = usuarioDto.Telefone,
                 Cargo = usuarioDto.Cargo,
@@ -46,143 +42,90 @@ namespace ApiParaBD.Controllers
             _context.Usuarios.Add(novoUsuario);
             await _context.SaveChangesAsync();
 
-            // Ocultar a senha hash na resposta
-            novoUsuario.SenhaHash = "[OCULTADO]"; 
-            return CreatedAtAction(nameof(GetUsuarioPorId), new { id = novoUsuario.Id }, novoUsuario);
+            // Retorna o usuário criado, mas sem a senha hash
+            novoUsuario.SenhaHash = ""; 
+            return CreatedAtAction(nameof(GetUsuario), new { id = novoUsuario.Id }, novoUsuario);
         }
 
-        // --- ENDPOINT PARA LISTAR USUÁRIOS (ADMIN E SUPORTE) ---
-        // GET /api/Usuarios
-        [Authorize(Roles = "Administrador, SuporteTecnico")] // Só Admin e Suporte podem ver a lista
+        // --- ENDPOINT: QUEM SOU EU? (PERFIL) ---
+        // Este é o endpoint que resolve o problema da "Home" e do "Perfil"
+        [Authorize] // Qualquer usuário logado pode acessar
+        [HttpGet("meu-perfil")]
+        public async Task<IActionResult> GetMeuPerfil()
+        {
+            // Pega o ID do usuário de dentro do Token JWT
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+
+            var usuario = await _context.Usuarios.FindAsync(userId);
+            if (usuario == null) return NotFound();
+
+            usuario.SenhaHash = ""; // Segurança: não devolve a senha
+            return Ok(usuario);
+        }
+
+        // --- ENDPOINT: ATUALIZAR MEU PRÓPRIO PERFIL ---
+        [Authorize]
+        [HttpPut("meu-perfil")]
+        public async Task<IActionResult> AtualizarMeuPerfil([FromBody] AtualizarUsuarioDto dto)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var usuario = await _context.Usuarios.FindAsync(userId);
+
+            if (usuario == null) return NotFound();
+
+            // Atualiza apenas os campos que foram enviados
+            if (dto.Nome != null) usuario.Nome = dto.Nome;
+            if (dto.Email != null) usuario.Email = dto.Email;
+            if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
+            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
+
+            await _context.SaveChangesAsync();
+            
+            usuario.SenhaHash = "";
+            return Ok(usuario);
+        }
+
+        // --- ENDPOINT: LISTAR TODOS (SÓ ADMIN E SUPORTE) ---
+        // Colaborador comum não deve ver a lista de todos os usuários
+        [Authorize(Roles = "Administrador, SuporteTecnico")]
         [HttpGet]
         public async Task<IActionResult> GetUsuarios()
         {
             var usuarios = await _context.Usuarios.ToListAsync();
-            // Ocultar todas as senhas hash
-            usuarios.ForEach(u => u.SenhaHash = "[OCULTADO]");
+            foreach (var u in usuarios) u.SenhaHash = ""; // Limpa senhas
             return Ok(usuarios);
         }
 
-        // --- ENDPOINT PARA BUSCAR UM USUÁRIO (ADMIN E SUPORTE) ---
-        // GET /api/Usuarios/5
+        // --- ENDPOINT: BUSCAR POR ID (SÓ ADMIN E SUPORTE) ---
         [Authorize(Roles = "Administrador, SuporteTecnico")]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetUsuarioPorId(int id)
+        public async Task<IActionResult> GetUsuario(int id)
         {
             var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null)
-            {
-                return NotFound();
-            }
-            usuario.SenhaHash = "[OCULTADO]";
+            if (usuario == null) return NotFound();
+            usuario.SenhaHash = "";
             return Ok(usuario);
         }
 
-        // --- NOVO ENDPOINT: ATUALIZAR O PRÓPRIO PERFIL (QUALQUER USUÁRIO LOGADO) ---
-        // PUT /api/Usuarios/meu-perfil
-        [Authorize] // Qualquer usuário logado (Admin, Suporte, Colaborador)
-        [HttpPut("meu-perfil")]
-        public async Task<IActionResult> AtualizarMeuPerfil([FromBody] AtualizarUsuarioDto dto)
-        {
-            // Pegamos o ID do usuário A PARTIR DO TOKEN JWT
-            var userIdString = User.Identity?.Name;
-            if (string.IsNullOrEmpty(userIdString))
-            {
-                return Unauthorized(); // Token inválido ou não encontrado
-            }
-
-            var userId = int.Parse(userIdString);
-            var usuario = await _context.Usuarios.FindAsync(userId);
-
-            if (usuario == null)
-            {
-                return NotFound(new { message = "Usuário não encontrado." });
-            }
-
-            // Atualiza apenas os campos fornecidos
-            if (!string.IsNullOrEmpty(dto.Nome)) usuario.Nome = dto.Nome;
-            if (!string.IsNullOrEmpty(dto.Email)) usuario.Email = dto.Email.ToLower();
-            if (!string.IsNullOrEmpty(dto.Telefone)) usuario.Telefone = dto.Telefone;
-            if (!string.IsNullOrEmpty(dto.Cargo)) usuario.Cargo = dto.Cargo;
-            
-            // Verifica se o e-mail (se alterado) já existe
-            var emailExistente = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == usuario.Email && u.Id != usuario.Id);
-            if (emailExistente != null)
-            {
-                return BadRequest(new { message = "E-mail já está em uso por outra conta." });
-            }
-
-            await _context.SaveChangesAsync();
-            usuario.SenhaHash = "[OCULTADO]";
-            return Ok(usuario);
-        }
-
-        // --- NOVO ENDPOINT: ATUALIZAR QUALQUER USUÁRIO (SÓ ADMIN) ---
-        // PUT /api/Usuarios/5
-        [Authorize(Roles = "Administrador")] // Só Admin pode fazer isso
-        [HttpPut("{id}")]
-        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioDto dto)
-        {
-            var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null)
-            {
-                return NotFound(new { message = "Usuário não encontrado." });
-            }
-            
-            // Admin pode atualizar tudo
-            if (!string.IsNullOrEmpty(dto.Nome)) usuario.Nome = dto.Nome;
-            if (!string.IsNullOrEmpty(dto.Email)) usuario.Email = dto.Email.ToLower();
-            if (!string.IsNullOrEmpty(dto.Telefone)) usuario.Telefone = dto.Telefone;
-            if (!string.IsNullOrEmpty(dto.Cargo)) usuario.Cargo = dto.Cargo;
-
-            // Lógica de verificação de e-mail (separada da atualização de perfil)
-            if (!string.IsNullOrEmpty(dto.Email))
-            {
-                 var emailExistente = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == usuario.Email && u.Id != usuario.Id);
-                 if (emailExistente != null)
-                 {
-                     return BadRequest(new { message = "E-mail já está em uso por outra conta." });
-                 }
-            }
-
-            await _context.SaveChangesAsync();
-            usuario.SenhaHash = "[OCULTADO]";
-            return Ok(usuario);
-        }
-        
-        // --- NOVO ENDPOINT: EXCLUIR UM USUÁRIO (SÓ ADMIN) ---
-        // DELETE /api/Usuarios/5
-        [Authorize(Roles = "Administrador")] // Só Admin pode fazer isso
+        // --- ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---
+        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> ExcluirUsuario(int id)
+        public async Task<IActionResult> DeletarUsuario(int id)
         {
-            // Verifica se o Admin está tentando se auto-excluir
-            var userIdString = User.Identity?.Name;
-            if (id == int.Parse(userIdString ?? "0"))
+            // Impede que o admin se exclua a si mesmo por acidente
+            var meuId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (id == meuId)
             {
-                return BadRequest(new { message = "Um administrador não pode excluir a própria conta." });
+                return BadRequest(new { message = "Você não pode excluir a sua própria conta enquanto está logado." });
             }
 
             var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null)
-            {
-                return NotFound(new { message = "Usuário não encontrado." });
-            }
-
-            // (Lógica de segurança adicional: verificar se o usuário a ser excluído é o último admin)
-            if (usuario.Permissao == PermissaoUsuario.Administrador)
-            {
-                 var totalAdmins = await _context.Usuarios.CountAsync(u => u.Permissao == PermissaoUsuario.Administrador);
-                 if (totalAdmins <= 1)
-                 {
-                     return BadRequest(new { message = "Não é possível excluir o último administrador do sistema." });
-                 }
-            }
+            if (usuario == null) return NotFound();
 
             _context.Usuarios.Remove(usuario);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // Retorna 204 No Content (sucesso)
+            return NoContent(); // 204 No Content (Sucesso)
         }
     }
 }
