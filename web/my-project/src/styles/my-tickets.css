@@ -1,4 +1,6 @@
-.completed-tickets-page {
+/* src/styles/my-tickets.css */
+
+.my-tickets-page {
   display: grid;
   grid-template-areas: "sidebar header" "sidebar main";
   grid-template-columns: 280px 1fr;
@@ -7,7 +9,16 @@
   background-color: #F8F9FA;
 }
 
-.completed-tickets-main {
+/* Header e Sidebar no grid */
+.my-tickets-page .home-header {
+  grid-area: header;
+}
+
+.my-tickets-page .home-sidebar {
+  grid-area: sidebar;
+}
+
+.my-tickets-main {
   grid-area: main;
   padding: 2rem;
   overflow-y: auto;
@@ -100,20 +111,29 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #737373;
+  color: var(--neutral-700, #737373);
 }
 
 .search-box input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-light, #d4d4d4);
   border-radius: 0.5rem;
   font-size: 1rem;
+  background: var(--neutral-100, #f5f5f5);
+  color: var(--neutral-800, #333);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .search-box input:focus {
   outline: none;
   border-color: #A93226;
+}
+
+.search-box input::placeholder {
+  color: var(--neutral-500, #999);
+  font-weight: var(--font-weight-normal, 400);
 }
 
 .sort-options {
@@ -126,15 +146,29 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--neutral-800, #333);
+}
+
+.sort-options .filter-icon {
+  color: var(--neutral-800, #333);
 }
 
 .sort-options select {
   padding: 1rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-light, #d4d4d4);
   border-radius: 0.5rem;
   font-size: 1rem;
   min-width: 150px;
+  background: var(--neutral-100, #f5f5f5);
+  color: var(--neutral-800, #333);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  cursor: pointer;
+}
+
+.sort-options select:hover {
+  border-color: #A93226;
 }
 
 .table-section {
@@ -188,6 +222,7 @@
 
 .title-cell {
   font-weight: 500;
+  color: var(--secondary-color, #333);
 }
 
 .priority-badge {
@@ -221,7 +256,9 @@
 
 .no-data {
   text-align: center;
-  padding: 3rem;
+  padding: 40px !important;
+  color: #999;
+  font-style: italic;
 }
 
 .loading-container {
@@ -231,6 +268,11 @@
   justify-content: center;
   height: 400px;
   gap: 1.5rem;
+}
+
+.loading-container p {
+  color: var(--text-primary, #333);
+  font-weight: 600;
 }
 
 .loading-spinner {
@@ -247,8 +289,9 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
-  .completed-tickets-page {
+  .my-tickets-page {
     grid-template-columns: 1fr;
     grid-template-areas: "header" "main";
   }
@@ -257,4 +300,3 @@
     flex-direction: column;
   }
 }
-

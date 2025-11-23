@@ -6,7 +6,10 @@ import RegisterEmployeePage from './pages/RegisterEmployeePage';
 import NewTicketPage from './pages/NewTicketPage';
 import PendingTicketsPage from './pages/PendingTicketsPage';
 import CompletedTicketsPage from './pages/CompletedTicketsPage';
+import MyTicketsPage from './pages/MyTicketsPage';
 import ReportsPage from './pages/ReportsPage';
+import UsersReportPage from './pages/UsersReportPage';
+import UserActivityPage from './pages/UserActivityPage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
 import FAQPage from './pages/FAQPage';
@@ -216,7 +219,8 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        fontSize: '18px'
+        fontSize: '18px',
+        color: '#000000'
       }}>
         Carregando...
       </div>
@@ -279,12 +283,34 @@ function App() {
           onNavigateToProfile={navigateToProfile}
         />
       )}
-      {currentPage === 'reports' && (
-        <ReportsPage 
+      {currentPage === 'my-tickets' && (
+        <MyTicketsPage 
           onLogout={handleLogout}
           onNavigateToHome={navigateToHome}
           onNavigateToPage={navigateToPage}
           currentPage={currentPage}
+          userInfo={userInfo}
+          onNavigateToTicketDetail={navigateToTicketDetail}
+          onNavigateToProfile={navigateToProfile}
+        />
+      )}
+      {currentPage === 'reports' && (
+        <UsersReportPage
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
+          userInfo={userInfo}
+          onNavigateToProfile={navigateToProfile}
+          onViewUser={(id) => { setSelectedTicketId(null); setPreviousPage('reports'); setCurrentPage('user-activity'); localStorage.setItem('selectedUserId', id); }}
+        />
+      )}
+      {currentPage === 'dashboard' && (
+        <ReportsPage 
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={'dashboard'}
           userInfo={userInfo}
           onNavigateToProfile={navigateToProfile}
         />
@@ -298,6 +324,18 @@ function App() {
           ticketId={selectedTicketId}
           previousPage={previousPage}
           onNavigateToProfile={navigateToProfile}
+        />
+      )}
+      {currentPage === 'user-activity' && (
+        <UserActivityPage
+          onLogout={handleLogout}
+          onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
+          userInfo={userInfo}
+          onNavigateToProfile={navigateToProfile}
+          userId={Number(localStorage.getItem('selectedUserId'))}
+          onBack={() => setCurrentPage('reports')}
         />
       )}
       {currentPage === 'profile' && (

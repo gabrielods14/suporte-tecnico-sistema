@@ -16,7 +16,8 @@ import {
   FaChevronUp,
   FaInfoCircle,
   FaExclamationCircle,
-  FaLightbulb
+  FaLightbulb,
+  FaList
 } from 'react-icons/fa';
 
 function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
@@ -78,6 +79,11 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
           <p>O menu lateral está sempre visível e permite acesso rápido às principais áreas do sistema:</p>
           <ul className="feature-list">
             <li><strong>HOME:</strong> Retorna à página inicial com os cards de acesso rápido</li>
+            {isColaborador && (
+              <>
+                <li><strong>MEUS CHAMADOS:</strong> Visualiza todos os seus chamados criados (Colaborador)</li>
+              </>
+            )}
             {!isColaborador && (
               <>
                 <li><strong>CHAMADO:</strong> Visualiza chamados em andamento (Suporte e Admin)</li>
@@ -114,6 +120,20 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
             </ul>
             <p className="tip"><FaLightbulb /> <strong>Dica:</strong> Seja específico na descrição para facilitar o atendimento da equipe de suporte.</p>
           </div>
+
+          {isColaborador && (
+            <div className="card-info">
+              <h4><FaClipboardList /> MEUS CHAMADOS</h4>
+              <p><strong>Funcionalidade:</strong> Permite visualizar todos os seus chamados criados. Você pode:</p>
+              <ul>
+                <li>Visualizar lista de todos os seus chamados (abertos, em atendimento ou fechados)</li>
+                <li>Filtrar e buscar seus chamados por código ou título</li>
+                <li>Ordenar por código, título, prioridade ou data de abertura</li>
+                <li>Clicar em um chamado para ver detalhes completos e acompanhar o andamento</li>
+              </ul>
+              <p className="info"><FaInfoCircle /> <strong>Informação:</strong> Apenas você consegue visualizar seus próprios chamados. Os técnicos que estiverem atendendo seu chamado também poderão visualizá-lo.</p>
+            </div>
+          )}
 
           {!isColaborador && (
             <>
@@ -421,9 +441,17 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
   return (
     <div className="faq-layout">
       <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       
       <main className="faq-main-content">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         <div className="faq-header">
           <h1>
             <FaQuestionCircle className="faq-title-icon" />

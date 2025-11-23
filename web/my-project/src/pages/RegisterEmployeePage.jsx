@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
+import { FaEye, FaEyeSlash, FaUser, FaTrash, FaEdit } from 'react-icons/fa';
+import { userService } from '../utils/api';
 import '../styles/register.css';
 
 const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigateToProfile }) => {
@@ -12,12 +15,19 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
     email: '',
     cargo: '',
     senha: '',
+    confirmarSenha: '',
     telefone: '',
     permissao: 1
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Validação em tempo real - Heurística de Nielsen: Prevenção de Erros
   const validateField = (name, value) => {
@@ -52,6 +62,22 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
           newErrors.senha = 'Senha deve ter pelo menos 6 caracteres';
         } else {
           delete newErrors.senha;
+        }
+        // Validar confirmação de senha se já foi preenchida
+        if (formData.confirmarSenha && value !== formData.confirmarSenha) {
+          newErrors.confirmarSenha = 'As senhas não conferem';
+        } else if (formData.confirmarSenha && value === formData.confirmarSenha) {
+          delete newErrors.confirmarSenha;
+        }
+        break;
+        
+      case 'confirmarSenha':
+        if (!value) {
+          newErrors.confirmarSenha = 'Confirmação de senha é obrigatória';
+        } else if (value !== formData.senha) {
+          newErrors.confirmarSenha = 'As senhas não conferem';
+        } else {
+          delete newErrors.confirmarSenha;
         }
         break;
         
@@ -103,83 +129,187 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
     // Validação final antes do envio - Heurística de Nielsen: Prevenção de Erros
     const hasErrors = Object.keys(errors).length > 0;
     const hasEmptyRequiredFields = !formData.nome.trim() || !formData.email.trim() || 
-                                 !formData.cargo.trim() || !formData.senha.trim();
+                                 !formData.cargo.trim() || !formData.senha.trim() || !formData.confirmarSenha.trim();
     
     if (hasErrors || hasEmptyRequiredFields) {
       showToast('Por favor, corrija os erros antes de continuar.', 'error');
       return;
     }
     
+    // Validar se as senhas conferem
+    if (formData.senha !== formData.confirmarSenha) {
+      showToast('As senhas não conferem.', 'error');
+      return;
+    }
+    
+    // Abre o modal de confirmação
+    setIsConfirmModalOpen(true);
+  };
+
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const usersData = await userService.getUsers();
+      
+      // A API pode retornar um objeto com total e lista, ou diretamente um array
+      if (usersData && typeof usersData === 'object') {
+        if (Array.isArray(usersData)) {
+          setUsers(usersData);
+        } else if (usersData.usuarios && Array.isArray(usersData.usuarios)) {
+          setUsers(usersData.usuarios);
+        } else if (usersData.total !== undefined) {
+          // Se tiver total mas não tiver lista explícita, pode estar em outro formato
+          setUsers([]);
+        } else {
+          setUsers([]);
+        }
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error);
+      showToast('Erro ao carregar lista de usuários.', 'error');
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleConfirmCadastro = async () => {
+    setIsConfirmModalOpen(false);
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // Verifica se o email já existe
+      try {
+        const allUsers = await userService.getUsers();
+        let usersArray = [];
+        if (Array.isArray(allUsers)) {
+          usersArray = allUsers;
+        } else if (allUsers?.usuarios && Array.isArray(allUsers.usuarios)) {
+          usersArray = allUsers.usuarios;
+        } else if (allUsers?.items && Array.isArray(allUsers.items)) {
+          usersArray = allUsers.items;
+        } else if (allUsers?.users && Array.isArray(allUsers.users)) {
+          usersArray = allUsers.users;
+        }
 
-      const data = await response.json();
-
-      if (response.ok) {
-        showToast('Funcionário cadastrado com sucesso!', 'success');
-        // Limpa o formulário
-        setFormData({
-          nome: '',
-          email: '',
-          cargo: '',
-          senha: '',
-          telefone: '',
-          permissao: 1
-        });
-        setErrors({});
-      } else {
-        showToast(data.message || 'Erro ao cadastrar funcionário.', 'error');
+        const emailLower = (formData.email || '').trim().toLowerCase();
+        const exists = usersArray.some(u => ((u.email || u.Email || '') + '').toLowerCase() === emailLower);
+        if (exists) {
+          showToast('O e-mail informado já existe. Verifique e tente novamente.', 'error');
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        // Se falhar na verificação, prossegue e confia na validação do backend
+        console.warn('Não foi possível verificar emails existentes, prosseguindo para tentativa de cadastro:', err);
       }
+
+      // Realiza o cadastro via serviço (mantendo as regras de apiClient)
+      await userService.register(formData);
+      showToast('Funcionário cadastrado com sucesso!', 'success');
+      // Limpa o formulário
+      setFormData({
+        nome: '',
+        email: '',
+        cargo: '',
+        senha: '',
+        confirmarSenha: '',
+        telefone: '',
+        permissao: 1
+      });
+      setErrors({});
+      // Recarrega a lista de usuários
+      await loadUsers();
     } catch (error) {
       console.error('Erro no cadastro:', error);
-      showToast('Erro de conexão. Tente novamente.', 'error');
+      // Se o backend retornar erro de duplicidade, mostra mensagem adequada
+      const msg = error?.data?.message || error?.message || 'Erro ao cadastrar funcionário.';
+      if ((error?.data?.message || '').toLowerCase().includes('email') || (msg || '').toLowerCase().includes('email')) {
+        showToast('O e-mail informado já existe. Verifique e tente novamente.', 'error');
+      } else {
+        showToast(msg, 'error');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getPermissionLabel = (permissao) => {
+    switch (permissao) {
+      case 1: return 'Colaborador';
+      case 2: return 'Suporte Técnico';
+      case 3: return 'Administrador';
+      default: return 'Desconhecido';
+    }
+  };
+
+  const getPermissionColor = (permissao) => {
+    switch (permissao) {
+      case 1: return '#4299e1';
+      case 2: return '#f6ad55';
+      case 3: return '#48bb78';
+      default: return '#6c757d';
+    }
+  };
+
+  const filteredUsers = users.filter(user => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      (user.nome && user.nome.toLowerCase().includes(search)) ||
+      (user.email && user.email.toLowerCase().includes(search)) ||
+      (user.cargo && user.cargo.toLowerCase().includes(search))
+    );
+  });
+
   return (
     <div className="register-layout">
       <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage="register" onNavigate={() => {}} />
+      <Sidebar currentPage="register" onNavigate={() => {}} userInfo={userInfo} />
       <main className="register-main-content">
-        <button 
-          className="back-button" 
-          onClick={onNavigateToHome}
-          aria-label="Voltar para página inicial"
-        >
-          ← Voltar
-        </button>
-        <div className="register-header">
-          <h2>CADASTRO DE FUNCIONÁRIO</h2>
+        <div className="register-page-header">
+          <h1>CADASTRO DE FUNCIONÁRIO</h1>
         </div>
-
-        {/* Permissões do usuário */}
-        <div className={`form-group`}>
-          <label htmlFor="permissao">Permissão</label>
-          <div className="select-container">
-            <select
-              id="permissao"
-              name="permissao"
-              value={formData.permissao}
-              onChange={(e) => handleInputChange({ target: { name: 'permissao', value: Number(e.target.value) } })}
+        
+        <div className="register-content-grid">
+          {/* Formulário de Cadastro */}
+          <div className="register-form-section">
+            <button 
+              className="back-button" 
+              onClick={onNavigateToHome}
+              aria-label="Voltar para página inicial"
             >
-              <option value={1}>Colaborador</option>
-              <option value={2}>Suporte Técnico</option>
-              <option value={3}>Administrador</option>
-            </select>
-            <div className="select-arrow">▼</div>
+              ← Voltar
+            </button>
+            <div className="register-header">
+              <h2>NOVO FUNCIONÁRIO</h2>
+            </div>
+
+            <form className="register-form" onSubmit={handleSubmit} noValidate>
+          {/* Permissões do usuário */}
+          <div className={`form-group`}>
+            <label htmlFor="permissao">Permissão *</label>
+            <div className="select-container">
+              <select
+                id="permissao"
+                name="permissao"
+                value={formData.permissao}
+                onChange={(e) => handleInputChange({ target: { name: 'permissao', value: Number(e.target.value) } })}
+                required
+              >
+                <option value={1}>Colaborador</option>
+                <option value={2}>Suporte Técnico</option>
+                <option value={3}>Administrador</option>
+              </select>
+              <div className="select-arrow">▼</div>
+            </div>
           </div>
-        </div>
-        <form className="register-form" onSubmit={handleSubmit} noValidate>
           {/* Campos do formulário com validação em tempo real */}
           <div className={`form-group ${errors.nome ? 'error' : ''}`}>
             <label htmlFor="nome">Nome Completo *</label>
@@ -258,19 +388,58 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
           
           <div className={`form-group ${errors.senha ? 'error' : ''}`}>
             <label htmlFor="senha">Senha *</label>
-            <input 
-              type="password" 
-              id="senha" 
-              name="senha" 
-              value={formData.senha}
-              onChange={handleInputChange}
-              placeholder="Mínimo 6 caracteres"
-              required 
-              aria-describedby={errors.senha ? 'senha-error' : undefined}
-            />
+            <div className="password-input-container">
+              <input 
+                type={showPassword ? 'text' : 'password'}
+                id="senha" 
+                name="senha" 
+                value={formData.senha}
+                onChange={handleInputChange}
+                placeholder="Mínimo 6 caracteres"
+                required 
+                aria-describedby={errors.senha ? 'senha-error' : undefined}
+              />
+              <button
+                type="button"
+                className="password-toggle-register"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {errors.senha && (
               <span id="senha-error" className="error-message" role="alert">
                 {errors.senha}
+              </span>
+            )}
+          </div>
+          
+          <div className={`form-group ${errors.confirmarSenha ? 'error' : ''}`}>
+            <label htmlFor="confirmarSenha">Confirmar Senha *</label>
+            <div className="password-input-container">
+              <input 
+                type={showConfirmPassword ? 'text' : 'password'}
+                id="confirmarSenha" 
+                name="confirmarSenha" 
+                value={formData.confirmarSenha}
+                onChange={handleInputChange}
+                placeholder="Repita a senha"
+                required 
+                aria-describedby={errors.confirmarSenha ? 'confirmarSenha-error' : undefined}
+              />
+              <button
+                type="button"
+                className="password-toggle-register"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                aria-label={showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              >
+                {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
+            {errors.confirmarSenha && (
+              <span id="confirmarSenha-error" className="error-message" role="alert">
+                {errors.confirmarSenha}
               </span>
             )}
           </div>
@@ -291,10 +460,71 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
             )}
           </button>
           
-          <div id="submit-help" className="form-help">
-            * Campos obrigatórios
+            <div id="submit-help" className="form-help">
+              * Campos obrigatórios
+            </div>
+          </form>
           </div>
-        </form>
+
+          {/* Lista de Usuários */}
+          <div className="users-list-section">
+            <div className="users-list-header">
+              <h2>LISTA DE USUÁRIOS</h2>
+              <input
+                type="text"
+                className="users-search"
+                placeholder="Buscar usuário..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            {loadingUsers ? (
+              <div className="users-loading">
+                <div className="loading-spinner"></div>
+                <p>Carregando usuários...</p>
+              </div>
+            ) : (
+              <div className="users-list-container">
+                {filteredUsers.length === 0 ? (
+                  <div className="no-users">
+                    <FaUser />
+                    <p>Nenhum usuário encontrado</p>
+                  </div>
+                ) : (
+                  <div className="users-table">
+                    <div className="users-table-header">
+                      <div className="user-col-name">Nome</div>
+                      <div className="user-col-email">Email</div>
+                      <div className="user-col-cargo">Cargo</div>
+                      <div className="user-col-permission">Permissão</div>
+                    </div>
+                    <div className="users-table-body">
+                      {filteredUsers.map((user) => (
+                        <div key={user.id} className="user-row">
+                          <div className="user-col-name">
+                            <FaUser className="user-icon" />
+                            {user.nome || 'N/A'}
+                          </div>
+                          <div className="user-col-email">{user.email || 'N/A'}</div>
+                          <div className="user-col-cargo">{user.cargo || 'N/A'}</div>
+                          <div className="user-col-permission">
+                            <span 
+                              className="permission-badge"
+                              style={{ backgroundColor: getPermissionColor(user.permissao) }}
+                            >
+                              {getPermissionLabel(user.permissao)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </main>
       
       <Toast
@@ -302,6 +532,16 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         message={toast.message}
         type={toast.type}
         onClose={hideToast}
+      />
+      
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        title="CONFIRMAR CADASTRO"
+        message={`Tem certeza que deseja cadastrar o funcionário ${formData.nome || ''}?`}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmCadastro}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

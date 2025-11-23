@@ -138,6 +138,28 @@ namespace ApiParaBD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Cargo = "Gestor de TI",
+                            Email = "admin@helpwave.com",
+                            Nome = "Administrador Sistema",
+                            Permissao = 3,
+                            SenhaHash = "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK",
+                            Telefone = "12999999999"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Cargo = "Suporte N1",
+                            Email = "tecnico@helpwave.com",
+                            Nome = "Técnico Padrão",
+                            Permissao = 2,
+                            SenhaHash = "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK",
+                            Telefone = "12888888888"
+                        });
                 });
 
             modelBuilder.Entity("ApiParaBD.Chamado", b =>

@@ -6,7 +6,7 @@ import Header from '../components/Header';
 import { FaServer, FaDatabase, FaRobot, FaUsers, FaCheckCircle, FaClock, FaSpinner } from 'react-icons/fa';
 import { ticketService, userService } from '../utils/api';
 
-function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
+function DashboardPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const [loading, setLoading] = useState(true);
   const [reports, setReports] = useState({
     totalUsuarios: 0,
@@ -37,8 +37,10 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
       
       // Calcular estatísticas dos chamados
       const totalChamados = tickets.length;
-      const chamadosResolvidos = tickets.filter(t => t.status === 4 || t.status === 5).length;
-      const chamadosEmAndamento = tickets.filter(t => t.status === 1 || t.status === 2 || t.status === 3).length;
+      // Conforme lógica da API: status === 3 representa chamados resolvidos/fechados
+      const chamadosResolvidos = tickets.filter(t => Number(t.status) === 3).length;
+      // Em andamento são os que estão abertos ou em atendimento (1 e 2)
+      const chamadosEmAndamento = tickets.filter(t => Number(t.status) === 1 || Number(t.status) === 2).length;
       
       // Buscar dados de usuários com estatísticas
       let totalUsuarios = 0;
@@ -222,7 +224,7 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
   if (loading) {
     return (
       <div className="reports-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
         <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="reports-main">
           <div className="loading-container">
@@ -236,12 +238,20 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
 
   return (
     <div className="reports-page">
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="reports-main">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         <div className="page-header">
-          <h1>RELATÓRIOS DO SISTEMA</h1>
+          <h1>DASHBOARD</h1>
         </div>
 
         {/* Cards de Estatísticas Gerais */}
@@ -395,4 +405,4 @@ function ReportsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
   );
 }
 
-export default ReportsPage;
+export default DashboardPage;

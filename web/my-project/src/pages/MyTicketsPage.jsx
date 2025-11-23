@@ -1,28 +1,28 @@
-// src/pages/CompletedTicketsPage.jsx
+// src/pages/MyTicketsPage.jsx
 import React, { useState, useEffect } from 'react';
-import '../styles/completed-tickets.css';
+import '../styles/my-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
-import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
+function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState('dataFechamento'); // codigo, titulo, prioridade, dataFechamento
+  const [sortBy, setSortBy] = useState('dataAbertura'); // codigo, titulo, prioridade, dataAbertura, status
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
 
   const handleTicketClick = (ticketId) => {
     if (onNavigateToTicketDetail) {
-      onNavigateToTicketDetail(ticketId, 'completed-tickets');
+      onNavigateToTicketDetail(ticketId, 'my-tickets');
     }
   };
 
   useEffect(() => {
     loadTickets();
-  }, [userInfo?.id, userInfo?.permissao]);
+  }, [userInfo?.id]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -32,29 +32,30 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
     try {
       setLoading(true);
       
-      const isColaborador = userInfo?.permissao === 1;
-      const filters = {
-        status: 3
-      };
-      
-      if (isColaborador) {
-        let userId = userInfo?.id;
-        if (!userId) {
-          try {
-            const token = localStorage.getItem('authToken');
-            if (token) {
-              const payload = JSON.parse(atob(token.split('.')[1]));
-              userId = payload?.sub || payload?.id;
-            }
-          } catch (e) {
-            console.error('Erro ao decodificar token:', e);
+      // Obter ID do usuário
+      let userId = userInfo?.id;
+      if (!userId) {
+        try {
+          const token = localStorage.getItem('authToken');
+          if (token) {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userId = payload?.sub || payload?.id;
           }
-        }
-        
-        if (userId) {
-          filters.solicitanteId = Number(userId);
+        } catch (e) {
+          console.error('Erro ao decodificar token:', e);
         }
       }
+      
+      if (!userId) {
+        setTickets([]);
+        setLoading(false);
+        return;
+      }
+
+      // Buscar todos os chamados do usuário (solicitante)
+      const filters = {
+        solicitanteId: Number(userId)
+      };
       
       const apiTickets = await ticketService.getTickets(filters);
       
@@ -69,40 +70,29 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           if (val.includes('baix')) return 'BAIXA';
           return 'MÉDIA';
         };
-        
-        let filteredTickets = apiTickets.filter(item => item.status === 3);
-        
-        if (isColaborador) {
-          let userId = userInfo?.id;
-          if (!userId) {
-            try {
-              const token = localStorage.getItem('authToken');
-              if (token) {
-                const payload = JSON.parse(atob(token.split('.')[1]));
-                userId = payload?.sub || payload?.id;
-              }
-            } catch (e) {
-              console.error('Erro ao obter userId do token:', e);
+
+        const mapStatus = (s) => {
+          if (typeof s === 'number') {
+            switch (s) {
+              case 1: return 'ABERTO';
+              case 2: return 'EM ATENDIMENTO';
+              case 3: return 'FECHADO';
+              default: return 'DESCONHECIDO';
             }
           }
-          
-          if (userId) {
-            userId = Number(userId);
-            filteredTickets = filteredTickets.filter(item => {
-              const solicitanteId = item.solicitanteId || item.SolicitanteId;
-              return Number(solicitanteId) === userId;
-            });
-          }
-        }
+          return 'DESCONHECIDO';
+        };
         
-        const mapped = filteredTickets
+        const mapped = apiTickets
           .map(item => ({
             id: item.id,
             codigo: String(item.id).padStart(6, '0'),
             titulo: item.titulo || '',
             prioridade: mapPriority(item.prioridade),
-            dataFechamento: item.dataFechamento || item.dataAbertura,
             status: item.status,
+            statusText: mapStatus(item.status),
+            dataAbertura: item.dataAbertura,
+            dataFechamento: item.dataFechamento,
             tecnico: item.tecnicoResponsavel?.nome || 'N/A'
           }));
         
@@ -148,9 +138,14 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           aValue = priorityOrder[a.prioridade] || 4;
           bValue = priorityOrder[b.prioridade] || 4;
           break;
-        case 'dataFechamento':
-          aValue = new Date(a.dataFechamento);
-          bValue = new Date(b.dataFechamento);
+        case 'status':
+          const statusOrder = { 'ABERTO': 1, 'EM ATENDIMENTO': 2, 'FECHADO': 3 };
+          aValue = statusOrder[a.statusText] || 4;
+          bValue = statusOrder[b.statusText] || 4;
+          break;
+        case 'dataAbertura':
+          aValue = new Date(a.dataAbertura);
+          bValue = new Date(b.dataAbertura);
           break;
         default:
           return 0;
@@ -182,38 +177,30 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
-  };
-
-  const getStatusText = (status) => {
-    switch (status) {
-      case 3: return 'FECHADO';
-      case 4: return 'RESOLVIDO';
-      case 5: return 'CONCLUÍDO';
-      default: return 'N/A';
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
-      case 3: return '#6c757d';
-      case 4: return '#28a745';
-      case 5: return '#6c757d';
+      case 1: return '#007bff'; // Aberto - azul
+      case 2: return '#ffc107'; // Em Atendimento - amarelo
+      case 3: return '#6c757d'; // Fechado - cinza
       default: return '#6c757d';
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  };
+
   if (loading) {
     return (
-      <div className="completed-tickets-page">
+      <div className="my-tickets-page">
         <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
         <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="completed-tickets-main">
+        <main className="my-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando chamados concluídos...</p>
+            <p>Carregando seus chamados...</p>
           </div>
         </main>
       </div>
@@ -221,11 +208,11 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   }
 
   return (
-    <div className="completed-tickets-page">
+    <div className="my-tickets-page">
       <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
-      <main className="completed-tickets-main">
+      <main className="my-tickets-main">
         <button 
           className="back-button" 
           onClick={onNavigateToHome}
@@ -236,7 +223,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
         
         {/* Header da página */}
         <div className="page-header">
-          <h1>CHAMADOS CONCLUÍDOS</h1>
+          <h1>MEUS CHAMADOS</h1>
         </div>
 
         {/* Filtros */}
@@ -250,7 +237,6 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
           <div className="sort-options">
             <label>
               <FaFilter className="filter-icon" />
@@ -260,11 +246,11 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
               <option value="codigo">Código</option>
               <option value="titulo">Título</option>
               <option value="prioridade">Prioridade</option>
-              <option value="dataFechamento">Data de Fechamento</option>
+              <option value="dataAbertura">Data Limite</option>
             </select>
             <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-              <option value="desc">Mais Recente</option>
-              <option value="asc">Mais Antigo</option>
+              <option value="asc">Crescente</option>
+              <option value="desc">Decrescente</option>
             </select>
           </div>
         </div>
@@ -283,18 +269,18 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                 <th onClick={() => handleSort('prioridade')} className="sortable">
                   PRIORIDADE {sortBy === 'prioridade' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
-                <th>STATUS</th>
-                <th>TÉCNICO</th>
-                <th onClick={() => handleSort('dataFechamento')} className="sortable">
-                  DATA FECHAMENTO {sortBy === 'dataFechamento' && (sortOrder === 'asc' ? '▲' : '▼')}
+                <th onClick={() => handleSort('dataAbertura')} className="sortable">
+                  DATA LIMITE {sortBy === 'dataAbertura' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
+                <th>STATUS</th>
+                <th>TÉCNICO RESPONSÁVEL</th>
               </tr>
             </thead>
             <tbody>
               {filteredTickets.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="no-data">
-                    <p>Nenhum chamado concluído encontrado</p>
+                    <p>Nenhum chamado encontrado</p>
                   </td>
                 </tr>
               ) : (
@@ -314,16 +300,16 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                         {ticket.prioridade}
                       </span>
                     </td>
+                    <td className="date-cell">{formatDate(ticket.dataAbertura)}</td>
                     <td>
                       <span 
                         className="status-badge"
                         style={{ backgroundColor: getStatusColor(ticket.status) }}
                       >
-                        {getStatusText(ticket.status)}
+                        {ticket.statusText}
                       </span>
                     </td>
                     <td className="tecnico-cell">{ticket.tecnico}</td>
-                    <td className="date-cell">{formatDate(ticket.dataFechamento)}</td>
                   </tr>
                 ))
               )}
@@ -335,5 +321,4 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   );
 }
 
-export default CompletedTicketsPage;
-
+export default MyTicketsPage;

@@ -1,4 +1,6 @@
-.completed-tickets-page {
+/* src/styles/users-report.css */
+
+.users-report-page {
   display: grid;
   grid-template-areas: "sidebar header" "sidebar main";
   grid-template-columns: 280px 1fr;
@@ -7,7 +9,16 @@
   background-color: #F8F9FA;
 }
 
-.completed-tickets-main {
+/* Header e Sidebar no grid */
+.users-report-page .home-header {
+  grid-area: header;
+}
+
+.users-report-page .home-sidebar {
+  grid-area: sidebar;
+}
+
+.users-report-main {
   grid-area: main;
   padding: 2rem;
   overflow-y: auto;
@@ -63,6 +74,7 @@
   transform: translateY(0);
 }
 
+/* Header da página */
 .page-header {
   background: #A93226;
   color: white;
@@ -79,6 +91,7 @@
   text-transform: uppercase;
 }
 
+/* Seção de filtros */
 .filters-section {
   background: white;
   padding: 2rem;
@@ -100,15 +113,19 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #737373;
+  color: var(--neutral-700, #737373);
 }
 
 .search-box input {
   width: 100%;
   padding: 1rem 1rem 1rem 3rem;
-  border: 1px solid #d4d4d4;
+  border: 1px solid var(--border-light, #d4d4d4);
   border-radius: 0.5rem;
   font-size: 1rem;
+  background: var(--neutral-100, #f5f5f5);
+  color: var(--neutral-800, #333);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
 .search-box input:focus {
@@ -116,27 +133,12 @@
   border-color: #A93226;
 }
 
-.sort-options {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
+.search-box input::placeholder {
+  color: var(--neutral-500, #999);
+  font-weight: var(--font-weight-normal, 400);
 }
 
-.sort-options label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.sort-options select {
-  padding: 1rem;
-  border: 1px solid #d4d4d4;
-  border-radius: 0.5rem;
-  font-size: 1rem;
-  min-width: 150px;
-}
-
+/* Seção da tabela */
 .table-section {
   background: white;
   border-radius: 1rem;
@@ -144,14 +146,17 @@
   overflow: hidden;
 }
 
-.tickets-table {
+.users-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.tickets-table th {
+.users-table thead {
   background-color: #A93226;
   color: white;
+}
+
+.users-table th {
   padding: 1rem;
   text-align: left;
   font-weight: 600;
@@ -159,71 +164,43 @@
   text-transform: uppercase;
 }
 
-.tickets-table th.sortable {
+.users-table tbody tr {
+  border-bottom: 1px solid #e5e5e5;
+  transition: background-color 0.2s;
   cursor: pointer;
 }
 
-.tickets-table th.sortable:hover {
-  background-color: #8B2635;
+.users-table tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
-.tickets-table td {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.tickets-table tr:nth-child(even) {
+.users-table tbody tr:nth-child(even) {
   background-color: #FAFAFA;
 }
 
-.tickets-table tr:hover {
+.users-table tbody tr:nth-child(even):hover {
   background-color: #f3f3f3;
 }
 
-.code-cell {
-  font-family: monospace;
-  font-weight: 600;
-  color: #A93226;
-}
-
-.title-cell {
-  font-weight: 500;
-}
-
-.priority-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: white;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: white;
-}
-
-.tecnico-cell {
-  font-style: italic;
-  color: #737373;
-}
-
-.date-cell {
-  font-family: monospace;
+.users-table td {
+  padding: 1rem;
   font-size: 0.875rem;
-  color: #737373;
+  color: #333;
 }
 
-.no-data {
+.users-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Estado vazio */
+.users-table tbody tr td[colspan] {
   text-align: center;
   padding: 3rem;
+  color: #999;
+  font-style: italic;
 }
 
+/* Loading */
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -231,6 +208,11 @@
   justify-content: center;
   height: 400px;
   gap: 1.5rem;
+}
+
+.loading-container p {
+  color: var(--text-primary, #333);
+  font-weight: 600;
 }
 
 .loading-spinner {
@@ -247,8 +229,9 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Responsividade */
 @media (max-width: 768px) {
-  .completed-tickets-page {
+  .users-report-page {
     grid-template-columns: 1fr;
     grid-template-areas: "header" "main";
   }
@@ -256,5 +239,17 @@
   .filters-section {
     flex-direction: column;
   }
+  
+  .search-box {
+    width: 100%;
+  }
+  
+  .users-table {
+    font-size: 0.75rem;
+  }
+  
+  .users-table th,
+  .users-table td {
+    padding: 0.75rem 0.5rem;
+  }
 }
-

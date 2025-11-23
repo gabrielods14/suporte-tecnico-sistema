@@ -3,7 +3,10 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
+import ConfirmSaveModal from '../components/ConfirmSaveModal';
 import '../styles/profile.css';
+import '../styles/modal.css';
+import { userService } from '../utils/api';
 
 const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavigateToProfile, userInfo, onUpdateUserInfo }) => {
   const [formData, setFormData] = useState({
@@ -197,9 +200,49 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
       return;
     }
     
-    setIsLoading(true);
+    // Open confirmation modal instead of executing immediately
+    setConfirmOpen(true);
+  };
 
+  // State and function to control confirm modal
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+  const performSave = async () => {
+    setConfirmOpen(false);
+    setIsLoading(true);
     try {
+      // Verifica se o email já existe e pertence a outro usuário
+      try {
+        const allUsers = await userService.getUsers();
+        let usersArray = [];
+        if (Array.isArray(allUsers)) {
+          usersArray = allUsers;
+        } else if (allUsers?.usuarios && Array.isArray(allUsers.usuarios)) {
+          usersArray = allUsers.usuarios;
+        } else if (allUsers?.items && Array.isArray(allUsers.items)) {
+          usersArray = allUsers.items;
+        } else if (allUsers?.users && Array.isArray(allUsers.users)) {
+          usersArray = allUsers.users;
+        }
+
+        const emailLower = (formData.email || '').trim().toLowerCase();
+        const currentUserId = userInfo?.id || userInfo?.Id || null;
+        const existsOther = usersArray.some(u => {
+          const uEmail = ((u.email || u.Email || '') + '').toLowerCase();
+          const uId = u.id || u.Id || null;
+          return uEmail === emailLower && (currentUserId == null || Number(uId) !== Number(currentUserId));
+        });
+
+        if (existsOther) {
+          showToast('O e-mail informado já existe para outro usuário. Verifique e tente novamente.', 'error');
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Não foi possível verificar emails existentes antes de salvar perfil:', err);
+        // prossegue e confia na validação do backend
+      }
+
       const token = localStorage.getItem('authToken');
 
       if (!token) {
@@ -237,7 +280,13 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
           });
         }
       } else {
-        showToast(data.message || 'Erro ao atualizar perfil.', 'error');
+        // Se backend informar que o email já existe, mostra mensagem específica
+        const msg = data?.message || '';
+        if ((msg || '').toLowerCase().includes('email')) {
+          showToast('O e-mail informado já existe. Verifique e tente novamente.', 'error');
+        } else {
+          showToast(msg || 'Erro ao atualizar perfil.', 'error');
+        }
       }
     } catch (error) {
       console.error('Erro ao atualizar perfil:', error);
@@ -258,7 +307,7 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
   return (
     <div className="profile-layout">
       <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage="profile" onNavigate={onNavigateToPage} />
+      <Sidebar currentPage="profile" onNavigate={onNavigateToPage} userInfo={userInfo} />
       <main className="profile-main-content">
         <button 
           className="back-button" 
@@ -400,6 +449,13 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
         </div>
       </main>
       
+      <ConfirmSaveModal
+        isOpen={confirmOpen}
+        title="Confirmar alterações"
+        message="Tem certeza que deseja salvar as alterações do seu perfil?"
+        onConfirm={performSave}
+        onCancel={() => setConfirmOpen(false)}
+      />
       <Toast
         isVisible={toast.isVisible}
         message={toast.message}

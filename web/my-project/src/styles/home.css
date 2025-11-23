@@ -66,11 +66,17 @@
   align-items: center;
   gap: var(--space-sm);
   font-size: var(--font-size-sm);
-  color: var(--text-inverse);
+  color: var(--text-inverse, #ffffff);
+  /* Defensive: ensure user info is visible and interactive */
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 900; /* put header contents above other elements */
 }
 
 .header-user-info .user-icon {
   font-size: var(--font-size-lg);
+  color: var(--text-inverse, #ffffff);
+  display: inline-block;
 }
 
 .header-user-info .settings-icon {
@@ -84,8 +90,32 @@
   transform: rotate(90deg);
 }
 
-.header-user-info .dropdown-arrow {
-  margin-left: var(--space-xs);
+
+.settings-dropdown-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff2f2;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(169,50,38,0.08);
+  padding: 4px 10px;
+  gap: 8px;
+  margin-left: 12px;
+  position: relative;
+}
+
+.settings-dropdown-square .settings-icon {
+  font-size: 1.2rem;
+  color: #a93226;
+  margin: 0;
+  pointer-events: none;
+}
+
+.settings-dropdown-square .dropdown-arrow {
+  font-size: 1.2rem;
+  color: #a93226;
+  margin: 0;
+  cursor: pointer;
 }
 
 /* ===== SIDEBAR ===== */

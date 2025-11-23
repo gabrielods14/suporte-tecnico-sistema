@@ -14,8 +14,8 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
 
   // Informações de contato do administrador
   const adminContact = {
-    email: 'admin@helpwave.com',
-    phone: '(11) 98765-4321'
+    email: 'admin2@helpwave.com',
+    phone: '(12) 99999-8888'
   };
 
   const handleEmailClick = () => {
@@ -29,9 +29,17 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
   return (
     <div className="contact-layout">
       <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       
       <main className="contact-main-content">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         <div className="contact-header">
           <h1>
             <FaHeadset className="contact-title-icon" />

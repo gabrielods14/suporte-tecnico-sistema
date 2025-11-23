@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
 import '../styles/newticket.css';
 import { ticketService } from '../utils/api';
 
@@ -16,6 +17,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   // Opções para o dropdown de tipo de chamado
   const tiposChamado = [
@@ -90,7 +92,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
     setToast({ isVisible: false, message: '', type: 'error' });
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = (event) => {
     event.preventDefault();
     
     // Validação final antes do envio - Heurística de Nielsen: Prevenção de Erros
@@ -104,6 +106,12 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
       return;
     }
     
+    // Abre o modal de confirmação
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmSubmit = async () => {
+    setIsConfirmModalOpen(false);
     setIsLoading(true);
 
     try {
@@ -159,7 +167,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
   return (
     <div className="newticket-layout">
       <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage="newticket" onNavigate={onNavigateToPage} />
+      <Sidebar currentPage="newticket" onNavigate={onNavigateToPage} userInfo={userInfo} />
       <main className="newticket-main-content">
         <button 
           className="back-button" 
@@ -276,6 +284,16 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
         message={toast.message}
         type={toast.type}
         onClose={hideToast}
+      />
+      
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        title="CONFIRMAR CHAMADO"
+        message={`Tem certeza que deseja enviar o chamado com o título "${formData.titulo}"?`}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmSubmit}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

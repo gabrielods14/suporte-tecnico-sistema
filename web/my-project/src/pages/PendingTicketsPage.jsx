@@ -216,7 +216,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   if (loading) {
     return (
       <div className="pending-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
         <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="pending-tickets-main">
           <div className="loading-container">
@@ -230,10 +230,18 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
 
   return (
     <div className="pending-tickets-page">
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="pending-tickets-main">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         {/* Header da página */}
         <div className="page-header">
           <h1>CHAMADOS EM ANDAMENTO</h1>

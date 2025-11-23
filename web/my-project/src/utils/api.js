@@ -304,6 +304,46 @@ export const userService = {
   },
 
   /**
+   * Obtém informações de um único usuário
+   * Note: /api/Usuarios/{id} endpoint may not be available, so we fallback to fetching all and filtering
+   */
+  async getUser(userId) {
+    try {
+      // Try direct endpoint first
+      return await apiClient.get(`/api/Usuarios/${userId}`);
+    } catch (error) {
+      console.warn(`Direct endpoint /api/Usuarios/${userId} failed, attempting fallback...`);
+      
+      // Fallback: fetch all users and find the one we need
+      try {
+        const allData = await this.getUsers();
+        let users = [];
+        
+        if (Array.isArray(allData)) {
+          users = allData;
+        } else if (allData?.usuarios && Array.isArray(allData.usuarios)) {
+          users = allData.usuarios;
+        } else if (allData?.items && Array.isArray(allData.items)) {
+          users = allData.items;
+        } else if (allData?.users && Array.isArray(allData.users)) {
+          users = allData.users;
+        }
+        
+        const foundUser = users.find(u => Number(u.id) === Number(userId));
+        if (foundUser) {
+          console.log(`User ${userId} found via fallback`);
+          return foundUser;
+        }
+        
+        throw new Error(`User ${userId} not found`);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        throw error; // Throw original error
+      }
+    }
+  },
+
+  /**
    * Atualiza dados do usuário
    */
   async updateUser(userId, userData) {

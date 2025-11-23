@@ -4,7 +4,7 @@ import '../styles/home.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 // Importando os ícones para os cards
-import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus } from 'react-icons/fa';
+import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus, FaList } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
 
 function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
@@ -20,6 +20,9 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
     switch (cardType) {
       case 'new-ticket':
         onNavigateToNewTicket();
+        break;
+      case 'my-tickets':
+        onNavigateToPage('my-tickets');
         break;
       case 'pending-tickets':
         onNavigateToPage('pending-tickets');
@@ -46,7 +49,7 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
         userInfo={userInfo}
         onNavigateToProfile={onNavigateToProfile}
       /> {/* Adicionado ao grid area 'header' */}
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} /> {/* Adicionado ao grid area 'sidebar' */}
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} /> {/* Adicionado ao grid area 'sidebar' */}
 
       <main className="home-main-content">
         <h2 className="main-welcome">BEM-VINDO(A), {userName}</h2>
@@ -57,6 +60,14 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
             <FaEdit className="card-icon" />
             <span>NOVO CHAMADO</span>
           </article>
+
+          {/* Card "MEUS CHAMADOS" - visível para colaboradores (1) */}
+          {permissao === 1 && (
+            <article className="card" onClick={() => handleCardClick('my-tickets')}>
+              <FaList className="card-icon" />
+              <span>MEUS CHAMADOS</span>
+            </article>
+          )}
 
           {/* Cards para Suporte (2) e Admin (3) */}
           {(permissao === 2 || permissao === 3) && (
