@@ -221,7 +221,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
         <main className="pending-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando...</p>
+            <p>Carregando chamados...</p>
           </div>
         </main>
       </div>

@@ -166,7 +166,7 @@ function UserActivityPage({ onLogout, onNavigateToHome, onNavigateToPage, curren
         <main className="user-activity-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando...</p>
+            <p>Carregando atividade do usuário...</p>
           </div>
         </main>
       </div>

@@ -207,7 +207,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         <main className="ticket-detail-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando...</p>
+            <p>Carregando detalhes do chamado...</p>
           </div>
         </main>
       </div>

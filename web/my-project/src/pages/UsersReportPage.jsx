@@ -14,6 +14,15 @@ function mapPermissaoToLabel(p) {
   return 'Desconhecido';
 }
 
+function getPermissionColor(permissao) {
+  switch (permissao) {
+    case 1: return '#4299e1';
+    case 2: return '#f6ad55';
+    case 3: return '#48bb78';
+    default: return '#6c757d';
+  }
+}
+
 function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile, onViewUser }) {
   const [users, setUsers] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -106,7 +115,7 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
         <main className="users-report-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando...</p>
+            <p>Carregando usuários...</p>
           </div>
         </main>
       </div>
@@ -151,12 +160,13 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
                 <th>NOME</th>
                 <th>E-MAIL</th>
                 <th>CARGO</th>
+                <th>PERMISSÃO</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="4">Nenhum usuário encontrado</td>
+                  <td colSpan="5">Nenhum usuário encontrado</td>
                 </tr>
               ) : (
                 filtered.map(u => (
@@ -164,7 +174,8 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
                     <td>{String(u.id)}</td>
                     <td>{u.nome}</td>
                     <td>{u.email}</td>
-                    <td>{u.cargo || mapPermissaoToLabel(u.permissao)}</td>
+                    <td>{u.cargo}</td>
+                    <td><span className="permission-badge" style={{ backgroundColor: getPermissionColor(u.permissao) }}>{mapPermissaoToLabel(u.permissao)}</span></td>
                   </tr>
                 ))
               )}

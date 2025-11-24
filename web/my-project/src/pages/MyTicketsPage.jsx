@@ -200,7 +200,7 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
         <main className="my-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando...</p>
+            <p>Carregando seus chamados...</p>
           </div>
         </main>
       </div>
