@@ -28,6 +28,10 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingUser, setEditingUser] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // Validação em tempo real - Heurística de Nielsen: Prevenção de Erros
   const validateField = (name, value) => {
@@ -268,6 +272,87 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
     );
   });
 
+  const handleEditUser = (user) => {
+    setEditingUser({
+      id: user.id || user.Id,
+      nome: user.nome || user.Nome || '',
+      email: user.email || user.Email || '',
+      cargo: user.cargo || user.Cargo || '',
+      telefone: user.telefone || user.Telefone || '',
+      permissao: user.permissao || user.Permissao || 1
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteUser = (user) => {
+    setDeleteConfirmUser(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirmUser) return;
+    
+    setIsDeleteModalOpen(false);
+    setIsLoading(true);
+
+    try {
+      const userId = deleteConfirmUser.id || deleteConfirmUser.Id;
+      await userService.deleteUser(userId);
+      showToast('Usuário excluído com sucesso!', 'success');
+      await loadUsers();
+    } catch (error) {
+      console.error('Erro ao excluir usuário:', error);
+      const msg = error?.data?.message || error?.message || 'Erro ao excluir usuário.';
+      showToast(msg, 'error');
+    } finally {
+      setIsLoading(false);
+      setDeleteConfirmUser(null);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingUser) return;
+
+    // Validação básica
+    if (!editingUser.nome?.trim() || !editingUser.email?.trim() || !editingUser.cargo?.trim()) {
+      showToast('Por favor, preencha todos os campos obrigatórios.', 'error');
+      return;
+    }
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editingUser.email)) {
+      showToast('E-mail inválido.', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    setIsEditModalOpen(false);
+
+    try {
+      const userId = editingUser.id;
+      const updateData = {
+        Nome: editingUser.nome.trim(),
+        Email: editingUser.email.trim(),
+        Cargo: editingUser.cargo.trim(),
+        Telefone: editingUser.telefone?.trim() || null,
+        Permissao: editingUser.permissao
+      };
+
+      await userService.updateUser(userId, updateData);
+      showToast('Usuário atualizado com sucesso!', 'success');
+      await loadUsers();
+      setEditingUser(null);
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      const msg = error?.data?.message || error?.message || 'Erro ao atualizar usuário.';
+      showToast(msg, 'error');
+      setIsEditModalOpen(true); // Reabre o modal em caso de erro
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="register-layout">
       <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
@@ -498,23 +583,48 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
                       <div className="user-col-email">Email</div>
                       <div className="user-col-cargo">Cargo</div>
                       <div className="user-col-permission">Permissão</div>
+                      <div className="user-col-actions">Ações</div>
                     </div>
                     <div className="users-table-body">
                       {filteredUsers.map((user) => (
-                        <div key={user.id} className="user-row">
+                        <div key={user.id || user.Id} className="user-row">
                           <div className="user-col-name">
                             <FaUser className="user-icon" />
-                            {user.nome || 'N/A'}
+                            {user.nome || user.Nome || 'N/A'}
                           </div>
-                          <div className="user-col-email">{user.email || 'N/A'}</div>
-                          <div className="user-col-cargo">{user.cargo || 'N/A'}</div>
+                          <div className="user-col-email">{user.email || user.Email || 'N/A'}</div>
+                          <div className="user-col-cargo">{user.cargo || user.Cargo || 'N/A'}</div>
                           <div className="user-col-permission">
                             <span 
                               className="permission-badge"
-                              style={{ backgroundColor: getPermissionColor(user.permissao) }}
+                              style={{ backgroundColor: getPermissionColor(user.permissao || user.Permissao) }}
                             >
-                              {getPermissionLabel(user.permissao)}
+                              {getPermissionLabel(user.permissao || user.Permissao)}
                             </span>
+                          </div>
+                          <div className="user-col-actions">
+                            <button
+                              className="action-button edit-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditUser(user);
+                              }}
+                              aria-label="Editar usuário"
+                              title="Editar usuário"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              className="action-button delete-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(user);
+                              }}
+                              aria-label="Excluir usuário"
+                              title="Excluir usuário"
+                            >
+                              <FaTrash />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -542,6 +652,97 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         cancelText="Cancelar"
         onConfirm={handleConfirmCadastro}
         onCancel={() => setIsConfirmModalOpen(false)}
+      />
+
+      {/* Modal de Edição */}
+      {isEditModalOpen && editingUser && (
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div className="modal-content edit-user-modal" onClick={(e) => e.stopPropagation()}>
+            <header className="modal-header">
+              <h2>EDITAR USUÁRIO</h2>
+            </header>
+            <main className="modal-body">
+              <div className="form-group">
+                <label htmlFor="edit-nome">Nome Completo *</label>
+                <input
+                  type="text"
+                  id="edit-nome"
+                  value={editingUser.nome}
+                  onChange={(e) => setEditingUser({ ...editingUser, nome: e.target.value })}
+                  placeholder="Digite o nome completo"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-email">E-mail *</label>
+                <input
+                  type="email"
+                  id="edit-email"
+                  value={editingUser.email}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                  placeholder="exemplo@helpwave.com"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-cargo">Cargo *</label>
+                <input
+                  type="text"
+                  id="edit-cargo"
+                  value={editingUser.cargo}
+                  onChange={(e) => setEditingUser({ ...editingUser, cargo: e.target.value })}
+                  placeholder="Ex: Administrador, Gestor, Técnico"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-telefone">Telefone</label>
+                <input
+                  type="tel"
+                  id="edit-telefone"
+                  value={editingUser.telefone}
+                  onChange={(e) => setEditingUser({ ...editingUser, telefone: e.target.value })}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="edit-permissao">Permissão *</label>
+                <div className="select-container">
+                  <select
+                    id="edit-permissao"
+                    value={editingUser.permissao}
+                    onChange={(e) => setEditingUser({ ...editingUser, permissao: Number(e.target.value) })}
+                  >
+                    <option value={1}>Colaborador</option>
+                    <option value={2}>Suporte Técnico</option>
+                    <option value={3}>Administrador</option>
+                  </select>
+                  <div className="select-arrow">▼</div>
+                </div>
+              </div>
+            </main>
+            <footer className="modal-footer">
+              <button className="modal-button modal-button-cancel" onClick={() => setIsEditModalOpen(false)}>
+                Cancelar
+              </button>
+              <button className="modal-button modal-button-confirm" onClick={handleSaveEdit} disabled={isLoading}>
+                {isLoading ? 'Salvando...' : 'Salvar'}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="CONFIRMAR EXCLUSÃO"
+        message={`Tem certeza que deseja excluir o usuário ${deleteConfirmUser?.nome || deleteConfirmUser?.Nome || ''}? Esta ação não pode ser desfeita.`}
+        confirmText="Excluir"
+        cancelText="Cancelar"
+        isDangerous={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setDeleteConfirmUser(null);
+        }}
       />
     </div>
   );

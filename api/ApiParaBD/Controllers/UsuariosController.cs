@@ -107,6 +107,36 @@ namespace ApiParaBD.Controllers
             return Ok(usuario);
         }
 
+        // --- ENDPOINT: ATUALIZAR USUÁRIO POR ID (SÓ ADMIN) ---
+        [Authorize(Roles = "Administrador")]
+        [HttpPut("{id}")]
+        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioDto dto)
+        {
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null) return NotFound();
+
+            // Verifica se o e-mail já existe em outro usuário
+            if (dto.Email != null && dto.Email != usuario.Email)
+            {
+                if (await _context.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != id))
+                {
+                    return BadRequest(new { message = "E-mail já cadastrado para outro usuário." });
+                }
+            }
+
+            // Atualiza apenas os campos que foram enviados
+            if (dto.Nome != null) usuario.Nome = dto.Nome;
+            if (dto.Email != null) usuario.Email = dto.Email;
+            if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
+            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
+            if (dto.Permissao.HasValue) usuario.Permissao = dto.Permissao.Value;
+
+            await _context.SaveChangesAsync();
+            
+            usuario.SenhaHash = "";
+            return Ok(usuario);
+        }
+
         // --- ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---
         [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]

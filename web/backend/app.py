@@ -11,7 +11,7 @@ print("[INFO] Caminho raiz adicionado ao sys.path:", root_path)
 # Import absoluto a partir do diretório raiz do projeto
 # O pacote IAAPI está dentro da pasta `web/IAAPI`, portanto importamos via `web.IAAPI`.
 from web.IAAPI.GeminiController import gemini_bp
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from config import config
@@ -80,19 +80,29 @@ def register_routes():
         from pages.chamados_detalhar_atualizar import detalhar_chamado
         app.add_url_rule('/chamados/<int:chamado_id>', view_func=detalhar_chamado, methods=['GET', 'PUT', 'OPTIONS'])
         
-        # Importa e registra rota unificada de gerenciar usuário (GET e PUT)
+        # Importa funções de usuários
         from pages.atualizar_usuario import gerenciar_usuario
-        app.add_url_rule('/usuarios/<int:usuario_id>', view_func=gerenciar_usuario, methods=['GET', 'PUT', 'OPTIONS'])
-        
-        # Importa e registra rota para gerenciar meu próprio perfil (GET e PUT)
         from pages.meu_perfil import gerenciar_meu_perfil
-        app.add_url_rule('/api/Usuarios/meu-perfil', view_func=gerenciar_meu_perfil, methods=['GET', 'PUT', 'OPTIONS'])
-        
-        # Importa e registra rota para listar usuários e estatísticas
         from pages.listar_usuarios_relatorios import listar_usuarios
+        
+        # IMPORTANTE: Rotas mais específicas devem vir ANTES das rotas com parâmetros
+        # Rota para listar usuários (sem parâmetros)
         app.add_url_rule('/api/Usuarios', view_func=listar_usuarios, methods=['GET', 'OPTIONS'])
         
+        # Rota para gerenciar meu próprio perfil (específica, deve vir antes da rota com parâmetro)
+        app.add_url_rule('/api/Usuarios/meu-perfil', view_func=gerenciar_meu_perfil, methods=['GET', 'PUT', 'OPTIONS'])
+        
+        # Rota para gerenciar usuário por ID (deve vir DEPOIS das rotas específicas)
+        app.add_url_rule('/api/Usuarios/<int:usuario_id>', view_func=gerenciar_usuario, methods=['GET', 'PUT', 'DELETE', 'OPTIONS'])
+        
+        # Rota alternativa para /usuarios/<id> (mantida para compatibilidade)
+        app.add_url_rule('/usuarios/<int:usuario_id>', view_func=gerenciar_usuario, methods=['GET', 'PUT', 'DELETE', 'OPTIONS'])
+        
         print("Rotas registradas com sucesso!")
+        print("Rotas de Usuários:")
+        print("  - GET, PUT, DELETE /api/Usuarios/<id>")
+        print("  - GET, PUT /api/Usuarios/meu-perfil")
+        print("  - GET /api/Usuarios")
     except Exception as e:
         print(f"Erro ao registrar rotas: {e}")
 
@@ -101,6 +111,13 @@ register_routes()
 
 # Registra as rotas da IA Gemini
 app.register_blueprint(gemini_bp, url_prefix='/api/gemini')
+
+# Handler para métodos não permitidos (405)
+@app.errorhandler(405)
+def method_not_allowed(e):
+    print(f'[ERROR 405] Método não permitido: {request.method} em {request.url}')
+    print(f'[ERROR 405] Rotas disponíveis: {[str(rule) for rule in app.url_map.iter_rules()]}')
+    return jsonify({"message": f"Método {request.method} não permitido para esta rota"}), 405
 
 # ----------------------------------------------------
 # 3. Execução do Servidor

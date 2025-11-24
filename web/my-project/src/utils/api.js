@@ -112,12 +112,28 @@ class ApiClient {
    * Processa a resposta da API
    */
   async handleResponse(response) {
+    // Respostas 204 (NoContent) não têm corpo
+    if (response.status === 204) {
+      return { message: 'Operação realizada com sucesso' };
+    }
+
     let data;
     
     try {
-      data = await response.json();
+      const text = await response.text();
+      // Se a resposta estiver vazia, retorna um objeto vazio
+      if (!text) {
+        data = {};
+      } else {
+        data = JSON.parse(text);
+      }
     } catch (error) {
-      data = { message: 'Erro interno do servidor.' };
+      // Se não conseguir fazer parse, pode ser que não tenha corpo
+      if (response.ok) {
+        data = { message: 'Operação realizada com sucesso' };
+      } else {
+        data = { message: 'Erro interno do servidor.' };
+      }
     }
 
     if (!response.ok) {
@@ -347,14 +363,14 @@ export const userService = {
    * Atualiza dados do usuário
    */
   async updateUser(userId, userData) {
-    return await apiClient.put(`/users/${userId}`, userData);
+    return await apiClient.put(`/api/Usuarios/${userId}`, userData);
   },
 
   /**
    * Remove usuário
    */
   async deleteUser(userId) {
-    return await apiClient.delete(`/users/${userId}`);
+    return await apiClient.delete(`/api/Usuarios/${userId}`);
   }
 };
 
