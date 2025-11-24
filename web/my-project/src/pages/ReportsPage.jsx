@@ -229,7 +229,7 @@ function DashboardPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
         <main className="reports-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando relatórios...</p>
+            <p>Carregando...</p>
           </div>
         </main>
       </div>

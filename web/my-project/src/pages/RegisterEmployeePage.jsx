@@ -482,7 +482,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
             {loadingUsers ? (
               <div className="users-loading">
                 <div className="loading-spinner"></div>
-                <p>Carregando usuários...</p>
+                <p>Carregando...</p>
               </div>
             ) : (
               <div className="users-list-container">

@@ -106,7 +106,7 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
         <main className="users-report-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando usuários...</p>
+            <p>Carregando...</p>
           </div>
         </main>
       </div>

@@ -213,7 +213,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
         <main className="completed-tickets-main">
           <div className="loading-container">
             <div className="loading-spinner"></div>
-            <p>Carregando chamados concluídos...</p>
+            <p>Carregando...</p>
           </div>
         </main>
       </div>

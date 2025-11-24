@@ -216,13 +216,37 @@ function App() {
     return (
       <div style={{ 
         display: 'flex', 
+        flexDirection: 'column',
         justifyContent: 'center', 
         alignItems: 'center', 
         height: '100vh',
-        fontSize: '18px',
-        color: '#000000'
+        gap: '1.5rem',
+        backgroundColor: '#FFFFFF',
+        padding: '2rem'
       }}>
-        Carregando...
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '5px solid #F5F5F5',
+          borderTop: '5px solid #8B4513',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.08)',
+          backgroundColor: 'transparent'
+        }}></div>
+        <p style={{
+          color: '#000000',
+          fontWeight: '700',
+          fontSize: '1.125rem',
+          margin: 0,
+          textAlign: 'center'
+        }}>Carregando...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }

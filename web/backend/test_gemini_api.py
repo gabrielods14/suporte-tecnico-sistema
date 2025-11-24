@@ -20,7 +20,7 @@ def test_gemini_endpoint():
     }
     
     print("=" * 60)
-    print("TESTE DA IA API (GEMINI)")
+    print("TESTE DA IA API (GEMINI)")s
     print("=" * 60)
     print(f"\n📡 Endpoint: {endpoint}")
     print(f"📤 Dados enviados:")
