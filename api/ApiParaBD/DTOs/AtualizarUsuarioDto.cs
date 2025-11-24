@@ -1,5 +1,4 @@
-using ApiParaBD;
-
+// DTO usado para atualizar informações de um usuário
 namespace ApiParaBD.DTOs
 {
     public class AtualizarUsuarioDto

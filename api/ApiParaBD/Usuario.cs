@@ -9,6 +9,8 @@ namespace ApiParaBD
         public string? Telefone { get; set; }
         public required string Cargo { get; set; }
         public PermissaoUsuario Permissao { get; set; } // Usando o Enum
+        public bool PrimeiroAcesso { get; set; } = true; // Novo campo para primeiro acesso
+
     }
 
     public enum PermissaoUsuario
