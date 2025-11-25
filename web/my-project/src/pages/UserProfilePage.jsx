@@ -9,6 +9,44 @@ import '../styles/modal.css';
 import { userService } from '../utils/api';
 
 const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavigateToProfile, userInfo, onUpdateUserInfo }) => {
+  // Lista de cargos corporativos pré-definidos
+  const cargosCorporativos = [
+    'Diretor',
+    'Gerente',
+    'Coordenador',
+    'Supervisor',
+    'Analista',
+    'Analista de TI',
+    'Analista de Sistemas',
+    'Desenvolvedor',
+    'Técnico',
+    'Técnico de TI',
+    'Suporte Técnico',
+    'Especialista',
+    'Consultor',
+    'Assistente',
+    'Assistente Administrativo',
+    'Auxiliar',
+    'Coordenador de TI',
+    'Gerente de TI',
+    'Administrador de Sistemas',
+    'Analista de Suporte',
+    'Analista de Negócios',
+    'Product Owner',
+    'Scrum Master',
+    'Arquiteto de Software',
+    'DevOps',
+    'DBA',
+    'Analista de Segurança',
+    'Analista de Qualidade',
+    'Analista de Dados',
+    'Analista de Infraestrutura',
+    'Coordenador de Projetos',
+    'Gerente de Projetos',
+    'Estagiário',
+    'Trainee'
+  ];
+
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -372,17 +410,25 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
             
             <div className={`form-group ${errors.cargo ? 'error' : ''}`}>
               <label htmlFor="cargo">Cargo *</label>
-              <input 
-                type="text" 
-                id="cargo" 
-                name="cargo" 
-                value={formData.cargo}
-                onChange={handleInputChange}
-                placeholder="Ex: Administrador, Gestor, Técnico"
-                disabled={!isEditing}
-                required 
-                aria-describedby={errors.cargo ? 'cargo-error' : undefined}
-              />
+              <div className="select-container">
+                <select
+                  id="cargo"
+                  name="cargo"
+                  value={formData.cargo}
+                  onChange={handleInputChange}
+                  disabled={!isEditing}
+                  required
+                  aria-describedby={errors.cargo ? 'cargo-error' : undefined}
+                >
+                  <option value="">Selecione um cargo</option>
+                  {cargosCorporativos.map((cargo) => (
+                    <option key={cargo} value={cargo}>
+                      {cargo}
+                    </option>
+                  ))}
+                </select>
+                <div className="select-arrow">▼</div>
+              </div>
               {errors.cargo && (
                 <span id="cargo-error" className="error-message" role="alert">
                   {errors.cargo}

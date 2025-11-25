@@ -84,10 +84,14 @@ def register_routes():
         from pages.atualizar_usuario import gerenciar_usuario
         from pages.meu_perfil import gerenciar_meu_perfil
         from pages.listar_usuarios_relatorios import listar_usuarios
+        from pages.alterar_senha import alterar_senha
         
         # IMPORTANTE: Rotas mais específicas devem vir ANTES das rotas com parâmetros
         # Rota para listar usuários (sem parâmetros)
         app.add_url_rule('/api/Usuarios', view_func=listar_usuarios, methods=['GET', 'OPTIONS'])
+        
+        # Rota para alterar senha (específica, deve vir antes das outras rotas)
+        app.add_url_rule('/api/Usuarios/alterar-senha', view_func=alterar_senha, methods=['PUT', 'OPTIONS'])
         
         # Rota para gerenciar meu próprio perfil (específica, deve vir antes da rota com parâmetro)
         app.add_url_rule('/api/Usuarios/meu-perfil', view_func=gerenciar_meu_perfil, methods=['GET', 'PUT', 'OPTIONS'])
@@ -102,6 +106,7 @@ def register_routes():
         print("Rotas de Usuários:")
         print("  - GET, PUT, DELETE /api/Usuarios/<id>")
         print("  - GET, PUT /api/Usuarios/meu-perfil")
+        print("  - PUT /api/Usuarios/alterar-senha")
         print("  - GET /api/Usuarios")
     except Exception as e:
         print(f"Erro ao registrar rotas: {e}")

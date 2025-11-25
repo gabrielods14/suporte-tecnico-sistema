@@ -15,7 +15,23 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
   console.log('HomePage - permissao:', permissao);
   
   // Usa o nome completo diretamente do userInfo (já normalizado no App.jsx)
-  const userName = userInfo?.nome || 'Usuário';
+  // Formata o nome para exibição (primeira letra maiúscula)
+  const formatName = (name) => {
+    if (!name || name.trim() === '') return 'Usuário';
+    // Se o nome parece ser um email, extrai a parte antes do @
+    if (name.includes('@')) {
+      const emailPart = name.split('@')[0];
+      return emailPart.split(/[._-]/).map(part => 
+        part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+      ).join(' ');
+    }
+    // Formata o nome normalmente
+    return name.split(' ').map(part => 
+      part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()
+    ).join(' ');
+  };
+  
+  const userName = formatName(userInfo?.nome || 'Usuário');
   const handleCardClick = (cardType) => {
     switch (cardType) {
       case 'new-ticket':

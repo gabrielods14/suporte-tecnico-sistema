@@ -57,33 +57,37 @@ function LoginPage({ onLoginSuccess }) {
 
       if (response.ok) {
         // Salva o token no localStorage se a API retornar um
-        if (data.token) {
-          localStorage.setItem('authToken', data.token);
+        if (data.token || data.Token) {
+          localStorage.setItem('authToken', data.token || data.Token);
         }
 
         // Busca dados completos do usuário após login bem-sucedido
         let userData = data.user || { email: username };
+        
+        // Adiciona PrimeiroAcesso aos dados do usuário se vier na resposta
+        if (data.primeiroAcesso !== undefined || data.PrimeiroAcesso !== undefined) {
+          userData.primeiroAcesso = data.primeiroAcesso !== undefined ? data.primeiroAcesso : data.PrimeiroAcesso;
+        }
 
-        // Se não tiver nome completo, busca da API
-        if (!userData.nome || !userData.id) {
-          try {
-            const userId = userData.id || data.user?.id;
-            if (userId) {
-              const userResponse = await fetch(`http://localhost:5000/usuarios/${userId}`, {
-                headers: {
-                  'Authorization': `Bearer ${data.token}`
-                }
-              });
-
-              if (userResponse.ok) {
-                const fullUserData = await userResponse.json();
-                console.log('LoginPage - Dados completos do usuário:', fullUserData);
-                userData = fullUserData;
+        // Busca dados completos do usuário da API
+        try {
+          const token = data.token || data.Token;
+          if (token) {
+            const userResponse = await fetch(`http://localhost:5000/api/Usuarios/meu-perfil`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
               }
+            });
+
+            if (userResponse.ok) {
+              const fullUserData = await userResponse.json();
+              console.log('LoginPage - Dados completos do usuário:', fullUserData);
+              userData = { ...userData, ...fullUserData };
             }
-          } catch (error) {
-            console.error('LoginPage - Erro ao buscar dados completos:', error);
           }
+        } catch (error) {
+          console.error('LoginPage - Erro ao buscar dados completos:', error);
         }
 
         console.log('LoginPage - Dados do usuário para onLoginSuccess:', userData);

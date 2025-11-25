@@ -10,6 +10,44 @@ import { userService } from '../utils/api';
 import '../styles/register.css';
 
 const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigateToProfile }) => {
+  // Lista de cargos corporativos pré-definidos
+  const cargosCorporativos = [
+    'Diretor',
+    'Gerente',
+    'Coordenador',
+    'Supervisor',
+    'Analista',
+    'Analista de TI',
+    'Analista de Sistemas',
+    'Desenvolvedor',
+    'Técnico',
+    'Técnico de TI',
+    'Suporte Técnico',
+    'Especialista',
+    'Consultor',
+    'Assistente',
+    'Assistente Administrativo',
+    'Auxiliar',
+    'Coordenador de TI',
+    'Gerente de TI',
+    'Administrador de Sistemas',
+    'Analista de Suporte',
+    'Analista de Negócios',
+    'Product Owner',
+    'Scrum Master',
+    'Arquiteto de Software',
+    'DevOps',
+    'DBA',
+    'Analista de Segurança',
+    'Analista de Qualidade',
+    'Analista de Dados',
+    'Analista de Infraestrutura',
+    'Coordenador de Projetos',
+    'Gerente de Projetos',
+    'Estagiário',
+    'Trainee'
+  ];
+
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -492,16 +530,24 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
           
           <div className={`form-group ${errors.cargo ? 'error' : ''}`}>
             <label htmlFor="cargo">Cargo *</label>
-            <input 
-              type="text" 
-              id="cargo" 
-              name="cargo" 
-              value={formData.cargo}
-              onChange={handleInputChange}
-              placeholder="Ex: Administrador, Gestor, Técnico"
-              required 
-              aria-describedby={errors.cargo ? 'cargo-error' : undefined}
-            />
+            <div className="select-container">
+              <select
+                id="cargo"
+                name="cargo"
+                value={formData.cargo}
+                onChange={handleInputChange}
+                required
+                aria-describedby={errors.cargo ? 'cargo-error' : undefined}
+              >
+                <option value="">Selecione um cargo</option>
+                {cargosCorporativos.map((cargo) => (
+                  <option key={cargo} value={cargo}>
+                    {cargo}
+                  </option>
+                ))}
+              </select>
+              <div className="select-arrow">▼</div>
+            </div>
             {errors.cargo && (
               <span id="cargo-error" className="error-message" role="alert">
                 {errors.cargo}
@@ -740,13 +786,21 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
               </div>
               <div className="form-group">
                 <label htmlFor="edit-cargo">Cargo *</label>
-                <input
-                  type="text"
-                  id="edit-cargo"
-                  value={editingUser.cargo}
-                  onChange={(e) => setEditingUser({ ...editingUser, cargo: e.target.value })}
-                  placeholder="Ex: Administrador, Gestor, Técnico"
-                />
+                <div className="select-container">
+                  <select
+                    id="edit-cargo"
+                    value={editingUser.cargo}
+                    onChange={(e) => setEditingUser({ ...editingUser, cargo: e.target.value })}
+                  >
+                    <option value="">Selecione um cargo</option>
+                    {cargosCorporativos.map((cargo) => (
+                      <option key={cargo} value={cargo}>
+                        {cargo}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="select-arrow">▼</div>
+                </div>
               </div>
               <div className="form-group">
                 <label htmlFor="edit-telefone">Telefone</label>

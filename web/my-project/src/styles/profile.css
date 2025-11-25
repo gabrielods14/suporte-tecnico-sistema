@@ -235,6 +235,50 @@
   background-color: #FFFFFF;
 }
 
+/* ===== SELECT STYLING ===== */
+.select-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-group .select-container select {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background-color: #FFFFFF;
+  border: 2px solid #E5E5E5;
+  border-radius: var(--radius-lg);
+  color: #1A1A1A;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  appearance: none;
+  padding-right: var(--space-3xl);
+  cursor: pointer;
+}
+
+.form-group .select-container select:disabled {
+  background-color: #F8F9FA;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.form-group .select-container select:focus:not(:disabled) {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
+}
+
+.select-arrow {
+  position: absolute;
+  right: var(--space-lg);
+  color: #666666;
+  pointer-events: none;
+  font-size: var(--font-size-sm);
+}
+
 /* ===== ESTADOS DE VALIDAÇÃO ===== */
 .form-group input:valid:not(:disabled) {
   border-color: var(--success-color);

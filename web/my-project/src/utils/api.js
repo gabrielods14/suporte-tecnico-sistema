@@ -313,6 +313,16 @@ export const userService = {
   },
 
   /**
+   * Altera a senha do usuário (primeiro acesso)
+   */
+  async alterarSenha(senhaAtual, novaSenha) {
+    return await apiClient.put('/api/Usuarios/alterar-senha', {
+      SenhaAtual: senhaAtual,
+      NovaSenha: novaSenha
+    });
+  },
+
+  /**
    * Obtém lista de usuários e estatísticas
    */
   async getUsers() {

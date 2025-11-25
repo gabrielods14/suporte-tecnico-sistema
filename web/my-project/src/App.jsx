@@ -14,6 +14,8 @@ import TicketDetailPage from './pages/TicketDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
 import FAQPage from './pages/FAQPage';
 import ContactPage from './pages/ContactPage';
+import FirstAccessModal from './components/FirstAccessModal';
+import LoadingScreen from './components/LoadingScreen';
 import { authService } from './utils/api';
 
 /**
@@ -24,28 +26,54 @@ import { authService } from './utils/api';
  * @returns {Object} Dados do usuário normalizados
  */
 const normalizeUserData = (userData, tokenPayload = null, email = '') => {
-  // Tenta obter nome de várias fontes
+  // Tenta obter nome de várias fontes (prioriza dados da API)
   let nome = userData?.nome || userData?.Nome || userData?.name || userData?.Name || '';
   
   // Se não encontrou, tenta do token
-  if (!nome && tokenPayload) {
-    nome = tokenPayload?.nome || tokenPayload?.Nome || tokenPayload?.name || tokenPayload?.Name || 
-           tokenPayload?.unique_name || tokenPayload?.preferred_username || tokenPayload?.upn || '';
+  if (!nome || nome.trim() === '') {
+    if (tokenPayload) {
+      nome = tokenPayload?.nome || tokenPayload?.Nome || tokenPayload?.name || tokenPayload?.Name || 
+             tokenPayload?.unique_name || tokenPayload?.preferred_username || tokenPayload?.upn || '';
+    }
   }
   
-  // Se ainda não tem nome, tenta usar o email
-  if (!nome && email) {
-    nome = email.split('@')[0];
+  // Se ainda não tem nome válido, tenta usar o email (mas só como último recurso)
+  if (!nome || nome.trim() === '' || nome === email) {
+    const emailToUse = userData?.email || userData?.Email || email || '';
+    if (emailToUse && emailToUse.includes('@')) {
+      // Extrai o nome do email, mas formata melhor
+      const emailParts = emailToUse.split('@')[0].split(/[._-]/);
+      nome = emailParts.map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()).join(' ');
+    }
   }
+  
+  // Garante que o nome não seja vazio
+  if (!nome || nome.trim() === '') {
+    nome = 'Usuário';
+  }
+  
+  // Extrai PrimeiroAcesso de todas as possíveis variações (prioriza camelCase da API)
+  // IMPORTANTE: A API está retornando em camelCase: primeiroAcesso
+  const primeiroAcessoValue = userData?.primeiroAcesso !== undefined ? userData.primeiroAcesso :
+                              userData?.PrimeiroAcesso !== undefined ? userData.PrimeiroAcesso :
+                              userData?.primeiro_acesso !== undefined ? userData.primeiro_acesso :
+                              false;
+  
+  console.log('🔄 normalizeUserData - PrimeiroAcesso extraído:', primeiroAcessoValue, 'Tipo:', typeof primeiroAcessoValue);
+  console.log('🔄 normalizeUserData - userData completo:', JSON.stringify(userData, null, 2));
+  console.log('🔄 normalizeUserData - Chaves de userData:', Object.keys(userData || {}));
   
   return {
     id: userData?.id || userData?.Id || tokenPayload?.sub || tokenPayload?.userId || tokenPayload?.id,
-    nome: nome.trim() || 'Usuário',
+    nome: nome.trim(),
     email: userData?.email || userData?.Email || email || '',
     telefone: userData?.telefone || userData?.Telefone || '',
     cargo: userData?.cargo || userData?.Cargo || '',
     permissao: userData?.permissao !== undefined ? userData.permissao : 
-               (userData?.Permissao !== undefined ? userData.Permissao : tokenPayload?.role || 1)
+               (userData?.Permissao !== undefined ? userData.Permissao : 
+                (tokenPayload?.role ? (typeof tokenPayload.role === 'number' ? tokenPayload.role : 
+                 (tokenPayload.role === 'Administrador' ? 3 : tokenPayload.role === 'SuporteTecnico' ? 2 : 1)) : 1)),
+    primeiroAcesso: primeiroAcessoValue
   };
 };
 
@@ -56,6 +84,12 @@ function App() {
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [previousPage, setPreviousPage] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFirstAccessModal, setShowFirstAccessModal] = useState(false);
+  
+  // Debug: Log quando o estado do modal muda
+  useEffect(() => {
+    console.log('App - showFirstAccessModal mudou para:', showFirstAccessModal);
+  }, [showFirstAccessModal]);
 
   // Verifica autenticação ao carregar a aplicação
   useEffect(() => {
@@ -88,13 +122,60 @@ function App() {
               
               if (response.ok) {
                 const userData = await response.json();
-                console.log('App - Dados do perfil recebido:', userData);
+                console.log('📥 App - checkAuth - Dados do perfil recebido (RAW):', userData);
+                console.log('📥 App - checkAuth - Tipo do objeto:', typeof userData);
+                console.log('📥 App - checkAuth - Chaves disponíveis:', Object.keys(userData || {}));
+                
+                // Verifica PRIMEIRO se o campo existe antes de normalizar
+                console.log('🔍 App - checkAuth - Verificando PrimeiroAcesso ANTES da normalização:');
+                console.log('   userData?.PrimeiroAcesso:', userData?.PrimeiroAcesso, 'Tipo:', typeof userData?.PrimeiroAcesso);
+                console.log('   userData?.primeiroAcesso:', userData?.primeiroAcesso, 'Tipo:', typeof userData?.primeiroAcesso);
+                console.log('   userData completo (JSON):', JSON.stringify(userData, null, 2));
                 
                 // Normaliza os dados usando a função auxiliar
-                const normalizedData = normalizeUserData(userData, userInfoFromToken, userInfoFromToken?.email);
-                console.log('App - Dados normalizados:', normalizedData);
+                const normalizedData = normalizeUserData(userData, userInfoFromToken, userData?.email || userInfoFromToken?.email);
+                console.log('📦 App - checkAuth - Dados normalizados:', normalizedData);
+                console.log('📦 App - checkAuth - normalizedData.primeiroAcesso:', normalizedData?.primeiroAcesso, 'Tipo:', typeof normalizedData?.primeiroAcesso);
+                
                 setUserInfo(normalizedData);
                 setIsLoggedIn(true);
+                
+                // Verifica se é primeiro acesso (API retorna camelCase: primeiroAcesso)
+                // Prioriza o valor BRUTO da API antes da normalização
+                // IMPORTANTE: A API está retornando em camelCase, não PascalCase!
+                const primeiroAcessoRaw = userData?.primeiroAcesso !== undefined ? userData.primeiroAcesso :
+                                          userData?.PrimeiroAcesso !== undefined ? userData.PrimeiroAcesso :
+                                          userData?.primeiro_acesso !== undefined ? userData.primeiro_acesso :
+                                          normalizedData?.primeiroAcesso !== undefined ? normalizedData.primeiroAcesso :
+                                          false;
+                
+                // Converte para boolean
+                const primeiroAcesso = primeiroAcessoRaw === true || 
+                                      primeiroAcessoRaw === 'true' || 
+                                      primeiroAcessoRaw === 1 ||
+                                      primeiroAcessoRaw === '1';
+                
+                console.log('🔍 App - checkAuth - Verificando PrimeiroAcesso...');
+                console.log('   PrimeiroAcesso RAW:', primeiroAcessoRaw, 'Tipo:', typeof primeiroAcessoRaw);
+                console.log('   PrimeiroAcesso (convertido):', primeiroAcesso);
+                console.log('   Valores verificados:', {
+                  'userData?.PrimeiroAcesso': userData?.PrimeiroAcesso,
+                  'userData?.primeiroAcesso': userData?.primeiroAcesso,
+                  'normalizedData?.primeiroAcesso': normalizedData?.primeiroAcesso,
+                  'primeiroAcessoRaw': primeiroAcessoRaw,
+                  'primeiroAcesso (final)': primeiroAcesso
+                });
+                
+                if (primeiroAcesso) {
+                  console.log('✅✅✅ App - checkAuth - MOSTRANDO MODAL DE PRIMEIRO ACESSO ✅✅✅');
+                  // Usa setTimeout para garantir que o estado seja atualizado após o render
+                  setTimeout(() => {
+                    console.log('✅ App - checkAuth - setShowFirstAccessModal(true) chamado');
+                    setShowFirstAccessModal(true);
+                  }, 200);
+                } else {
+                  console.log('❌ App - checkAuth - NÃO é primeiro acesso ou campo não encontrado');
+                }
               } else {
                 // Token inválido, limpa o localStorage
                 console.warn('App - Token inválido ou usuário não encontrado');
@@ -151,13 +232,63 @@ function App() {
         
         if (response.ok) {
           const fullUserData = await response.json();
-          console.log('App - handleLoginSuccess - Dados do perfil recebidos:', fullUserData);
+          console.log('📥 App - handleLoginSuccess - Dados do perfil recebidos (RAW):', fullUserData);
+          console.log('📥 App - handleLoginSuccess - Tipo do objeto:', typeof fullUserData);
+          console.log('📥 App - handleLoginSuccess - Chaves disponíveis:', Object.keys(fullUserData || {}));
+          
+          // Verifica PRIMEIRO se o campo existe antes de normalizar
+          console.log('🔍 App - handleLoginSuccess - Verificando PrimeiroAcesso ANTES da normalização:');
+          console.log('   fullUserData?.PrimeiroAcesso:', fullUserData?.PrimeiroAcesso, 'Tipo:', typeof fullUserData?.PrimeiroAcesso);
+          console.log('   fullUserData?.primeiroAcesso:', fullUserData?.primeiroAcesso, 'Tipo:', typeof fullUserData?.primeiroAcesso);
+          console.log('   fullUserData completo (JSON):', JSON.stringify(fullUserData, null, 2));
           
           // Normaliza os dados usando a função auxiliar
           const tokenPayload = authService.getUserInfo();
-          const normalizedData = normalizeUserData(fullUserData, tokenPayload, userData?.email);
-          console.log('App - handleLoginSuccess - Dados normalizados:', normalizedData);
+          const normalizedData = normalizeUserData(fullUserData, tokenPayload, fullUserData?.email || userData?.email);
+          console.log('📦 App - handleLoginSuccess - Dados normalizados:', normalizedData);
+          console.log('📦 App - handleLoginSuccess - normalizedData.primeiroAcesso:', normalizedData?.primeiroAcesso, 'Tipo:', typeof normalizedData?.primeiroAcesso);
+          
           setUserInfo(normalizedData);
+          
+          // Verifica se é primeiro acesso (verifica tanto nos dados normalizados quanto nos dados brutos)
+          // Prioriza o valor BRUTO da API antes da normalização
+          // IMPORTANTE: A API está retornando em camelCase, não PascalCase!
+          const primeiroAcessoRaw = fullUserData?.primeiroAcesso !== undefined ? fullUserData.primeiroAcesso :
+                                    fullUserData?.PrimeiroAcesso !== undefined ? fullUserData.PrimeiroAcesso :
+                                    fullUserData?.primeiro_acesso !== undefined ? fullUserData.primeiro_acesso :
+                                    normalizedData?.primeiroAcesso !== undefined ? normalizedData.primeiroAcesso :
+                                    userData?.primeiroAcesso !== undefined ? userData.primeiroAcesso :
+                                    userData?.PrimeiroAcesso !== undefined ? userData.PrimeiroAcesso :
+                                    false;
+          
+          // Converte para boolean se necessário
+          const primeiroAcesso = primeiroAcessoRaw === true || 
+                                primeiroAcessoRaw === 'true' || 
+                                primeiroAcessoRaw === 1 ||
+                                primeiroAcessoRaw === '1';
+          
+          console.log('🔍 App - handleLoginSuccess - Verificando PrimeiroAcesso...');
+          console.log('   PrimeiroAcesso RAW:', primeiroAcessoRaw, 'Tipo:', typeof primeiroAcessoRaw);
+          console.log('   PrimeiroAcesso (convertido):', primeiroAcesso);
+          console.log('   Valores verificados:', {
+            'fullUserData?.PrimeiroAcesso': fullUserData?.PrimeiroAcesso,
+            'fullUserData?.primeiroAcesso': fullUserData?.primeiroAcesso,
+            'normalizedData?.primeiroAcesso': normalizedData?.primeiroAcesso,
+            'userData?.PrimeiroAcesso': userData?.PrimeiroAcesso,
+            'userData?.primeiroAcesso': userData?.primeiroAcesso,
+            'primeiroAcessoRaw': primeiroAcessoRaw,
+            'primeiroAcesso (final)': primeiroAcesso
+          });
+          
+          if (primeiroAcesso) {
+            console.log('✅✅✅ App - handleLoginSuccess - MOSTRANDO MODAL DE PRIMEIRO ACESSO ✅✅✅');
+            setTimeout(() => {
+              console.log('✅ App - handleLoginSuccess - setShowFirstAccessModal(true) chamado');
+              setShowFirstAccessModal(true);
+            }, 200);
+          } else {
+            console.log('❌ App - handleLoginSuccess - NÃO é primeiro acesso ou campo não encontrado');
+          }
           return;
         } else {
           console.warn('App - handleLoginSuccess - Erro ao buscar perfil:', response.status);
@@ -170,7 +301,33 @@ function App() {
     // Fallback: usa os dados recebidos do login normalizados
     console.log('App - handleLoginSuccess - Usando dados do login:', userData);
     const normalizedData = normalizeUserData(userData, {}, userData?.email);
+    console.log('App - handleLoginSuccess - Dados normalizados (fallback):', normalizedData);
     setUserInfo(normalizedData);
+    
+    // Verifica se é primeiro acesso no fallback também
+    // IMPORTANTE: A API está retornando em camelCase: primeiroAcesso
+    const primeiroAcessoRaw = userData?.primeiroAcesso !== undefined ? userData.primeiroAcesso :
+                              userData?.PrimeiroAcesso !== undefined ? userData.PrimeiroAcesso :
+                              userData?.primeiro_acesso !== undefined ? userData.primeiro_acesso :
+                              normalizedData?.primeiroAcesso !== undefined ? normalizedData.primeiroAcesso :
+                              false;
+    
+    const primeiroAcesso = primeiroAcessoRaw === true || 
+                          primeiroAcessoRaw === 'true' || 
+                          primeiroAcessoRaw === 1 ||
+                          primeiroAcessoRaw === '1';
+    
+    console.log('App - handleLoginSuccess - PrimeiroAcesso RAW (fallback):', primeiroAcessoRaw, 'Tipo:', typeof primeiroAcessoRaw);
+    console.log('App - handleLoginSuccess - PrimeiroAcesso (convertido - fallback):', primeiroAcesso);
+    console.log('App - handleLoginSuccess - userData completo (fallback):', JSON.stringify(userData, null, 2));
+    console.log('App - handleLoginSuccess - normalizedData (fallback):', normalizedData);
+    
+    if (primeiroAcesso) {
+      console.log('App - handleLoginSuccess - ✅ MOSTRANDO MODAL DE PRIMEIRO ACESSO (fallback)');
+      setShowFirstAccessModal(true);
+    } else {
+      console.log('App - handleLoginSuccess - ❌ NÃO é primeiro acesso ou campo não encontrado (fallback)');
+    }
   };
 
   const handleLogout = () => {
@@ -211,20 +368,35 @@ function App() {
     setUserInfo(updatedUserInfo);
   };
 
+  const handleFirstAccessSuccess = async () => {
+    // Recarrega os dados do usuário após alterar a senha
+    try {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        const response = await fetch(`http://localhost:5000/api/Usuarios/meu-perfil`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          const tokenPayload = authService.getUserInfo();
+          const normalizedData = normalizeUserData(userData, tokenPayload, userData?.email);
+          setUserInfo(normalizedData);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao recarregar dados do usuário:', error);
+    }
+    
+    setShowFirstAccessModal(false);
+  };
+
   // Mostra loading enquanto verifica autenticação
   if (isLoading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        fontSize: '18px',
-        color: '#000000'
-      }}>
-        Carregando...
-      </div>
-    );
+    return <LoadingScreen message="Carregando..." />;
   }
 
   if (!isLoggedIn) {
@@ -368,6 +540,13 @@ function App() {
           onNavigateToProfile={navigateToProfile}
         />
       )}
+
+      {/* Modal de Primeiro Acesso */}
+      {console.log('App - Render - showFirstAccessModal:', showFirstAccessModal, 'Tipo:', typeof showFirstAccessModal)}
+      <FirstAccessModal
+        isOpen={showFirstAccessModal}
+        onSuccess={handleFirstAccessSuccess}
+      />
     </React.Fragment>
   );
 }

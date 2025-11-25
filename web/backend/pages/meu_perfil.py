@@ -39,7 +39,9 @@ def gerenciar_meu_perfil():
                     'email': usuario_data.get('email') or usuario_data.get('Email') or '',
                     'telefone': usuario_data.get('telefone') or usuario_data.get('Telefone') or '',
                     'cargo': usuario_data.get('cargo') or usuario_data.get('Cargo') or '',
-                    'permissao': usuario_data.get('permissao') if usuario_data.get('permissao') is not None else usuario_data.get('Permissao')
+                    'permissao': usuario_data.get('permissao') if usuario_data.get('permissao') is not None else usuario_data.get('Permissao'),
+                    # IMPORTANTE: Inclui o campo primeiroAcesso para o modal de primeiro acesso funcionar
+                    'primeiroAcesso': usuario_data.get('primeiroAcesso') if usuario_data.get('primeiroAcesso') is not None else usuario_data.get('PrimeiroAcesso', False)
                 }
                 
                 print(f'[GET /api/Usuarios/meu-perfil] Dados normalizados:', normalized_data)

@@ -68,7 +68,20 @@ namespace ApiParaBD.Controllers
             return Ok(new { message = "Senha alterada com sucesso!" });
         }
 
-        // --- 3. USUÁRIO ATUALIZA O PRÓPRIO PERFIL ---
+        // --- 3. USUÁRIO OBTÉM O PRÓPRIO PERFIL ---
+        [Authorize]
+        [HttpGet("meu-perfil")]
+        public async Task<IActionResult> GetMeuPerfil()
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var usuario = await _context.Usuarios.FindAsync(userId);
+            if (usuario == null) return NotFound();
+            
+            usuario.SenhaHash = ""; // Não retorna o hash
+            return Ok(usuario);
+        }
+
+        // --- 4. USUÁRIO ATUALIZA O PRÓPRIO PERFIL ---
         [Authorize]
         [HttpPut("meu-perfil")]
         public async Task<IActionResult> AtualizarMeuPerfil([FromBody] AtualizarUsuarioDto dto)
@@ -86,7 +99,7 @@ namespace ApiParaBD.Controllers
             return Ok(new { message = "Perfil atualizado." });
         }
 
-        // --- 4. LEITURA E EXCLUSÃO (Padrão) ---
+        // --- 5. LEITURA E EXCLUSÃO (Padrão) ---
         [Authorize(Roles = "Administrador, SuporteTecnico")]
         [HttpGet]
         public async Task<IActionResult> GetUsuarios()
@@ -105,7 +118,7 @@ namespace ApiParaBD.Controllers
             usuario.SenhaHash = "";
             return Ok(usuario);
         }
-        // --- 5. ADMIN ATUALIZA USUÁRIO POR ID (Incluindo Senha) ---
+        // --- 6. ADMIN ATUALIZA USUÁRIO POR ID (Incluindo Senha) ---
         [Authorize(Roles = "Administrador")]
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioAdminDto dto)
@@ -155,7 +168,7 @@ namespace ApiParaBD.Controllers
             return Ok(new { message = "Usuário atualizado com sucesso.", usuario });
         }
 
-        // --- ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---
+        // --- 7. ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---
         [Authorize(Roles = "Administrador")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletarUsuario(int id)
