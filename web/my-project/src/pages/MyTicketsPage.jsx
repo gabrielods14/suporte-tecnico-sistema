@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/my-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
@@ -193,18 +194,7 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
   };
 
   if (loading) {
-    return (
-      <div className="my-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="my-tickets-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando seus chamados...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

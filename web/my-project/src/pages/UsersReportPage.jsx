@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/users-report.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaSearch, FaUsers } from 'react-icons/fa';
 import { userService } from '../utils/api';
 
@@ -108,18 +109,7 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
   };
 
   if (loading) {
-    return (
-      <div className="users-report-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="users-report-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando usuários...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

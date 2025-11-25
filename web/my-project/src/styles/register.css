@@ -575,11 +575,21 @@
 
 .edit-button {
   color: #9e1d1d;
+  padding: 0.25rem;
+  min-width: auto;
+  min-height: auto;
+  width: auto;
+  height: auto;
 }
 
 .edit-button:hover {
   background-color: rgba(255, 70, 70, 0.267);
   color: #ff090956;
+}
+
+.edit-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .delete-button {
@@ -589,6 +599,11 @@
 .delete-button:hover {
   background-color: rgba(255, 70, 70, 0.267);
   color: #ff090956;
+}
+
+.delete-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .action-button:focus-visible {
@@ -642,6 +657,76 @@
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
+}
+
+.edit-user-modal .form-group input[type="checkbox"] {
+  width: auto;
+  min-width: auto;
+  min-height: auto;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.edit-user-modal .password-input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.edit-user-modal .password-input-container input {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  padding-right: var(--space-3xl);
+  background-color: #FFFFFF;
+  border: 2px solid #E5E5E5;
+  border-radius: var(--radius-lg);
+  color: #1A1A1A;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  transition: var(--transition-fast);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.edit-user-modal .password-input-container input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.15);
+  background-color: #FFFFFF;
+}
+
+.edit-user-modal .password-toggle-register {
+  position: absolute;
+  right: var(--space-lg);
+  background: none;
+  border: none;
+  color: #666666;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+  z-index: 10;
+}
+
+.edit-user-modal .password-toggle-register:hover {
+  color: var(--primary-color);
+}
+
+.edit-user-modal .form-group.error .error-message {
+  display: block;
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: var(--space-xs);
+  font-weight: 500;
+}
+
+.edit-user-modal .form-group.error input {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
 }
 
 .edit-user-modal .modal-footer {

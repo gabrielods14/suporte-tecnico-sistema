@@ -4,6 +4,7 @@ import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
+import LoadingScreen from '../components/LoadingScreen';
 import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
@@ -200,18 +201,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   if (loading) {
-    return (
-      <div className="ticket-detail-layout">
-        <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="ticket-detail-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando detalhes do chamado...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   if (!ticket) {

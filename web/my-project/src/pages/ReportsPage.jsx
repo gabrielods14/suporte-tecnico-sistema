@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/reports.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaServer, FaDatabase, FaRobot, FaUsers, FaCheckCircle, FaClock, FaSpinner } from 'react-icons/fa';
 import { ticketService, userService } from '../utils/api';
 
@@ -222,18 +223,7 @@ function DashboardPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
   };
 
   if (loading) {
-    return (
-      <div className="reports-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="reports-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando relatórios...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

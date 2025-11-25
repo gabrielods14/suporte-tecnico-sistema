@@ -19,12 +19,15 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
     telefone: '',
     permissao: 1
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingCadastro, setIsLoadingCadastro] = useState(false);
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+  const [isLoadingDelete, setIsLoadingDelete] = useState(false);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isConfirmEditModalOpen, setIsConfirmEditModalOpen] = useState(false);
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +35,12 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [changePassword, setChangePassword] = useState(false);
+  const [editPassword, setEditPassword] = useState('');
+  const [editConfirmPassword, setEditConfirmPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [showEditConfirmPassword, setShowEditConfirmPassword] = useState(false);
+  const [editPasswordErrors, setEditPasswordErrors] = useState({});
 
   // Validação em tempo real - Heurística de Nielsen: Prevenção de Erros
   const validateField = (name, value) => {
@@ -185,7 +194,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
 
   const handleConfirmCadastro = async () => {
     setIsConfirmModalOpen(false);
-    setIsLoading(true);
+    setIsLoadingCadastro(true);
 
     try {
       // Verifica se o email já existe
@@ -206,7 +215,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         const exists = usersArray.some(u => ((u.email || u.Email || '') + '').toLowerCase() === emailLower);
         if (exists) {
           showToast('O e-mail informado já existe. Verifique e tente novamente.', 'error');
-          setIsLoading(false);
+          setIsLoadingCadastro(false);
           return;
         }
       } catch (err) {
@@ -240,7 +249,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         showToast(msg, 'error');
       }
     } finally {
-      setIsLoading(false);
+      setIsLoadingCadastro(false);
     }
   };
 
@@ -281,7 +290,21 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
       telefone: user.telefone || user.Telefone || '',
       permissao: user.permissao || user.Permissao || 1
     });
+    setChangePassword(false);
+    setEditPassword('');
+    setEditConfirmPassword('');
+    setEditPasswordErrors({});
     setIsEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false);
+    setChangePassword(false);
+    setEditPassword('');
+    setEditConfirmPassword('');
+    setEditPasswordErrors({});
+    setShowEditPassword(false);
+    setShowEditConfirmPassword(false);
   };
 
   const handleDeleteUser = (user) => {
@@ -293,7 +316,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
     if (!deleteConfirmUser) return;
     
     setIsDeleteModalOpen(false);
-    setIsLoading(true);
+    setIsLoadingDelete(true);
 
     try {
       const userId = deleteConfirmUser.id || deleteConfirmUser.Id;
@@ -305,7 +328,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
       const msg = error?.data?.message || error?.message || 'Erro ao excluir usuário.';
       showToast(msg, 'error');
     } finally {
-      setIsLoading(false);
+      setIsLoadingDelete(false);
       setDeleteConfirmUser(null);
     }
   };
@@ -326,8 +349,32 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
       return;
     }
 
-    setIsLoading(true);
+    // Validação de senha se a opção de alterar senha estiver marcada
+    if (changePassword) {
+      if (!editPassword.trim()) {
+        showToast('Por favor, preencha a nova senha.', 'error');
+        return;
+      }
+      if (editPassword.length < 6) {
+        showToast('A senha deve ter pelo menos 6 caracteres.', 'error');
+        return;
+      }
+      if (editPassword !== editConfirmPassword) {
+        showToast('As senhas não conferem.', 'error');
+        return;
+      }
+    }
+
+    // Abre o modal de confirmação
+    setIsConfirmEditModalOpen(true);
+  };
+
+  const handleConfirmSaveEdit = async () => {
+    if (!editingUser) return;
+
+    setIsConfirmEditModalOpen(false);
     setIsEditModalOpen(false);
+    setIsLoadingEdit(true);
 
     try {
       const userId = editingUser.id;
@@ -339,17 +386,26 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         Permissao: editingUser.permissao
       };
 
+      // Adiciona NovaSenha apenas se a opção de alterar senha estiver marcada
+      if (changePassword && editPassword.trim()) {
+        updateData.NovaSenha = editPassword.trim();
+      }
+
       await userService.updateUser(userId, updateData);
       showToast('Usuário atualizado com sucesso!', 'success');
       await loadUsers();
       setEditingUser(null);
+      setChangePassword(false);
+      setEditPassword('');
+      setEditConfirmPassword('');
+      setEditPasswordErrors({});
     } catch (error) {
       console.error('Erro ao atualizar usuário:', error);
       const msg = error?.data?.message || error?.message || 'Erro ao atualizar usuário.';
       showToast(msg, 'error');
       setIsEditModalOpen(true); // Reabre o modal em caso de erro
     } finally {
-      setIsLoading(false);
+      setIsLoadingEdit(false);
     }
   };
 
@@ -532,10 +588,10 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
           <button 
             type="submit" 
             className="submit-button" 
-            disabled={isLoading || Object.keys(errors).length > 0}
+            disabled={isLoadingCadastro || Object.keys(errors).length > 0}
             aria-describedby="submit-help"
           >
-            {isLoading ? (
+            {isLoadingCadastro ? (
               <span className="loading-indicator">
                 <span className="loading-spinner"></span>
                 CADASTRANDO...
@@ -656,7 +712,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
 
       {/* Modal de Edição */}
       {isEditModalOpen && editingUser && (
-        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+        <div className="modal-overlay" onClick={handleCloseEditModal}>
           <div className="modal-content edit-user-modal" onClick={(e) => e.stopPropagation()}>
             <header className="modal-header">
               <h2>EDITAR USUÁRIO</h2>
@@ -717,18 +773,135 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
                   <div className="select-arrow">▼</div>
                 </div>
               </div>
+              
+              {/* Checkbox para alterar senha */}
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={changePassword}
+                    onChange={(e) => {
+                      setChangePassword(e.target.checked);
+                      if (!e.target.checked) {
+                        setEditPassword('');
+                        setEditConfirmPassword('');
+                        setEditPasswordErrors({});
+                      }
+                    }}
+                    style={{ width: 'auto', cursor: 'pointer' }}
+                  />
+                  <span>Alterar senha</span>
+                </label>
+              </div>
+
+              {/* Campos de senha (mostrados apenas se checkbox marcada) */}
+              {changePassword && (
+                <>
+                  <div className={`form-group ${editPasswordErrors.senha ? 'error' : ''}`}>
+                    <label htmlFor="edit-senha">Nova Senha *</label>
+                    <div className="password-input-container">
+                      <input
+                        type={showEditPassword ? 'text' : 'password'}
+                        id="edit-senha"
+                        value={editPassword}
+                        onChange={(e) => {
+                          setEditPassword(e.target.value);
+                          // Validação em tempo real
+                          if (e.target.value && e.target.value.length < 6) {
+                            setEditPasswordErrors({ ...editPasswordErrors, senha: 'Senha deve ter pelo menos 6 caracteres' });
+                          } else {
+                            const newErrors = { ...editPasswordErrors };
+                            delete newErrors.senha;
+                            setEditPasswordErrors(newErrors);
+                          }
+                          // Verifica se as senhas conferem
+                          if (e.target.value !== editConfirmPassword && editConfirmPassword) {
+                            setEditPasswordErrors({ ...editPasswordErrors, confirmarSenha: 'As senhas não conferem' });
+                          } else if (e.target.value === editConfirmPassword && editConfirmPassword) {
+                            const newErrors = { ...editPasswordErrors };
+                            delete newErrors.confirmarSenha;
+                            setEditPasswordErrors(newErrors);
+                          }
+                        }}
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-register"
+                        onClick={() => setShowEditPassword(!showEditPassword)}
+                        aria-label={showEditPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showEditPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    {editPasswordErrors.senha && (
+                      <span className="error-message" role="alert">
+                        {editPasswordErrors.senha}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className={`form-group ${editPasswordErrors.confirmarSenha ? 'error' : ''}`}>
+                    <label htmlFor="edit-confirmar-senha">Confirmar Nova Senha *</label>
+                    <div className="password-input-container">
+                      <input
+                        type={showEditConfirmPassword ? 'text' : 'password'}
+                        id="edit-confirmar-senha"
+                        value={editConfirmPassword}
+                        onChange={(e) => {
+                          setEditConfirmPassword(e.target.value);
+                          // Validação em tempo real
+                          if (e.target.value !== editPassword) {
+                            setEditPasswordErrors({ ...editPasswordErrors, confirmarSenha: 'As senhas não conferem' });
+                          } else {
+                            const newErrors = { ...editPasswordErrors };
+                            delete newErrors.confirmarSenha;
+                            setEditPasswordErrors(newErrors);
+                          }
+                        }}
+                        placeholder="Repita a senha"
+                      />
+                      <button
+                        type="button"
+                        className="password-toggle-register"
+                        onClick={() => setShowEditConfirmPassword(!showEditConfirmPassword)}
+                        aria-label={showEditConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showEditConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                    {editPasswordErrors.confirmarSenha && (
+                      <span className="error-message" role="alert">
+                        {editPasswordErrors.confirmarSenha}
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </main>
             <footer className="modal-footer">
-              <button className="modal-button modal-button-cancel" onClick={() => setIsEditModalOpen(false)}>
+              <button className="modal-button modal-button-cancel" onClick={handleCloseEditModal} disabled={isLoadingEdit}>
                 Cancelar
               </button>
-              <button className="modal-button modal-button-confirm" onClick={handleSaveEdit} disabled={isLoading}>
-                {isLoading ? 'Salvando...' : 'Salvar'}
+              <button className="modal-button modal-button-confirm" onClick={handleSaveEdit} disabled={isLoadingEdit}>
+                {isLoadingEdit ? 'Salvando...' : 'Salvar'}
               </button>
             </footer>
           </div>
         </div>
       )}
+
+      {/* Modal de Confirmação de Edição */}
+      <ConfirmModal
+        isOpen={isConfirmEditModalOpen}
+        title="CONFIRMAR EDIÇÃO"
+        message={`Tem certeza que deseja salvar as alterações no usuário ${editingUser?.nome || ''}?`}
+        confirmText="Salvar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmSaveEdit}
+        onCancel={() => setIsConfirmEditModalOpen(false)}
+        isLoading={isLoadingEdit}
+      />
 
       {/* Modal de Confirmação de Exclusão */}
       <ConfirmModal
@@ -743,6 +916,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
           setIsDeleteModalOpen(false);
           setDeleteConfirmUser(null);
         }}
+        isLoading={isLoadingDelete}
       />
     </div>
   );

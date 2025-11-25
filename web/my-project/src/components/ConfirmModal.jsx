@@ -2,7 +2,7 @@
 import React from 'react';
 import '../styles/modal.css';
 
-function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = 'Confirmar', cancelText = 'Cancelar', isDangerous = false }) {
+function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText = 'Confirmar', cancelText = 'Cancelar', isDangerous = false, isLoading = false }) {
   // Se não estiver aberto, não renderiza nada.
   if (!isOpen) {
     return null;
@@ -20,11 +20,18 @@ function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmText
           <p>{message}</p>
         </main>
         <footer className="modal-footer">
-          <button className="modal-button modal-button-cancel" onClick={onCancel}>
+          <button className="modal-button modal-button-cancel" onClick={onCancel} disabled={isLoading}>
             {cancelText}
           </button>
-          <button className={`modal-button ${isDangerous ? 'modal-button-danger' : 'modal-button-confirm'}`} onClick={onConfirm}>
-            {confirmText}
+          <button className={`modal-button ${isDangerous ? 'modal-button-danger' : 'modal-button-confirm'}`} onClick={onConfirm} disabled={isLoading}>
+            {isLoading ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="loading-spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255, 255, 255, 0.3)', borderTop: '2px solid white', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></span>
+                {confirmText === 'Salvar' ? 'Salvando...' : confirmText === 'Excluir' ? 'Excluindo...' : 'Processando...'}
+              </span>
+            ) : (
+              confirmText
+            )}
           </button>
         </footer>
       </div>

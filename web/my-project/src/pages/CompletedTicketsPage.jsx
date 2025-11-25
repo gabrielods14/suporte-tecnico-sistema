@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/completed-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
@@ -206,18 +207,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   };
 
   if (loading) {
-    return (
-      <div className="completed-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="completed-tickets-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando chamados concluídos...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

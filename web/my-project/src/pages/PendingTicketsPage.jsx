@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/pending-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
@@ -214,18 +215,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   };
 
   if (loading) {
-    return (
-      <div className="pending-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="pending-tickets-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando chamados...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import '../styles/user-activity.css';
 import { userService, ticketService } from '../utils/api';
 
@@ -159,18 +160,7 @@ function UserActivityPage({ onLogout, onNavigateToHome, onNavigateToPage, curren
   };
 
   if (loading) {
-    return (
-      <div className="user-activity-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
-        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-        <main className="user-activity-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando atividade do usuário...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (

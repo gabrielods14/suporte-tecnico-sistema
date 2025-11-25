@@ -43,35 +43,7 @@ namespace ApiParaBD.Controllers
             return CreatedAtAction(nameof(GetUsuario), new { id = novoUsuario.Id }, novoUsuario);
         }
 
-        // --- 2. ADMIN EDITA QUALQUER USUÁRIO (Incluindo Senha) ---
-        [Authorize(Roles = "Administrador")]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> AdminAtualizarUsuario(int id, [FromBody] AtualizarUsuarioAdminDto dto)
-        {
-            var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null) return NotFound(new { message = "Usuário não encontrado." });
-
-            // Atualiza dados básicos
-            if (dto.Nome != null) usuario.Nome = dto.Nome;
-            if (dto.Email != null) usuario.Email = dto.Email;
-            if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
-            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
-            if (dto.Permissao.HasValue) usuario.Permissao = dto.Permissao.Value;
-
-            // Se o admin enviou uma nova senha, reseta a senha do usuário
-            if (!string.IsNullOrEmpty(dto.NovaSenha))
-            {
-                usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
-                // Opcional: Você pode definir PrimeiroAcesso = true aqui para forçar
-                // o usuário a trocar essa senha que o admin definiu.
-                usuario.PrimeiroAcesso = true; 
-            }
-
-            await _context.SaveChangesAsync();
-            return Ok(new { message = "Usuário atualizado com sucesso." });
-        }
-
-        // --- 3. USUÁRIO TROCA A PRÓPRIA SENHA (Primeiro Acesso) ---
+        // --- 2. USUÁRIO TROCA A PRÓPRIA SENHA (Primeiro Acesso) ---
         [Authorize]
         [HttpPut("alterar-senha")]
         public async Task<IActionResult> AlterarMinhaSenha([FromBody] TrocarSenhaDto dto)
@@ -96,7 +68,7 @@ namespace ApiParaBD.Controllers
             return Ok(new { message = "Senha alterada com sucesso!" });
         }
 
-        // --- 4. USUÁRIO ATUALIZA O PRÓPRIO PERFIL ---
+        // --- 3. USUÁRIO ATUALIZA O PRÓPRIO PERFIL ---
         [Authorize]
         [HttpPut("meu-perfil")]
         public async Task<IActionResult> AtualizarMeuPerfil([FromBody] AtualizarUsuarioDto dto)
@@ -114,7 +86,7 @@ namespace ApiParaBD.Controllers
             return Ok(new { message = "Perfil atualizado." });
         }
 
-        // --- 5. LEITURA E EXCLUSÃO (Padrão) ---
+        // --- 4. LEITURA E EXCLUSÃO (Padrão) ---
         [Authorize(Roles = "Administrador, SuporteTecnico")]
         [HttpGet]
         public async Task<IActionResult> GetUsuarios()
@@ -133,34 +105,54 @@ namespace ApiParaBD.Controllers
             usuario.SenhaHash = "";
             return Ok(usuario);
         }
-        // --- ENDPOINT: ATUALIZAR USUÁRIO POR ID (SÓ ADMIN) ---
+        // --- 5. ADMIN ATUALIZA USUÁRIO POR ID (Incluindo Senha) ---
         [Authorize(Roles = "Administrador")]
         [HttpPut("{id}")]
-        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioDto dto)
+        public async Task<IActionResult> AtualizarUsuario(int id, [FromBody] AtualizarUsuarioAdminDto dto)
         {
             var usuario = await _context.Usuarios.FindAsync(id);
-            if (usuario == null) return NotFound();
-
-            // Verifica se o e-mail já existe em outro usuário
-            if (dto.Email != null && dto.Email != usuario.Email)
+            if (usuario == null)
             {
-                if (await _context.Usuarios.AnyAsync(u => u.Email == dto.Email && u.Id != id))
-                {
-                    return BadRequest(new { message = "E-mail já cadastrado para outro usuário." });
-                }
+                return NotFound(new { message = "Usuário não encontrado." });
+            }
+            
+            // Atualiza dados básicos (apenas se enviados)
+            if (!string.IsNullOrEmpty(dto.Nome)) usuario.Nome = dto.Nome;
+            if (!string.IsNullOrEmpty(dto.Email)) usuario.Email = dto.Email.ToLower();
+            if (!string.IsNullOrEmpty(dto.Telefone)) usuario.Telefone = dto.Telefone;
+            if (!string.IsNullOrEmpty(dto.Cargo)) usuario.Cargo = dto.Cargo;
+            
+            // Admin pode mudar permissão
+            if (dto.Permissao.HasValue) usuario.Permissao = dto.Permissao.Value;
+
+            // --- A LÓGICA INTELIGENTE DE SENHA ESTÁ AQUI ---
+            // Só altera a senha se o admin enviou algo no campo 'NovaSenha'.
+            // Se ele deixar vazio ou null no JSON, a senha antiga permanece intacta.
+            if (!string.IsNullOrEmpty(dto.NovaSenha))
+            {
+                usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
+                
+                // Opcional: Se o admin trocou a senha, talvez queira forçar 
+                // o usuário a trocá-la novamente no próximo login.
+                usuario.PrimeiroAcesso = true; 
             }
 
-            // Atualiza apenas os campos que foram enviados
-            if (dto.Nome != null) usuario.Nome = dto.Nome;
-            if (dto.Email != null) usuario.Email = dto.Email;
-            if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
-            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
-            if (dto.Permissao.HasValue) usuario.Permissao = dto.Permissao.Value;
+            // Validação de e-mail duplicado (se o e-mail foi alterado)
+            if (!string.IsNullOrEmpty(dto.Email))
+            {
+                 var emailExistente = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.Email == usuario.Email && u.Id != usuario.Id);
+                 
+                 if (emailExistente != null)
+                 {
+                     return BadRequest(new { message = "E-mail já está em uso por outra conta." });
+                 }
+            }
 
             await _context.SaveChangesAsync();
             
-            usuario.SenhaHash = "";
-            return Ok(usuario);
+            usuario.SenhaHash = ""; // Não retorna o hash
+            return Ok(new { message = "Usuário atualizado com sucesso.", usuario });
         }
 
         // --- ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---

@@ -114,3 +114,20 @@
     transform: scale(1);
   }
 }
+
+/* Animação para spinner de loading */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
