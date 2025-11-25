@@ -17,12 +17,10 @@ namespace ApiParaBD // Verifique se este é o namespace raiz do projeto
         // --- Relacionamentos (Chaves Estrangeiras) ---
         public int SolicitanteId { get; set; }
         [ForeignKey("SolicitanteId")]
-        [JsonIgnore] // Ignora na serialização JSON para evitar referências circulares
         public virtual Usuario Solicitante { get; set; } = null!; // Garante que não é nulo
 
         public int? TecnicoResponsavelId { get; set; }
         [ForeignKey("TecnicoResponsavelId")]
-        [JsonIgnore] // Ignora na serialização JSON para evitar referências circulares
         public virtual Usuario? TecnicoResponsavel { get; set; }
 
         // --- Categorização ---

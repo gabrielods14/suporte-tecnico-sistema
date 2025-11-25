@@ -27,15 +27,63 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     try {
       setLoading(true);
       const ticketData = await ticketService.getTicket(ticketId);
-      setTicket(ticketData);
+      
+      // Normaliza os dados do solicitante (suporta camelCase e PascalCase)
+      const solicitante = ticketData.solicitante || ticketData.Solicitante || {};
+      const normalizedSolicitante = {
+        nome: solicitante.nome || solicitante.Nome || 'N/A',
+        email: solicitante.email || solicitante.Email || 'N/A',
+        cargo: solicitante.cargo || solicitante.Cargo || 'N/A',
+        telefone: solicitante.telefone || solicitante.Telefone || 'N/A'
+      };
+      
+      // Debug: verificar dados do solicitante
+      console.log('TicketDetailPage - Dados originais do solicitante:', solicitante);
+      console.log('TicketDetailPage - Dados normalizados do solicitante:', normalizedSolicitante);
+      
+      // Normaliza os dados do técnico responsável (suporta camelCase e PascalCase)
+      const tecnico = ticketData.tecnicoResponsavel || ticketData.TecnicoResponsavel || null;
+      const normalizedTecnico = tecnico ? {
+        nome: tecnico.nome || tecnico.Nome || 'N/A',
+        email: tecnico.email || tecnico.Email || 'N/A'
+      } : null;
+      
+      // Debug: verificar dados do técnico
+      if (tecnico) {
+        console.log('TicketDetailPage - Dados originais do técnico:', tecnico);
+        console.log('TicketDetailPage - Dados normalizados do técnico:', normalizedTecnico);
+      }
+      
+      // Normaliza o status e outros campos principais
+      const normalizedTicket = {
+        ...ticketData,
+        status: Number(ticketData.status || ticketData.Status || 1),
+        solicitante: normalizedSolicitante,
+        tecnicoResponsavel: normalizedTecnico,
+        // Normaliza outros campos que podem ter variações de nomenclatura
+        titulo: ticketData.titulo || ticketData.Titulo || '',
+        descricao: ticketData.descricao || ticketData.Descricao || '',
+        tipo: ticketData.tipo || ticketData.Tipo || '',
+        prioridade: ticketData.prioridade || ticketData.Prioridade || 1,
+        dataAbertura: ticketData.dataAbertura || ticketData.DataAbertura || '',
+        dataFechamento: ticketData.dataFechamento || ticketData.DataFechamento || null,
+        solucao: ticketData.solucao || ticketData.Solucao || null
+      };
+      
+      setTicket(normalizedTicket);
       setSolution(''); // Limpa o campo de solução ao carregar um novo chamado
       
       // Se o chamado está em status "Aberto" (1) e o usuário é um técnico, muda para "Em Atendimento" (2)
-      if (ticketData.status === 1 && (userInfo?.permissao === 2 || userInfo?.permissao === 3)) {
+      // IMPORTANTE: Não altera status de chamados já fechados (status 3) ou em atendimento (status 2)
+      const ticketStatus = normalizedTicket.status;
+      if (ticketStatus === 1 && (userInfo?.permissao === 2 || userInfo?.permissao === 3)) {
         try {
           await ticketService.updateTicket(ticketId, { status: 2 });
-          // Atualiza o estado local com o novo status
-          setTicket(prevTicket => ({ ...prevTicket, status: 2 }));
+          // Atualiza o estado local com o novo status, preservando os dados normalizados
+          setTicket(prevTicket => ({ 
+            ...prevTicket, 
+            status: 2 
+          }));
           console.log('Chamado atualizado para "Em Atendimento"');
         } catch (error) {
           console.error('Erro ao atualizar status do chamado:', error);
@@ -181,17 +229,14 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   const getStatusText = (status) => {
-    if (typeof status === 'number') {
-      switch (status) {
-        case 1: return 'ABERTO';
-        case 2: return 'EM ATENDIMENTO';
-        case 3: return 'AGUARDANDO USUÁRIO';
-        case 4: return 'RESOLVIDO';
-        case 5: return 'FECHADO';
-        default: return 'N/A';
-      }
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    const statusNum = Number(status);
+    switch (statusNum) {
+      case 1: return 'ABERTO';
+      case 2: return 'EM ATENDIMENTO';
+      case 3: return 'CONCLUÍDO';
+      default: return 'N/A';
     }
-    return status || 'N/A';
   };
 
   const formatDate = (dateString) => {
@@ -240,7 +285,9 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
             
             // Se não houver previousPage, tenta determinar pelo status do chamado
             if (!pageToReturn && ticket) {
-              const isConcluido = ticket.status === 5; // Status 5 = Fechado
+              // Status 3 = Fechado/Concluído (conforme enum StatusChamado)
+              const ticketStatus = Number(ticket.status || ticket.Status);
+              const isConcluido = ticketStatus === 3;
               pageToReturn = isConcluido ? 'completed-tickets' : 'pending-tickets';
             } else {
               // Se houver previousPage, usa ela (pode ser completed-tickets ou pending-tickets)
@@ -332,19 +379,19 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           </div>
 
           {/* Técnico responsável */}
-          {ticket.tecnicoResponsavel && (
+          {ticket.tecnicoResponsavel && ticket.tecnicoResponsavel.nome !== 'N/A' && (
             <div className="tecnico-info-section">
               <h2>Técnico Responsável</h2>
               
               <div className="info-grid">
                 <div className="info-item">
                   <label>Nome:</label>
-                  <span>{ticket.tecnicoResponsavel.nome}</span>
+                  <span>{ticket.tecnicoResponsavel.nome || 'N/A'}</span>
                 </div>
                 
                 <div className="info-item">
                   <label>Email:</label>
-                  <span>{ticket.tecnicoResponsavel.email}</span>
+                  <span>{ticket.tecnicoResponsavel.email || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -369,7 +416,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           )}
 
           {/* Campo de solução (apenas para técnicos) e apenas se o chamado não está fechado */}
-          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && ticket?.status !== 3 && (
+          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && Number(ticket?.status || ticket?.Status) !== 3 && (
             <div className="solution-section">
               <div className="solution-header">
                 <h2>Registrar Solução</h2>

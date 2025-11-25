@@ -71,7 +71,10 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           return 'MÉDIA';
         };
         
-        let filteredTickets = apiTickets.filter(item => item.status === 3);
+        let filteredTickets = apiTickets.filter(item => {
+          const status = item.status || item.Status;
+          return Number(status) === 3;
+        });
         
         if (isColaborador) {
           let userId = userInfo?.id;
@@ -100,11 +103,13 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           .map(item => ({
             id: item.id,
             codigo: String(item.id).padStart(6, '0'),
-            titulo: item.titulo || '',
-            prioridade: mapPriority(item.prioridade),
-            dataFechamento: item.dataFechamento || item.dataAbertura,
-            status: item.status,
-            tecnico: item.tecnicoResponsavel?.nome || 'N/A'
+            titulo: item.titulo || item.Titulo || '',
+            prioridade: mapPriority(item.prioridade || item.Prioridade),
+            dataFechamento: item.dataFechamento || item.DataFechamento || item.dataAbertura || item.DataAbertura,
+            status: item.status || item.Status,
+            tecnico: item.tecnicoResponsavel?.nome || item.tecnicoResponsavel?.Nome || item.TecnicoResponsavel?.nome || item.TecnicoResponsavel?.Nome || 'N/A',
+            solicitante: item.solicitante?.nome || item.solicitante?.Nome || item.Solicitante?.nome || item.Solicitante?.Nome || 'N/A',
+            solicitanteId: item.solicitanteId || item.SolicitanteId
           }));
         
         setTickets(mapped);
@@ -189,19 +194,21 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case 3: return 'FECHADO';
-      case 4: return 'RESOLVIDO';
-      case 5: return 'CONCLUÍDO';
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    switch (Number(status)) {
+      case 1: return 'ABERTO';
+      case 2: return 'EM ATENDIMENTO';
+      case 3: return 'CONCLUÍDO';
       default: return 'N/A';
     }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 3: return '#6c757d';
-      case 4: return '#28a745';
-      case 5: return '#6c757d';
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    switch (Number(status)) {
+      case 1: return '#ffc107';
+      case 2: return '#17a2b8';
+      case 3: return '#28a745';
       default: return '#6c757d';
     }
   };
@@ -274,6 +281,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                   PRIORIDADE {sortBy === 'prioridade' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
                 <th>STATUS</th>
+                <th>SOLICITANTE</th>
                 <th>TÉCNICO</th>
                 <th onClick={() => handleSort('dataFechamento')} className="sortable">
                   DATA FECHAMENTO {sortBy === 'dataFechamento' && (sortOrder === 'asc' ? '▲' : '▼')}
@@ -283,7 +291,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
             <tbody>
               {filteredTickets.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="no-data">
+                  <td colSpan="7" className="no-data">
                     <p>Nenhum chamado concluído encontrado</p>
                   </td>
                 </tr>
@@ -312,6 +320,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                         {getStatusText(ticket.status)}
                       </span>
                     </td>
+                    <td className="solicitante-cell">{ticket.solicitante}</td>
                     <td className="tecnico-cell">{ticket.tecnico}</td>
                     <td className="date-cell">{formatDate(ticket.dataFechamento)}</td>
                   </tr>
