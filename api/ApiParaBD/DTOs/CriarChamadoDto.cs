@@ -1,5 +1,4 @@
-// DTOs/CriarChamadoDto.cs
-
+// DTO usado para receber os dados de criação de um novo chamado
 namespace ApiParaBD.DTOs
 {
     // Define os dados que um cliente (web, desktop, etc.) precisa enviar para abrir um novo chamado.

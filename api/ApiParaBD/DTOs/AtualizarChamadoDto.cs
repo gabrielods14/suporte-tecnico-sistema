@@ -1,6 +1,4 @@
 // DTOs/AtualizarChamadoDto.cs
-using System;
-
 namespace ApiParaBD.DTOs
 {
     // Define os dados que um cliente pode enviar para atualizar um chamado existente
@@ -15,5 +13,6 @@ namespace ApiParaBD.DTOs
         public int? Prioridade { get; set; } // Nova prioridade
     }
 }
+
 
 

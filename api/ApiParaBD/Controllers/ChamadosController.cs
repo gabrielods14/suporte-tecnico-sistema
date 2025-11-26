@@ -1,16 +1,15 @@
-using ApiParaBD.DTOs; // Importa seus DTOs
-using Microsoft.AspNetCore.Authorization; // Importa a segurança
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using ApiParaBD.DTOs; // Necessário para os DTOs
+using Microsoft.AspNetCore.Authorization; // Necessário para [Authorize]
+using Microsoft.AspNetCore.Mvc; // Necessário para ControllerBase
+using Microsoft.EntityFrameworkCore; // Necessário para Include e operações assíncronas
 
 namespace ApiParaBD.Controllers
 {
-    [Authorize] // <-- ISSO PROTEGE TODOS OS ENDPOINTS NESTA CLASSE
+    [Authorize] // Protege todos os endpoints: só usuários logados acessam
     [ApiController]
     [Route("api/[controller]")]
     public class ChamadosController : ControllerBase
     {
-        // Usando o nome do DbContext que você corrigiu
         private readonly ApplicationDbContext _context;
 
         public ChamadosController(ApplicationDbContext context)
@@ -18,19 +17,19 @@ namespace ApiParaBD.Controllers
             _context = context;
         }
 
-        // --- ENDPOINT PARA BUSCAR TODOS OS CHAMADOS ---
+        // --- GET: Listar todos os chamados ---
         [HttpGet]
         public async Task<IActionResult> GetChamados()
         {
             var chamados = await _context.Chamados
-                .Include(c => c.Solicitante) // Inclui dados do usuário
-                .Include(c => c.TecnicoResponsavel) // Inclui dados do técnico
+                .Include(c => c.Solicitante) // Carrega dados do usuário
+                .Include(c => c.TecnicoResponsavel) // Carrega dados do técnico
                 .ToListAsync();
-            
+
             return Ok(chamados);
         }
-        
-        // --- ENDPOINT PARA BUSCAR UM CHAMADO POR ID ---
+
+        // --- GET: Buscar um chamado específico ---
         [HttpGet("{id}")]
         public async Task<IActionResult> GetChamado(int id)
         {
@@ -41,13 +40,13 @@ namespace ApiParaBD.Controllers
 
             if (chamado == null)
             {
-                return NotFound();
+                return NotFound(new { message = "Chamado não encontrado." });
             }
 
             return Ok(chamado);
         }
 
-        // --- ENDPOINT PARA CRIAR UM NOVO CHAMADO ---
+        // --- POST: Criar um novo chamado ---
         [HttpPost]
         public async Task<IActionResult> CriarChamado([FromBody] CriarChamadoDto chamadoDto)
         {
@@ -68,9 +67,11 @@ namespace ApiParaBD.Controllers
                 Descricao = chamadoDto.Descricao,
                 Tipo = chamadoDto.Tipo,
                 SolicitanteId = chamadoDto.SolicitanteId,
+                
+                // Definições Automáticas Iniciais
                 DataAbertura = DateTime.UtcNow,
                 Status = StatusChamado.Aberto,
-                Prioridade = chamadoDto.Prioridade ?? PrioridadeChamado.Baixa 
+                Prioridade = chamadoDto.Prioridade ?? PrioridadeChamado.Baixa
             };
 
             _context.Chamados.Add(novoChamado);
@@ -79,7 +80,7 @@ namespace ApiParaBD.Controllers
             return CreatedAtAction(nameof(GetChamado), new { id = novoChamado.Id }, novoChamado);
         }
 
-        // --- ENDPOINT PARA ATUALIZAR UM CHAMADO ---
+        // --- PUT: Atualizar Chamado (Status, Técnico, Solução) ---
         [HttpPut("{id}")]
         public async Task<IActionResult> AtualizarChamado(int id, [FromBody] AtualizarChamadoDto atualizacaoDto)
         {
@@ -89,12 +90,7 @@ namespace ApiParaBD.Controllers
                 return NotFound(new { message = "Chamado não encontrado." });
             }
 
-            // Atualiza campos dinamicamente se eles foram fornecidos no JSON
-            if (atualizacaoDto.Status.HasValue)
-            {
-                chamado.Status = (StatusChamado)atualizacaoDto.Status.Value;
-            }
-
+            // 1. Lógica para Atribuição de Técnico
             if (atualizacaoDto.TecnicoResponsavelId.HasValue)
             {
                 var tecnico = await _context.Usuarios.FindAsync(atualizacaoDto.TecnicoResponsavelId.Value);
@@ -102,7 +98,30 @@ namespace ApiParaBD.Controllers
                 {
                     return BadRequest(new { message = "Técnico responsável não encontrado." });
                 }
+                
                 chamado.TecnicoResponsavelId = atualizacaoDto.TecnicoResponsavelId.Value;
+
+                // AUTOMATIZAÇÃO: Se estava "Aberto" e ganhou um técnico -> "Em Atendimento"
+                if (chamado.Status == StatusChamado.Aberto)
+                {
+                    chamado.Status = StatusChamado.EmAtendimento;
+                }
+            }
+
+            // 2. Lógica para Solução e Fechamento
+            if (!string.IsNullOrEmpty(atualizacaoDto.Solucao))
+            {
+                chamado.Solucao = atualizacaoDto.Solucao;
+                
+                // AUTOMATIZAÇÃO: Se tem solução -> Fecha o chamado automaticamente
+                chamado.Status = StatusChamado.Fechado;
+                chamado.DataFechamento = DateTime.UtcNow;
+            }
+
+            // 3. Atualizações Manuais (caso o usuário queira mudar explicitamente)
+            if (atualizacaoDto.Status.HasValue)
+            {
+                chamado.Status = (StatusChamado)atualizacaoDto.Status.Value;
             }
 
             if (atualizacaoDto.DataFechamento.HasValue)
@@ -110,30 +129,14 @@ namespace ApiParaBD.Controllers
                 chamado.DataFechamento = atualizacaoDto.DataFechamento.Value;
             }
 
-            if (!string.IsNullOrEmpty(atualizacaoDto.Titulo))
-            {
-                chamado.Titulo = atualizacaoDto.Titulo;
-            }
+            if (!string.IsNullOrEmpty(atualizacaoDto.Titulo)) chamado.Titulo = atualizacaoDto.Titulo;
+            if (!string.IsNullOrEmpty(atualizacaoDto.Descricao)) chamado.Descricao = atualizacaoDto.Descricao;
+            if (atualizacaoDto.Prioridade.HasValue) chamado.Prioridade = (PrioridadeChamado)atualizacaoDto.Prioridade.Value;
 
-            if (!string.IsNullOrEmpty(atualizacaoDto.Descricao))
-            {
-                chamado.Descricao = atualizacaoDto.Descricao;
-            }
-
-            if (atualizacaoDto.Prioridade.HasValue)
-            {
-                chamado.Prioridade = (PrioridadeChamado)atualizacaoDto.Prioridade.Value;
-            }
-
-            // --- LÓGICA DA SUA NOVA FUNCIONALIDADE ---
-            if (!string.IsNullOrEmpty(atualizacaoDto.Solucao))
-            {
-                chamado.Solucao = atualizacaoDto.Solucao;
-            }
-
+            // Salvar tudo no banco
             await _context.SaveChangesAsync();
 
-            // Retornar o chamado atualizado com os dados relacionados
+            // Retornar o objeto atualizado com os dados relacionados (para a tela atualizar na hora)
             var chamadoAtualizado = await _context.Chamados
                 .Include(c => c.Solicitante)
                 .Include(c => c.TecnicoResponsavel)

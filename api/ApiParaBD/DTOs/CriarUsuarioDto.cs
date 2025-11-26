@@ -1,4 +1,4 @@
-// DTOs/CriarUsuarioDto.cs
+// DTO usado para receber os dados de criação de um novo usuário
 namespace ApiParaBD.DTOs 
 {
     // Esta classe define apenas os dados necessários para criar um novo usuário.

@@ -4,19 +4,16 @@ using ApiParaBD;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace ApiParaBD.Migrations
 {
-    [DbContext(typeof(AppContext))]
-    [Migration("20251102013925_AdicionarColunaSolucao")]
-    partial class AdicionarColunaSolucao
+    [DbContext(typeof(ApplicationDbContext))]
+    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -25,7 +22,7 @@ namespace ApiParaBD.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Chamado", b =>
+            modelBuilder.Entity("ApiParaBD.Chamado", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -75,7 +72,7 @@ namespace ApiParaBD.Migrations
                     b.ToTable("Chamados");
                 });
 
-            modelBuilder.Entity("HistoricoChamado", b =>
+            modelBuilder.Entity("ApiParaBD.HistoricoChamado", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -108,7 +105,7 @@ namespace ApiParaBD.Migrations
                     b.ToTable("Historicos");
                 });
 
-            modelBuilder.Entity("Usuario", b =>
+            modelBuilder.Entity("ApiParaBD.Usuario", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -131,6 +128,9 @@ namespace ApiParaBD.Migrations
                     b.Property<int>("Permissao")
                         .HasColumnType("int");
 
+                    b.Property<bool>("PrimeiroAcesso")
+                        .HasColumnType("bit");
+
                     b.Property<string>("SenhaHash")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -141,17 +141,41 @@ namespace ApiParaBD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Cargo = "Gestor de TI",
+                            Email = "admin@helpwave.com",
+                            Nome = "Administrador Sistema",
+                            Permissao = 3,
+                            PrimeiroAcesso = true,
+                            SenhaHash = "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK",
+                            Telefone = "12999999999"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Cargo = "Suporte N1",
+                            Email = "tecnico@helpwave.com",
+                            Nome = "Técnico Padrão",
+                            Permissao = 2,
+                            PrimeiroAcesso = true,
+                            SenhaHash = "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK",
+                            Telefone = "12888888888"
+                        });
                 });
 
-            modelBuilder.Entity("Chamado", b =>
+            modelBuilder.Entity("ApiParaBD.Chamado", b =>
                 {
-                    b.HasOne("Usuario", "Solicitante")
+                    b.HasOne("ApiParaBD.Usuario", "Solicitante")
                         .WithMany()
                         .HasForeignKey("SolicitanteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Usuario", "TecnicoResponsavel")
+                    b.HasOne("ApiParaBD.Usuario", "TecnicoResponsavel")
                         .WithMany()
                         .HasForeignKey("TecnicoResponsavelId");
 
@@ -160,15 +184,15 @@ namespace ApiParaBD.Migrations
                     b.Navigation("TecnicoResponsavel");
                 });
 
-            modelBuilder.Entity("HistoricoChamado", b =>
+            modelBuilder.Entity("ApiParaBD.HistoricoChamado", b =>
                 {
-                    b.HasOne("Chamado", "Chamado")
+                    b.HasOne("ApiParaBD.Chamado", "Chamado")
                         .WithMany()
                         .HasForeignKey("ChamadoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Usuario", "Usuario")
+                    b.HasOne("ApiParaBD.Usuario", "Usuario")
                         .WithMany()
                         .HasForeignKey("UsuarioId");
 

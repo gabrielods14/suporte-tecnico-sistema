@@ -121,3 +121,4 @@ _ReSharper*/
 # Keep human-readable note
 # Se precisar ignorar arquivos adicionais (chaves, certificados, arquivos de configuração locais),
 # adicione-os abaixo.
+appsettings.json

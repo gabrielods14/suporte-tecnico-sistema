@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace ApiParaBD.Migrations
 {
     /// <inheritdoc />
-    public partial class CriacaoModeloInicialSuporte : Migration
+    public partial class InitialCreateWithSeed : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -39,6 +41,7 @@ namespace ApiParaBD.Migrations
                     Descricao = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DataAbertura = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DataFechamento = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Solucao = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     SolicitanteId = table.Column<int>(type: "int", nullable: false),
                     TecnicoResponsavelId = table.Column<int>(type: "int", nullable: true),
                     Prioridade = table.Column<int>(type: "int", nullable: false),
@@ -87,6 +90,15 @@ namespace ApiParaBD.Migrations
                         column: x => x.UsuarioId,
                         principalTable: "Usuarios",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Usuarios",
+                columns: new[] { "Id", "Cargo", "Email", "Nome", "Permissao", "SenhaHash", "Telefone" },
+                values: new object[,]
+                {
+                    { 1, "Gestor de TI", "admin@helpwave.com", "Administrador Sistema", 3, "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK", "12999999999" },
+                    { 2, "Suporte N1", "tecnico@helpwave.com", "Técnico Padrão", 2, "$2a$11$8wYso8QevHE6MfV4JQoF5O2vlvvQyPnBVUL7ywtQ8p1gmSaPtK8nK", "12888888888" }
                 });
 
             migrationBuilder.CreateIndex(

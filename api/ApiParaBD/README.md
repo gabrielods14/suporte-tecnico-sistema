@@ -16,6 +16,8 @@ A API centraliza **três sistemas principais**:
 - Prioridades e status configuráveis
 - Atribuição automática de técnicos
 - Rastreamento de tempo de resolução
+- Sugestões de solução por técnicos
+- Integração com IA para sugestões de solução
 
 ### 3. **Sistema de Histórico** 📝
 - Log completo de todas as interações
@@ -64,6 +66,18 @@ graph TD
     E --> F[SQL Server Azure]
     B --> G[JWT Authentication]
     B --> H[Swagger Documentation]
+    I[IA - Gemini] -.-> B
+```
+
+### **Fluxo de Solução de Chamados**
+```mermaid
+graph LR
+    A[Chamado Aberto] --> B[Em Atendimento]
+    B --> C[Técnico Propõe Solução]
+    C --> D[Aguardando Usuário]
+    D --> E[Resolvido]
+    D --> B
+    E --> F[Fechado]
 ```
 
 ## 🚀 Pré-requisitos
@@ -157,6 +171,7 @@ A API estará disponível em:
 - **GET** `/api/Chamados` - Lista todos os chamados
 - **GET** `/api/Chamados/{id}` - Busca chamado por ID
 - **POST** `/api/Chamados` - Cria novo chamado
+- **PUT** `/api/Chamados/{id}` - Atualiza chamado, incluindo propostas de solução
 
 ### 📝 **Sistema de Histórico**
 - Integrado automaticamente com chamados
@@ -191,7 +206,8 @@ POST /api/Chamados
   "descricao": "Sistema não está funcionando",
   "tipo": "Software",
   "solicitanteId": 1,
-  "prioridade": 2
+  "prioridade": 2,
+  "solucao": "Reinstale o software e execute a atualização disponível."
 }
 ```
 
@@ -239,6 +255,7 @@ curl -X GET "https://localhost:7000/api/Chamados" \
 - `Descricao` (string, required)
 - `DataAbertura` (datetime)
 - `DataFechamento` (datetime, nullable)
+- `Solucao` (string, nullable) - Solução proposta pelo técnico
 - `SolicitanteId` (int, FK para Usuarios)
 - `TecnicoResponsavelId` (int, FK para Usuarios, nullable)
 - `Prioridade` (enum: Baixa=1, Media=2, Alta=3)
