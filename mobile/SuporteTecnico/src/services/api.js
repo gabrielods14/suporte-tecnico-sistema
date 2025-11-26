@@ -1,5 +1,5 @@
 // URL da API real hospedada no Azure
-const API_BASE_URL = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net';
+const API_BASE_URL = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net';
 
 class ApiService {
   // Armazenar token JWT

@@ -2,7 +2,7 @@ from flask import request, jsonify
 import requests 
 
 # ENDPOINT BASE da sua API externa (Azure)
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 # Rota unificada para buscar (GET), atualizar (PUT) e excluir (DELETE) o usuário
 def gerenciar_usuario(usuario_id):

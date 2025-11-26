@@ -3,7 +3,7 @@ from flask import request, jsonify
 import requests
 
 # ENDPOINT BASE da sua API externa (Azure)
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 def login_user():
     data = request.json

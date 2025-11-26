@@ -3,7 +3,7 @@ import requests
 # Não usamos o bcrypt aqui, pois enviamos a senha para a API do Azure validar.
 
 # ENDPOINT BASE da sua API externa (Azure)
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 # Rota para o Cadastro. O front-end envia todos os dados do novo funcionário para este endpoint.
 def register_user():

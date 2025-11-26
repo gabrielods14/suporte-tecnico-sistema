@@ -23,7 +23,7 @@ class Config:
     ]
     
     # Configurações da API externa
-    API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+    API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
     API_TIMEOUT = 30
     
     # Configurações de autenticação
