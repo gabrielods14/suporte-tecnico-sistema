@@ -6,16 +6,7 @@ app = None
 # Não usamos o bcrypt aqui, pois enviamos a senha para a API do Azure validar.
 
 # ENDPOINT BASE da sua API externa (Azure)
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
-
-# Usuário administrador padrão para testes
-ADMIN_USER = {
-    'email': 'admin@helpwave.com',
-    'senha': 'admin123',
-    'nome': 'Administrador',
-    'cargo': 'Administrador',
-    'permissao': 3
-}
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 # Rota para o Login. O front-end envia email e senha para este endpoint.
 def login_user():
@@ -27,19 +18,6 @@ def login_user():
     
     if not email or not senha:
         return jsonify({"message": "Email e senha são obrigatórios para login."}), 400
-
-    # Verifica se é o usuário administrador padrão
-    if email == ADMIN_USER['email'] and senha == ADMIN_USER['senha']:
-        return jsonify({
-            "message": "Login realizado com sucesso!",
-            "token": "admin_token_12345",
-            "user": {
-                "nome": ADMIN_USER['nome'],
-                "email": ADMIN_USER['email'],
-                "cargo": ADMIN_USER['cargo'],
-                "permissao": ADMIN_USER['permissao']
-            }
-        }), 200
 
     # Prepara os dados no formato que a API do Azure espera para login
     # CORREÇÃO: A API C# espera Email e Senha com maiúsculas
@@ -90,24 +68,61 @@ def login_user():
                     if user_id:
                         # Busca dados do usuário para obter nome e permissão
                         usuario_resp = requests.get(f"{API_URL_BASE}/api/Usuarios/{user_id}")
+                        print(f"[Login] Resposta da API de usuário: Status {usuario_resp.status_code}")
+                        
                         if usuario_resp.status_code == 200:
                             usuario_json = usuario_resp.json() or {}
+                            print(f"[Login] Dados recebidos da API C#: {usuario_json}")
+                            
+                            # Normaliza campos (pode vir com maiúscula ou minúscula)
+                            nome_api = usuario_json.get('nome') or usuario_json.get('Nome') or ''
+                            email_api = usuario_json.get('email') or usuario_json.get('Email') or email
+                            cargo_api = usuario_json.get('cargo') or usuario_json.get('Cargo') or ''
+                            telefone_api = usuario_json.get('telefone') or usuario_json.get('Telefone') or ''
+                            
+                            print(f"[Login] Nome extraído: '{nome_api}'")
+                            print(f"[Login] Email extraído: '{email_api}'")
+                            print(f"[Login] Cargo extraído: '{cargo_api}'")
+                            
                             user_info = {
-                                'id': usuario_json.get('id') or user_id,
-                                'nome': usuario_json.get('nome') or '',
-                                'email': usuario_json.get('email') or '',
-                                'permissao': usuario_json.get('permissao') if usuario_json.get('permissao') is not None else user_role
+                                'id': usuario_json.get('id') or usuario_json.get('Id') or user_id,
+                                'nome': nome_api,
+                                'email': email_api,
+                                'cargo': cargo_api,
+                                'telefone': telefone_api,
+                                'permissao': usuario_json.get('permissao') if usuario_json.get('permissao') is not None else (usuario_json.get('Permissao') if usuario_json.get('Permissao') is not None else user_role)
                             }
+                            print(f"[Login] user_info final: {user_info}")
                         else:
+                            print(f"[Login] Erro ao buscar usuário: {usuario_resp.status_code}")
                             # Fallback: retorna apenas dados do token
                             user_info = {
                                 'id': user_id,
                                 'nome': '',
-                                'email': '',
-                                'permissao': user_role
+                                'email': email,
+                                'cargo': '',
+                                'telefone': '',
+                                'permissao': user_role if user_role else 1  # Default para colaborador se não houver role
                             }
             except Exception as e:
                 print(f"Falha ao enriquecer dados do usuário pós-login: {e}")
+                # Garantir que sempre há um user_info válido
+                if not user_info:
+                    user_info = {
+                        'id': None,
+                        'nome': '',
+                        'email': email,
+                        'permissao': 1  # Default para colaborador
+                    }
+
+            # Garantir que user_info não seja None antes de retornar
+            if not user_info:
+                user_info = {
+                    'id': None,
+                    'nome': '',
+                    'email': email,
+                    'permissao': 1
+                }
 
             # Monta resposta unificada
             return jsonify({

@@ -14,7 +14,7 @@ class DashboardBase(tk.Frame):
     """
     def __init__(self, master, user_info, app_manager_callback):
         super().__init__(master, bg="#D3D3D3")
-        self.pack(fill=tk.BOTH, expand=True)
+        # Não faz pack aqui - deixar o código que cria o DashboardBase decidir (grid ou pack)
 
         self.master = master # Adicionamos esta linha para poder referenciar a janela principal
         self.user_info = user_info
@@ -193,6 +193,9 @@ class DashboardBase(tk.Frame):
     
     def _logout(self):
         """Faz o logout do usuário e retorna à página de login."""
+        # Limpa o token de autenticação antes de fazer logout
+        from api_client import api_client
+        api_client.clear_auth_token()
         self.app_manager_callback.show_login_page()
     
     def _close_app(self):

@@ -3,10 +3,16 @@ import React, { useState, useEffect } from 'react';
 import '../styles/pending-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
+function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
+  const handleTicketClick = (ticketId) => {
+    if (onNavigateToTicketDetail) {
+      onNavigateToTicketDetail(ticketId, 'pending-tickets');
+    }
+  };
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +24,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
 
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [userInfo?.id, userInfo?.permissao]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -27,9 +33,31 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   const loadTickets = async () => {
     try {
       setLoading(true);
-      // Tentar carregar da API real primeiro
+      
+      const isColaborador = userInfo?.permissao === 1;
+      const filters = {};
+      
+      if (isColaborador) {
+        let userId = userInfo?.id;
+        if (!userId) {
+          try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              userId = payload?.sub || payload?.id;
+            }
+          } catch (e) {
+            console.error('Erro ao decodificar token:', e);
+          }
+        }
+        
+        if (userId) {
+          filters.solicitanteId = Number(userId);
+        }
+      }
+      
       try {
-        const apiTickets = await ticketService.getTickets();
+        const apiTickets = await ticketService.getTickets(filters);
         if (apiTickets && apiTickets.length > 0) {
           const mapPriority = (p) => {
             if (typeof p === 'number') {
@@ -41,27 +69,56 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
             if (val.includes('baix')) return 'BAIXA';
             return 'MÉDIA';
           };
-          const mapped = apiTickets.map(item => {
-            const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
-            const limite = new Date(abertura);
-            limite.setDate(limite.getDate() + 7);
-            return {
-              id: item.id,
-              codigo: String(item.id).padStart(6, '0'),
-              titulo: item.titulo || '',
-              prioridade: mapPriority(item.prioridade),
-              dataLimite: limite.toISOString(),
-              status: item.status || 'ABERTO'
-            };
+          
+          let filteredTickets = apiTickets.filter(item => {
+            const status = item.status;
+            return status === 1 || status === 2 || status === 4;
           });
+          
+          if (isColaborador) {
+            let userId = userInfo?.id;
+            if (!userId) {
+              try {
+                const token = localStorage.getItem('authToken');
+                if (token) {
+                  const payload = JSON.parse(atob(token.split('.')[1]));
+                  userId = payload?.sub || payload?.id;
+                }
+              } catch (e) {
+                console.error('Erro ao obter userId do token:', e);
+              }
+            }
+            
+            if (userId) {
+              userId = Number(userId);
+              filteredTickets = filteredTickets.filter(item => {
+                const solicitanteId = item.solicitanteId || item.SolicitanteId;
+                return Number(solicitanteId) === userId;
+              });
+            }
+          }
+        
+          const mapped = filteredTickets
+            .map(item => {
+              const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
+              const limite = new Date(abertura);
+              limite.setDate(limite.getDate() + 7);
+              return {
+                id: item.id,
+                codigo: String(item.id).padStart(6, '0'),
+                titulo: item.titulo || '',
+                prioridade: mapPriority(item.prioridade),
+                dataLimite: limite.toISOString(),
+                status: item.status || 'ABERTO'
+              };
+            });
           setTickets(mapped);
           return;
         }
       } catch (apiError) {
-        console.log('API não disponível, usando array vazio:', apiError);
+        console.error('Erro ao carregar chamados da API:', apiError);
       }
       
-      // Se a API falhar, usar array vazio
       setTickets([]);
     } catch (error) {
       console.error('Erro ao carregar tickets:', error);
@@ -158,29 +215,26 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   };
 
   if (loading) {
-    return (
-      <div className="pending-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
-        <main className="pending-tickets-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando chamados...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (
     <div className="pending-tickets-page">
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="pending-tickets-main">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         {/* Header da página */}
         <div className="page-header">
-          <h1>CHAMADOS ABERTOS</h1>
+          <h1>CHAMADOS EM ANDAMENTO</h1>
         </div>
 
         {/* Filtros */}
@@ -246,7 +300,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                   const isOverdue = daysToExpire.includes('Vencido');
                   
                   return (
-                    <tr key={ticket.id} onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} style={{ cursor: 'pointer' }}>
+                    <tr key={ticket.id} onClick={() => handleTicketClick(ticket.id)} style={{ cursor: 'pointer' }}>
                       <td className="code-cell">{ticket.codigo}</td>
                       <td className="title-cell">{ticket.titulo}</td>
                       <td>

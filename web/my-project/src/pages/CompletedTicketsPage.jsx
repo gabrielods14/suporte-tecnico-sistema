@@ -3,10 +3,11 @@ import React, { useState, useEffect } from 'react';
 import '../styles/completed-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import LoadingScreen from '../components/LoadingScreen';
 import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
-function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail }) {
+function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
   const [tickets, setTickets] = useState([]);
   const [filteredTickets, setFilteredTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,9 +15,15 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   const [sortBy, setSortBy] = useState('dataFechamento'); // codigo, titulo, prioridade, dataFechamento
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
 
+  const handleTicketClick = (ticketId) => {
+    if (onNavigateToTicketDetail) {
+      onNavigateToTicketDetail(ticketId, 'completed-tickets');
+    }
+  };
+
   useEffect(() => {
     loadTickets();
-  }, []);
+  }, [userInfo?.id, userInfo?.permissao]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -25,7 +32,33 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   const loadTickets = async () => {
     try {
       setLoading(true);
-      const apiTickets = await ticketService.getTickets();
+      
+      const isColaborador = userInfo?.permissao === 1;
+      const filters = {
+        status: 3
+      };
+      
+      if (isColaborador) {
+        let userId = userInfo?.id;
+        if (!userId) {
+          try {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              userId = payload?.sub || payload?.id;
+            }
+          } catch (e) {
+            console.error('Erro ao decodificar token:', e);
+          }
+        }
+        
+        if (userId) {
+          filters.solicitanteId = Number(userId);
+        }
+      }
+      
+      const apiTickets = await ticketService.getTickets(filters);
+      
       if (apiTickets && apiTickets.length > 0) {
         const mapPriority = (p) => {
           if (typeof p === 'number') {
@@ -38,17 +71,45 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           return 'MÉDIA';
         };
         
-        // Filtrar apenas chamados com status Resolvido (4) ou Fechado (5)
-        const mapped = apiTickets
-          .filter(item => item.status === 4 || item.status === 5)
+        let filteredTickets = apiTickets.filter(item => {
+          const status = item.status || item.Status;
+          return Number(status) === 3;
+        });
+        
+        if (isColaborador) {
+          let userId = userInfo?.id;
+          if (!userId) {
+            try {
+              const token = localStorage.getItem('authToken');
+              if (token) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                userId = payload?.sub || payload?.id;
+              }
+            } catch (e) {
+              console.error('Erro ao obter userId do token:', e);
+            }
+          }
+          
+          if (userId) {
+            userId = Number(userId);
+            filteredTickets = filteredTickets.filter(item => {
+              const solicitanteId = item.solicitanteId || item.SolicitanteId;
+              return Number(solicitanteId) === userId;
+            });
+          }
+        }
+        
+        const mapped = filteredTickets
           .map(item => ({
             id: item.id,
             codigo: String(item.id).padStart(6, '0'),
-            titulo: item.titulo || '',
-            prioridade: mapPriority(item.prioridade),
-            dataFechamento: item.dataFechamento || item.dataAbertura,
-            status: item.status,
-            tecnico: item.tecnicoResponsavel?.nome || 'N/A'
+            titulo: item.titulo || item.Titulo || '',
+            prioridade: mapPriority(item.prioridade || item.Prioridade),
+            dataFechamento: item.dataFechamento || item.DataFechamento || item.dataAbertura || item.DataAbertura,
+            status: item.status || item.Status,
+            tecnico: item.tecnicoResponsavel?.nome || item.tecnicoResponsavel?.Nome || item.TecnicoResponsavel?.nome || item.TecnicoResponsavel?.Nome || 'N/A',
+            solicitante: item.solicitante?.nome || item.solicitante?.Nome || item.Solicitante?.nome || item.Solicitante?.Nome || 'N/A',
+            solicitanteId: item.solicitanteId || item.SolicitanteId
           }));
         
         setTickets(mapped);
@@ -133,42 +194,43 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
   };
 
   const getStatusText = (status) => {
-    switch (status) {
-      case 4: return 'RESOLVIDO';
-      case 5: return 'FECHADO';
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    switch (Number(status)) {
+      case 1: return 'ABERTO';
+      case 2: return 'EM ATENDIMENTO';
+      case 3: return 'CONCLUÍDO';
       default: return 'N/A';
     }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 4: return '#28a745';
-      case 5: return '#6c757d';
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    switch (Number(status)) {
+      case 1: return '#ffc107';
+      case 2: return '#17a2b8';
+      case 3: return '#28a745';
       default: return '#6c757d';
     }
   };
 
   if (loading) {
-    return (
-      <div className="completed-tickets-page">
-        <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
-        <main className="completed-tickets-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando chamados concluídos...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   return (
     <div className="completed-tickets-page">
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="completed-tickets-main">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         {/* Header da página */}
         <div className="page-header">
           <h1>CHAMADOS CONCLUÍDOS</h1>
@@ -219,6 +281,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                   PRIORIDADE {sortBy === 'prioridade' && (sortOrder === 'asc' ? '▲' : '▼')}
                 </th>
                 <th>STATUS</th>
+                <th>SOLICITANTE</th>
                 <th>TÉCNICO</th>
                 <th onClick={() => handleSort('dataFechamento')} className="sortable">
                   DATA FECHAMENTO {sortBy === 'dataFechamento' && (sortOrder === 'asc' ? '▲' : '▼')}
@@ -228,7 +291,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
             <tbody>
               {filteredTickets.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="no-data">
+                  <td colSpan="7" className="no-data">
                     <p>Nenhum chamado concluído encontrado</p>
                   </td>
                 </tr>
@@ -236,7 +299,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                 filteredTickets.map((ticket) => (
                   <tr 
                     key={ticket.id} 
-                    onClick={() => onNavigateToTicketDetail && onNavigateToTicketDetail(ticket.id)} 
+                    onClick={() => handleTicketClick(ticket.id)} 
                     style={{ cursor: 'pointer' }}
                   >
                     <td className="code-cell">{ticket.codigo}</td>
@@ -257,6 +320,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
                         {getStatusText(ticket.status)}
                       </span>
                     </td>
+                    <td className="solicitante-cell">{ticket.solicitante}</td>
                     <td className="tecnico-cell">{ticket.tecnico}</td>
                     <td className="date-cell">{formatDate(ticket.dataFechamento)}</td>
                   </tr>

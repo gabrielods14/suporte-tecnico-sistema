@@ -446,3 +446,76 @@ textarea::placeholder {
 .animate-bounce-in {
   animation: bounce-in 0.5s ease-out;
 }
+
+/* ===== ESTILOS GLOBAIS DE LOADING ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 1.5rem;
+  background-color: #FFFFFF;
+  padding: 2rem;
+  width: 100%;
+}
+
+.loading-container p {
+  color: #000000;
+  font-weight: 700;
+  font-size: 1.125rem;
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #F5F5F5;
+  border-top: 5px solid #8B4513;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+  background-color: transparent;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Loading spinner pequeno (para botões) */
+.loading-spinner-small {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Garantir contraste em todos os casos */
+.loading-container[style*="background"] p,
+.loading-container p {
+  color: #000000 !important;
+}
+
+/* Ajuste para fundos escuros */
+@media (prefers-color-scheme: dark) {
+  .loading-container {
+    background-color: var(--neutral-900, #171717);
+  }
+  
+  .loading-container p {
+    color: #FFFFFF !important;
+  }
+  
+  .loading-spinner {
+    border-color: var(--neutral-700, #404040);
+    border-top-color: var(--primary-color, #A93226);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}

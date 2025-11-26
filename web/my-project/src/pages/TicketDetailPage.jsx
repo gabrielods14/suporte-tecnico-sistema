@@ -3,15 +3,19 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
+import ConfirmModal from '../components/ConfirmModal';
+import LoadingScreen from '../components/LoadingScreen';
 import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
-const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId }) => {
+const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo, ticketId, previousPage, onNavigateToProfile }) => {
   const [ticket, setTicket] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  // REMOVED: Priority dropdown states
   const [solution, setSolution] = useState('');
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   useEffect(() => {
     if (ticketId) {
@@ -23,8 +27,69 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     try {
       setLoading(true);
       const ticketData = await ticketService.getTicket(ticketId);
-      setTicket(ticketData);
+      
+      // Normaliza os dados do solicitante (suporta camelCase e PascalCase)
+      const solicitante = ticketData.solicitante || ticketData.Solicitante || {};
+      const normalizedSolicitante = {
+        nome: solicitante.nome || solicitante.Nome || 'N/A',
+        email: solicitante.email || solicitante.Email || 'N/A',
+        cargo: solicitante.cargo || solicitante.Cargo || 'N/A',
+        telefone: solicitante.telefone || solicitante.Telefone || 'N/A'
+      };
+      
+      // Debug: verificar dados do solicitante
+      console.log('TicketDetailPage - Dados originais do solicitante:', solicitante);
+      console.log('TicketDetailPage - Dados normalizados do solicitante:', normalizedSolicitante);
+      
+      // Normaliza os dados do técnico responsável (suporta camelCase e PascalCase)
+      const tecnico = ticketData.tecnicoResponsavel || ticketData.TecnicoResponsavel || null;
+      const normalizedTecnico = tecnico ? {
+        nome: tecnico.nome || tecnico.Nome || 'N/A',
+        email: tecnico.email || tecnico.Email || 'N/A'
+      } : null;
+      
+      // Debug: verificar dados do técnico
+      if (tecnico) {
+        console.log('TicketDetailPage - Dados originais do técnico:', tecnico);
+        console.log('TicketDetailPage - Dados normalizados do técnico:', normalizedTecnico);
+      }
+      
+      // Normaliza o status e outros campos principais
+      const normalizedTicket = {
+        ...ticketData,
+        status: Number(ticketData.status || ticketData.Status || 1),
+        solicitante: normalizedSolicitante,
+        tecnicoResponsavel: normalizedTecnico,
+        // Normaliza outros campos que podem ter variações de nomenclatura
+        titulo: ticketData.titulo || ticketData.Titulo || '',
+        descricao: ticketData.descricao || ticketData.Descricao || '',
+        tipo: ticketData.tipo || ticketData.Tipo || '',
+        prioridade: ticketData.prioridade || ticketData.Prioridade || 1,
+        dataAbertura: ticketData.dataAbertura || ticketData.DataAbertura || '',
+        dataFechamento: ticketData.dataFechamento || ticketData.DataFechamento || null,
+        solucao: ticketData.solucao || ticketData.Solucao || null
+      };
+      
+      setTicket(normalizedTicket);
       setSolution(''); // Limpa o campo de solução ao carregar um novo chamado
+      
+      // Se o chamado está em status "Aberto" (1) e o usuário é um técnico, muda para "Em Atendimento" (2)
+      // IMPORTANTE: Não altera status de chamados já fechados (status 3) ou em atendimento (status 2)
+      const ticketStatus = normalizedTicket.status;
+      if (ticketStatus === 1 && (userInfo?.permissao === 2 || userInfo?.permissao === 3)) {
+        try {
+          await ticketService.updateTicket(ticketId, { status: 2 });
+          // Atualiza o estado local com o novo status, preservando os dados normalizados
+          setTicket(prevTicket => ({ 
+            ...prevTicket, 
+            status: 2 
+          }));
+          console.log('Chamado atualizado para "Em Atendimento"');
+        } catch (error) {
+          console.error('Erro ao atualizar status do chamado:', error);
+          // Não mostra erro ao usuário, pois o chamado já foi carregado
+        }
+      }
     } catch (error) {
       console.error('Erro ao carregar chamado:', error);
       showToast('Erro ao carregar detalhes do chamado.', 'error');
@@ -64,9 +129,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
 
       if (response.sugestao) {
         setSugestao(response.sugestao);
-        // Preenche automaticamente o campo de solução com a sugestão
-        setSolution(response.sugestao);
-        showToast('Sugestão gerada com sucesso! Você pode editá-la antes de concluir.', 'success');
+        showToast('Sugestão gerada com sucesso! Clique em "Usar Sugestão" para aplicá-la.', 'success');
       } else {
         showToast('Não foi possível gerar uma sugestão. Tente novamente.', 'error');
       }
@@ -93,39 +156,52 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
     setSolution(e.target.value);
   };
 
-  const handleConcludeTicket = async () => {
+  const handleSendSolution = () => {
     if (!solution.trim()) {
-      showToast('Por favor, descreva a solução antes de concluir o chamado.', 'error');
+      showToast('Por favor, descreva a solução antes de enviar.', 'error');
       return;
     }
 
+    // Abre o modal de confirmação
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleConfirmSolution = async () => {
+    setIsConfirmModalOpen(false);
+    
     try {
       setSaving(true);
       
-      // Atualiza o chamado com a solução e marca como concluído
+      // Atualiza o chamado com a solução E muda o status para "Fechado" (3)
       const updateData = {
         solucao: solution,
-        status: 4, // StatusChamado.Resolvido
-        tecnicoResponsavelId: userInfo?.id ? Number(userInfo.id) : null,
+        status: 3, // Fechado
+        // Define o técnico responsável apenas se ainda não estiver definido
+        tecnicoResponsavelId: ticket.tecnicoResponsavelId || (userInfo?.id ? Number(userInfo.id) : null),
+        // Define a data de fechamento como agora
         dataFechamento: new Date().toISOString()
       };
 
       await ticketService.updateTicket(ticketId, updateData);
       
-      showToast('Chamado concluído com sucesso!', 'success');
+      showToast('Solução enviada e chamado fechado com sucesso!', 'success');
       
-      // Volta para a lista após 1.5s
+      // Aguarda um pouco para a toast ser exibida e depois navega
       setTimeout(() => {
-        onNavigateToPage('pending-tickets');
+        if (onNavigateToPage) {
+          onNavigateToPage('completed-tickets');
+        }
       }, 1500);
 
     } catch (error) {
-      console.error('Erro ao concluir chamado:', error);
-      showToast('Erro ao concluir chamado. Tente novamente.', 'error');
+      console.error('Erro ao enviar solução:', error);
+      showToast('Erro ao enviar solução. Tente novamente.', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  // REMOVED: Priority dropdown options
 
   const getPriorityColor = (priority) => {
     if (typeof priority === 'number') {
@@ -140,6 +216,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   const getPriorityText = (priority) => {
+      // REMOVED: Priority change handlers
     if (typeof priority === 'number') {
       switch (priority) {
         case 3: return 'ALTA';
@@ -152,17 +229,14 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   const getStatusText = (status) => {
-    if (typeof status === 'number') {
-      switch (status) {
-        case 1: return 'ABERTO';
-        case 2: return 'EM ATENDIMENTO';
-        case 3: return 'AGUARDANDO USUÁRIO';
-        case 4: return 'RESOLVIDO';
-        case 5: return 'FECHADO';
-        default: return 'N/A';
-      }
+    // StatusChamado enum: 1=Aberto, 2=EmAtendimento, 3=Fechado
+    const statusNum = Number(status);
+    switch (statusNum) {
+      case 1: return 'ABERTO';
+      case 2: return 'EM ATENDIMENTO';
+      case 3: return 'CONCLUÍDO';
+      default: return 'N/A';
     }
-    return status || 'N/A';
   };
 
   const formatDate = (dateString) => {
@@ -172,29 +246,21 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   if (loading) {
-    return (
-      <div className="ticket-detail-layout">
-        <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
-        <main className="ticket-detail-main">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Carregando detalhes do chamado...</p>
-          </div>
-        </main>
-      </div>
-    );
+    return <LoadingScreen message="Aguarde..." />;
   }
 
   if (!ticket) {
     return (
       <div className="ticket-detail-layout">
-        <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-        <Header onLogout={onLogout} userName={userInfo?.nome} />
+        <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} userInfo={userInfo} />
+        <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
           <div className="error-container">
             <p>Chamado não encontrado.</p>
-            <button onClick={() => onNavigateToPage('pending-tickets')}>
+            <button onClick={() => {
+              const pageToReturn = previousPage || 'pending-tickets';
+              onNavigateToPage(pageToReturn);
+            }}>
               Voltar para lista
             </button>
           </div>
@@ -205,17 +271,38 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
 
   return (
     <div className="ticket-detail-layout">
-      <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} />
-      <Header onLogout={onLogout} userName={userInfo?.nome} />
+      <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} userInfo={userInfo} />
+      <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="ticket-detail-main">
+        <button 
+          className="back-button" 
+          onClick={() => {
+            // Determina a página de retorno baseado no status do chamado ou previousPage
+            // Se o chamado está concluído (status 5) ou se veio de completed-tickets, volta para completed-tickets
+            // Caso contrário, volta para pending-tickets
+            let pageToReturn = previousPage;
+            
+            // Se não houver previousPage, tenta determinar pelo status do chamado
+            if (!pageToReturn && ticket) {
+              // Status 3 = Fechado/Concluído (conforme enum StatusChamado)
+              const ticketStatus = Number(ticket.status || ticket.Status);
+              const isConcluido = ticketStatus === 3;
+              pageToReturn = isConcluido ? 'completed-tickets' : 'pending-tickets';
+            } else {
+              // Se houver previousPage, usa ela (pode ser completed-tickets ou pending-tickets)
+              pageToReturn = pageToReturn || 'pending-tickets';
+            }
+            
+            console.log('Voltando para:', pageToReturn, '(status do chamado:', ticket?.status, ')');
+            onNavigateToPage(pageToReturn);
+          }}
+          aria-label="Voltar para lista"
+        >
+          ← Voltar
+        </button>
+        
         <div className="ticket-detail-header">
-          <button 
-            className="back-button" 
-            onClick={() => onNavigateToPage('pending-tickets')}
-          >
-            ← Voltar para lista
-          </button>
           <h1>DETALHES DO CHAMADO #{String(ticket.id).padStart(6, '0')}</h1>
         </div>
 
@@ -292,19 +379,19 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           </div>
 
           {/* Técnico responsável */}
-          {ticket.tecnicoResponsavel && (
+          {ticket.tecnicoResponsavel && ticket.tecnicoResponsavel.nome !== 'N/A' && (
             <div className="tecnico-info-section">
               <h2>Técnico Responsável</h2>
               
               <div className="info-grid">
                 <div className="info-item">
                   <label>Nome:</label>
-                  <span>{ticket.tecnicoResponsavel.nome}</span>
+                  <span>{ticket.tecnicoResponsavel.nome || 'N/A'}</span>
                 </div>
                 
                 <div className="info-item">
                   <label>Email:</label>
-                  <span>{ticket.tecnicoResponsavel.email}</span>
+                  <span>{ticket.tecnicoResponsavel.email || 'N/A'}</span>
                 </div>
               </div>
             </div>
@@ -321,15 +408,15 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
           {/* Solução (se já foi registrada) */}
           {ticket.solucao && (
             <div className="solution-display-section">
-              <h2>Solução Registrada</h2>
+              <h2>Solução Sugerida pelo Técnico</h2>
               <div className="description-box" style={{ backgroundColor: '#e8f5e9' }}>
                 {ticket.solucao}
               </div>
             </div>
           )}
 
-          {/* Campo de solução (apenas para técnicos e se ainda não foi resolvido) */}
-          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && ticket.status !== 4 && ticket.status !== 5 && (
+          {/* Campo de solução (apenas para técnicos) e apenas se o chamado não está fechado */}
+          {(userInfo?.permissao === 2 || userInfo?.permissao === 3) && Number(ticket?.status || ticket?.Status) !== 3 && (
             <div className="solution-section">
               <div className="solution-header">
                 <h2>Registrar Solução</h2>
@@ -383,18 +470,18 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
               <textarea
                 value={solution}
                 onChange={handleSolutionChange}
-                placeholder="Descreva aqui a solução para o problema ou use o botão acima para gerar uma sugestão com IA..."
+                placeholder="Descreva aqui a solução sugerida para o problema. Use o botão acima para gerar uma sugestão com IA..."
                 className="solution-textarea"
                 rows="8"
               />
               
               <div className="solution-actions">
                 <button 
-                  onClick={handleConcludeTicket}
+                  onClick={handleSendSolution}
                   disabled={saving || !solution.trim()}
                   className="conclude-button"
                 >
-                  {saving ? 'Concluindo...' : 'Concluir Chamado'}
+                  {saving ? 'Enviando...' : 'Enviar Solução'}
                 </button>
               </div>
             </div>
@@ -407,6 +494,16 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         message={toast.message}
         type={toast.type}
         onClose={hideToast}
+      />
+      
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        title="CONFIRMAR ENVIO DA SOLUÇÃO"
+        message={`Tem certeza que deseja enviar esta solução e fechar o chamado?\n\nO chamado será marcado como "Fechado" e o usuário receberá a solução sugerida.`}
+        confirmText="Confirmar"
+        cancelText="Cancelar"
+        onConfirm={handleConfirmSolution}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </div>
   );

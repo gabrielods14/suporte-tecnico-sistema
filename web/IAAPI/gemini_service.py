@@ -46,10 +46,68 @@ def gerar_sugestao(titulo, descricao):
             genai.configure(api_key=current_api_key)
         
         prompt = f"""
-        Você é um assistente técnico de TI.
-        O técnico está respondendo a um chamado com o título: "{titulo}".
-        Descrição do problema: "{descricao}".
-        Gere uma sugestão de resposta técnica clara, profissional e útil para o técnico enviar ao cliente.
+        Você é um assistente técnico de TI especializado em gerar relatórios detalhados de atendimento técnico para rastreabilidade.
+
+        CONTEXTO DO CHAMADO:
+        - Título: "{titulo}"
+        - Descrição do problema reportado: "{descricao}"
+        
+        OBJETIVO:
+        Gere uma resposta técnica COMPLETA e DETALHADA que descreva TODAS as ações realizadas pelo técnico para resolver este problema.
+        Esta resposta será registrada permanentemente no histórico do chamado e deve fornecer rastreabilidade completa.
+        Outro técnico deve ser capaz de ler esta resposta e entender EXATAMENTE o que foi feito, como foi feito e por que foi feito.
+        
+        ESTRUTURA OBRIGATÓRIA DA RESPOSTA:
+        
+        1. ANÁLISE INICIAL DO PROBLEMA:
+        - Descreva o problema identificado com base na descrição fornecida
+        - Identifique os sintomas observados
+        - Mencione possíveis causas iniciais consideradas
+        
+        2. PROCESSO DE DIAGNÓSTICO REALIZADO:
+        - Liste TODAS as verificações realizadas (ex: "Verifiquei os logs do sistema em /var/log/app.log")
+        - Mencione TODOS os testes executados (ex: "Executei ping para verificar conectividade de rede")
+        - Descreva comandos ou ferramentas utilizadas para diagnóstico
+        - Indique o que foi verificado e qual foi o resultado de cada verificação
+        
+        3. IDENTIFICAÇÃO DA CAUSA RAIZ:
+        - Explique claramente qual foi a causa raiz identificada
+        - Descreva como a causa foi identificada (através de qual verificação/teste)
+        
+        4. AÇÕES CORRETIVAS EXECUTADAS (Passo a Passo Detalhado):
+        - Liste TODAS as ações realizadas em ordem cronológica
+        - Para cada ação, seja ESPECÍFICO:
+          * Se executou um comando, mencione o comando exato (ex: "Executei o comando: ipconfig /flushdns")
+          * Se modificou configuração, mencione o arquivo/caminho e o que foi alterado
+          * Se reiniciou um serviço, mencione qual serviço (ex: "Reiniciei o serviço spooler de impressão")
+          * Se atualizou software, mencione a versão anterior e nova
+          * Se fez backup, mencione onde foi salvo
+        
+        5. CONFIGURAÇÕES OU AJUSTES REALIZADOS:
+        - Se houver configurações modificadas, detalhe exatamente o que foi alterado
+        - Mencione valores anteriores e novos (quando aplicável)
+        - Indique arquivos de configuração modificados com caminhos completos
+        
+        6. VERIFICAÇÃO E TESTES DE CONFIRMAÇÃO:
+        - Descreva como foi verificado que o problema foi resolvido
+        - Mencione testes realizados para confirmar a solução
+        - Indique resultados dos testes (ex: "Teste de conectividade realizado com sucesso, ping retornou resposta em 10ms")
+        
+        7. RESULTADO FINAL:
+        - Confirme que o problema foi resolvido
+        - Mencione se há recomendações adicionais ou ações preventivas
+        
+        DIRETRIZES DE QUALIDADE:
+        - Seja EXTREMAMENTE específico e detalhado
+        - Use linguagem técnica profissional mas clara
+        - Mencione comandos exatos, caminhos de arquivos, nomes de serviços, versões, etc.
+        - Evite generalizações como "problema analisado" ou "solução aplicada"
+        - Use tempo passado para descrever o que FOI FEITO (ex: "Executei", "Verifiquei", "Modifiquei")
+        - A resposta deve ter no mínimo 150-200 palavras com detalhes técnicos específicos
+        - Pense como se estivesse documentando para um relatório técnico formal
+        
+        FORMATO:
+        Gere uma resposta em texto corrido, profissional, completa e bem estruturada que descreva TODO o processo de resolução do problema com máximo detalhamento técnico.
         """
 
         # Usa um modelo estável disponível (gemini-2.0-flash ou gemini-flash-latest)

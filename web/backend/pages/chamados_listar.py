@@ -1,7 +1,7 @@
 from flask import request, jsonify
 import requests
 
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 
 def listar_chamados():
@@ -16,15 +16,42 @@ def listar_chamados():
         auth = request.headers.get('Authorization')
         if auth:
             headers['Authorization'] = auth
-        params = {}
-        if status_param:
-            params['status'] = status_param
-        if solicitante_id:
-            params['solicitanteId'] = solicitante_id
-
-        resp = requests.get(url, params=params, headers=headers)
+        
+        # A API C# não suporta filtros por query parameters, então buscamos todos e filtramos aqui
+        resp = requests.get(url, headers=headers)
         if resp.status_code == 200:
-            return jsonify(resp.json())
+            chamados = resp.json()
+            
+            # Filtrar por solicitanteId se fornecido (para colaboradores verem apenas seus chamados)
+            if solicitante_id:
+                try:
+                    solicitante_id_int = int(solicitante_id)
+                    chamados = [
+                        chamado for chamado in chamados 
+                        if (chamado.get('solicitanteId') == solicitante_id_int or 
+                            chamado.get('SolicitanteId') == solicitante_id_int)
+                    ]
+                except (ValueError, TypeError):
+                    pass
+            
+            # Filtrar por status se fornecido
+            if status_param:
+                # Mapear status textual para numérico se necessário
+                status_map = {
+                    'andamento': 2,
+                    'em_andamento': 2,
+                    'resolvido': 4,
+                    'fechado': 5,
+                    'aberto': 1
+                }
+                status_value = status_map.get(status_param.lower(), status_param)
+                try:
+                    status_int = int(status_value)
+                    chamados = [c for c in chamados if c.get('status') == status_int]
+                except (ValueError, TypeError):
+                    pass
+            
+            return jsonify(chamados)
 
         try:
             msg = resp.json().get('message', f'Erro HTTP {resp.status_code} ao listar chamados.')

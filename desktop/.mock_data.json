@@ -1,0 +1,122 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "nome": "Administrador",
+      "email": "admin@helpwave.com",
+      "cargo": "Administrador",
+      "telefone": "(11) 99999-9999",
+      "permissao": 3
+    },
+    {
+      "id": 2,
+      "nome": "Técnico Suporte",
+      "email": "tecnico@helpwave.com",
+      "cargo": "Técnico de Suporte",
+      "telefone": "(11) 88888-8888",
+      "permissao": 2
+    },
+    {
+      "id": 3,
+      "nome": "Colaborador Teste",
+      "email": "colaborador@helpwave.com",
+      "cargo": "Desenvolvedor",
+      "telefone": "(11) 77777-7777",
+      "permissao": 1
+    }
+  ],
+  "tickets": [
+    {
+      "id": 1,
+      "titulo": "Problema com impressora",
+      "descricao": "A impressora não está imprimindo corretamente. As folhas saem com linhas.",
+      "tipo": "Suporte",
+      "prioridade": 2,
+      "status": 1,
+      "dataAbertura": "2025-11-23T15:59:07.412670",
+      "dataFechamento": null,
+      "solicitanteId": 3,
+      "solicitante": {
+        "id": 3,
+        "nome": "Colaborador Teste",
+        "email": "colaborador@helpwave.com",
+        "cargo": "Desenvolvedor",
+        "telefone": "(11) 77777-7777"
+      },
+      "tecnicoResponsavelId": null,
+      "tecnicoResponsavel": null,
+      "solucao": null
+    },
+    {
+      "id": 2,
+      "titulo": "Instalação de software",
+      "descricao": "Preciso instalar o software X no meu computador.",
+      "tipo": "Instalação",
+      "prioridade": 1,
+      "status": 2,
+      "dataAbertura": "2025-11-24T15:59:07.412670",
+      "dataFechamento": null,
+      "solicitanteId": 3,
+      "solicitante": {
+        "id": 3,
+        "nome": "Colaborador Teste",
+        "email": "colaborador@helpwave.com",
+        "cargo": "Desenvolvedor",
+        "telefone": "(11) 77777-7777"
+      },
+      "tecnicoResponsavelId": 2,
+      "tecnicoResponsavel": {
+        "id": 2,
+        "nome": "Técnico Suporte",
+        "email": "tecnico@helpwave.com"
+      },
+      "solucao": null
+    },
+    {
+      "id": 3,
+      "titulo": "Problema resolvido",
+      "descricao": "Este chamado já foi resolvido como exemplo.",
+      "tipo": "Suporte",
+      "prioridade": 2,
+      "status": 4,
+      "dataAbertura": "2025-11-20T15:59:07.412670",
+      "dataFechamento": "2025-11-24T15:59:07.412670",
+      "solicitanteId": 3,
+      "solicitante": {
+        "id": 3,
+        "nome": "Colaborador Teste",
+        "email": "colaborador@helpwave.com",
+        "cargo": "Desenvolvedor",
+        "telefone": "(11) 77777-7777"
+      },
+      "tecnicoResponsavelId": 2,
+      "tecnicoResponsavel": {
+        "id": 2,
+        "nome": "Técnico Suporte",
+        "email": "tecnico@helpwave.com"
+      },
+      "solucao": "Problema resolvido através de atualização de drivers. Sistema funcionando normalmente."
+    },
+    {
+      "id": 4,
+      "titulo": "kdfskdfsjd",
+      "descricao": "khfksdhfksdfksdf",
+      "tipo": "Suporte",
+      "prioridade": 2,
+      "status": 1,
+      "dataAbertura": "2025-11-25T15:59:35.307061",
+      "dataFechamento": null,
+      "solicitanteId": 1,
+      "tecnicoResponsavelId": null,
+      "solucao": null,
+      "solicitante": {
+        "id": 1,
+        "nome": "Administrador",
+        "email": "admin@helpwave.com",
+        "cargo": "Administrador",
+        "telefone": "(11) 99999-9999",
+        "permissao": 3
+      }
+    }
+  ]
+}

@@ -9,15 +9,21 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'helpwave-secret-key-2025'
     
     # Configurações do CORS
+    # Em desenvolvimento, permitir todas as origens para facilitar testes com mobile
+    # Em produção, especificar apenas as origens permitidas
     CORS_ORIGINS = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
-        "http://127.0.0.1:5173"
+        "http://127.0.0.1:5173",
+        # Adicionar IPs do mobile (desenvolvimento)
+        "http://192.168.15.118:8081",  # Metro Bundler React Native
+        "http://192.168.15.118:*",     # Qualquer porta do mobile
+        "*"  # Em desenvolvimento, permitir todas as origens (remover em produção)
     ]
     
     # Configurações da API externa
-    API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+    API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
     API_TIMEOUT = 30
     
     # Configurações de autenticação
