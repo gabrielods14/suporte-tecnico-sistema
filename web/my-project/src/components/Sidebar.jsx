@@ -68,8 +68,8 @@ function Sidebar({ currentPage, onNavigate, userInfo }) {
                   <FaCheckCircle className="nav-icon" /> CONCLUÍDOS
                 </a>
               </li>
-              {/* Dashboard - apenas admin */}
-              {isAdmin && (
+              {/* Dashboard - disponível para técnico de suporte e admin */}
+              {(isSuporteTecnico || isAdmin) && (
                 <li>
                   <a href="#" className={currentPage === 'dashboard' ? 'active' : ''} onClick={(e) => { e.preventDefault(); handleMenuClick('dashboard'); }}>
                     <FaTachometerAlt className="nav-icon" /> DASHBOARD

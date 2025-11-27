@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/pending-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
 import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
@@ -107,7 +108,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                 id: item.id,
                 codigo: String(item.id).padStart(6, '0'),
                 titulo: item.titulo || '',
-                prioridade: mapPriority(item.prioridade),
+                prioridade: mapPriority(item.prioridade || item.Prioridade),
                 dataLimite: limite.toISOString(),
                 status: item.status || 'ABERTO'
               };
@@ -323,6 +324,7 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
           </table>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

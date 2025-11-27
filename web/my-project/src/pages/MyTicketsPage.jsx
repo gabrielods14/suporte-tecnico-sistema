@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/my-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
 import { FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
@@ -307,6 +308,7 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
           </table>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

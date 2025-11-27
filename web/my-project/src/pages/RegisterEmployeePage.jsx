@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import { FaEye, FaEyeSlash, FaUser, FaTrash, FaEdit } from 'react-icons/fa';
@@ -430,7 +431,14 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
       }
 
       await userService.updateUser(userId, updateData);
-      showToast('Usuário atualizado com sucesso!', 'success');
+      
+      // Mensagem informativa quando a senha foi alterada
+      if (changePassword && editPassword.trim()) {
+        showToast('Usuário atualizado com sucesso! O usuário precisará trocar a senha no próximo login.', 'success');
+      } else {
+        showToast('Usuário atualizado com sucesso!', 'success');
+      }
+      
       await loadUsers();
       setEditingUser(null);
       setChangePassword(false);
@@ -972,6 +980,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
         }}
         isLoading={isLoadingDelete}
       />
+      <Footer />
     </div>
   );
 };

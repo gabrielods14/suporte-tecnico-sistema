@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import '../styles/newticket.css';
@@ -278,6 +279,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
           </div>
         </form>
       </main>
+      <Footer />
       
       <Toast
         isVisible={toast.isVisible}

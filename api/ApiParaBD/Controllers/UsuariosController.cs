@@ -93,7 +93,12 @@ namespace ApiParaBD.Controllers
             if (dto.Nome != null) usuario.Nome = dto.Nome;
             if (dto.Email != null) usuario.Email = dto.Email;
             if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
-            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
+            
+            // Cargo só pode ser alterado se o usuário for administrador
+            if (dto.Cargo != null && usuario.Permissao == PermissaoUsuario.Administrador)
+            {
+                usuario.Cargo = dto.Cargo;
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Perfil atualizado." });

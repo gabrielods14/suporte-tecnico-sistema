@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import LoadingScreen from '../components/LoadingScreen';
+import Footer from '../components/Footer';
 import { ticketService, aiService } from '../utils/api';
 import '../styles/ticket-detail.css';
 
@@ -17,16 +18,47 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+  const showToast = (message, type = 'error') => {
+    setToast({ isVisible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ isVisible: false, message: '', type: 'error' });
+  };
+
   useEffect(() => {
+    console.log('TicketDetailPage - useEffect executado, ticketId:', ticketId);
     if (ticketId) {
       loadTicket();
+    } else {
+      console.warn('TicketDetailPage - ticketId não fornecido');
+      setLoading(false);
+      showToast('ID do chamado não fornecido.', 'error');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
   const loadTicket = async () => {
+    if (!ticketId) {
+      console.error('TicketDetailPage - loadTicket chamado sem ticketId');
+      setLoading(false);
+      showToast('ID do chamado não fornecido.', 'error');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('TicketDetailPage - Carregando chamado ID:', ticketId);
       const ticketData = await ticketService.getTicket(ticketId);
+      console.log('TicketDetailPage - Dados recebidos da API:', ticketData);
+      
+      if (!ticketData) {
+        throw new Error('Dados do chamado não retornados pela API');
+      }
+      
+      if (!ticketData.id && !ticketData.Id) {
+        console.warn('TicketDetailPage - Dados recebidos não contêm ID válido:', ticketData);
+      }
       
       // Normaliza os dados do solicitante (suporta camelCase e PascalCase)
       const solicitante = ticketData.solicitante || ticketData.Solicitante || {};
@@ -91,19 +123,23 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         }
       }
     } catch (error) {
-      console.error('Erro ao carregar chamado:', error);
-      showToast('Erro ao carregar detalhes do chamado.', 'error');
+      console.error('TicketDetailPage - Erro ao carregar chamado:', error);
+      console.error('TicketDetailPage - Detalhes do erro:', {
+        message: error?.message,
+        response: error?.response,
+        data: error?.data
+      });
+      
+      const errorMessage = error?.response?.data?.message || 
+                          error?.data?.message || 
+                          error?.message || 
+                          'Erro ao carregar detalhes do chamado.';
+      
+      showToast(errorMessage, 'error');
+      setTicket(null); // Garante que o ticket seja null em caso de erro
     } finally {
       setLoading(false);
     }
-  };
-
-  const showToast = (message, type = 'error') => {
-    setToast({ isVisible: true, message, type });
-  };
-
-  const hideToast = () => {
-    setToast({ isVisible: false, message: '', type: 'error' });
   };
 
   // Estados para sugestão de IA
@@ -246,27 +282,66 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
   };
 
   if (loading) {
-    return <LoadingScreen message="Aguarde..." />;
+    return <LoadingScreen message="Carregando detalhes do chamado..." />;
   }
 
-  if (!ticket) {
+  if (!ticket && !loading) {
     return (
       <div className="ticket-detail-layout">
         <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} userInfo={userInfo} />
         <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
         <main className="ticket-detail-main">
-          <div className="error-container">
-            <p>Chamado não encontrado.</p>
-            <button onClick={() => {
+          <button 
+            className="back-button" 
+            onClick={() => {
               const pageToReturn = previousPage || 'pending-tickets';
               onNavigateToPage(pageToReturn);
-            }}>
+            }}
+            aria-label="Voltar para lista"
+          >
+            ← Voltar
+          </button>
+          <div className="error-container">
+            <h2>Chamado não encontrado</h2>
+            <p>O chamado solicitado não foi encontrado ou não está disponível.</p>
+            {!ticketId && (
+              <p style={{ color: '#dc3545', marginTop: '1rem' }}>
+                Erro: ID do chamado não foi fornecido.
+              </p>
+            )}
+            <button 
+              onClick={() => {
+                const pageToReturn = previousPage || 'pending-tickets';
+                onNavigateToPage(pageToReturn);
+              }}
+              style={{
+                marginTop: '1.5rem',
+                padding: '0.75rem 1.5rem',
+                backgroundColor: '#A93226',
+                color: 'white',
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                fontWeight: '600'
+              }}
+            >
               Voltar para lista
             </button>
           </div>
         </main>
+        <Toast
+          isVisible={toast.isVisible}
+          message={toast.message}
+          type={toast.type}
+          onClose={hideToast}
+        />
       </div>
     );
+  }
+
+  if (!ticket) {
+    return <LoadingScreen message="Carregando..." />;
   }
 
   return (
@@ -505,6 +580,7 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
         onConfirm={handleConfirmSolution}
         onCancel={() => setIsConfirmModalOpen(false)}
       />
+      <Footer />
     </div>
   );
 };
