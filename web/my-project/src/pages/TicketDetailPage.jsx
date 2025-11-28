@@ -225,7 +225,34 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
       // Aguarda um pouco para a toast ser exibida e depois navega
       setTimeout(() => {
         if (onNavigateToPage) {
-          onNavigateToPage('completed-tickets');
+          // Determina a página de destino baseado na permissão do usuário e página de origem
+          const isColaborador = userInfo?.permissao === 1;
+          let pageToRedirect;
+          
+          // Colaboradores sempre vão para "Meus Chamados" após finalizar
+          if (isColaborador) {
+            pageToRedirect = 'my-tickets';
+          }
+          // Se veio de "Meus Chamados", volta para lá (independente de permissão)
+          else if (previousPage === 'my-tickets') {
+            pageToRedirect = 'my-tickets';
+          }
+          // Se veio de "Chamados Concluídos", volta para lá
+          else if (previousPage === 'completed-tickets') {
+            pageToRedirect = 'completed-tickets';
+          }
+          // Técnicos/Admins que vêm de "Chamados em Andamento" vão para "Concluídos"
+          else {
+            pageToRedirect = 'completed-tickets';
+          }
+          
+          console.log('TicketDetailPage - Redirecionando após finalizar chamado:', {
+            pageToRedirect,
+            permissao: userInfo?.permissao,
+            isColaborador,
+            previousPage
+          });
+          onNavigateToPage(pageToRedirect);
         }
       }, 1500);
 
@@ -346,30 +373,30 @@ const TicketDetailPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userIn
 
   return (
     <div className="ticket-detail-layout">
-      <Sidebar currentPage="pending-tickets" onNavigate={onNavigateToPage} userInfo={userInfo} />
+      <Sidebar currentPage={previousPage || 'pending-tickets'} onNavigate={onNavigateToPage} userInfo={userInfo} />
       <Header onLogout={onLogout} userName={userInfo?.nome} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
       
       <main className="ticket-detail-main">
         <button 
           className="back-button" 
           onClick={() => {
-            // Determina a página de retorno baseado no status do chamado ou previousPage
-            // Se o chamado está concluído (status 5) ou se veio de completed-tickets, volta para completed-tickets
-            // Caso contrário, volta para pending-tickets
+            // IMPORTANTE: Sempre usa previousPage se disponível, respeitando a página de origem
             let pageToReturn = previousPage;
             
-            // Se não houver previousPage, tenta determinar pelo status do chamado
-            if (!pageToReturn && ticket) {
-              // Status 3 = Fechado/Concluído (conforme enum StatusChamado)
-              const ticketStatus = Number(ticket.status || ticket.Status);
-              const isConcluido = ticketStatus === 3;
-              pageToReturn = isConcluido ? 'completed-tickets' : 'pending-tickets';
-            } else {
-              // Se houver previousPage, usa ela (pode ser completed-tickets ou pending-tickets)
-              pageToReturn = pageToReturn || 'pending-tickets';
+            // Se não houver previousPage explícito, tenta determinar pela página mais apropriada
+            if (!pageToReturn) {
+              if (ticket) {
+                // Status 3 = Fechado/Concluído (conforme enum StatusChamado)
+                const ticketStatus = Number(ticket.status || ticket.Status);
+                const isConcluido = ticketStatus === 3;
+                pageToReturn = isConcluido ? 'completed-tickets' : 'pending-tickets';
+              } else {
+                // Fallback: se não houver ticket nem previousPage, volta para home
+                pageToReturn = 'home';
+              }
             }
             
-            console.log('Voltando para:', pageToReturn, '(status do chamado:', ticket?.status, ')');
+            console.log('TicketDetailPage - Voltando para:', pageToReturn, '(previousPage:', previousPage, ', status do chamado:', ticket?.status, ')');
             onNavigateToPage(pageToReturn);
           }}
           aria-label="Voltar para lista"

@@ -148,10 +148,23 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
         });
         setErrors({});
         
-        // Navega para a página de chamados em andamento após 1.5s
+        // Navega para a página apropriada baseada na permissão do usuário
         setTimeout(() => {
           if (onNavigateToPage) {
-            onNavigateToPage('pending-tickets');
+            // Verifica a permissão do usuário
+            const isColaborador = userInfo?.permissao === 1;
+            
+            // Colaboradores vão para "Meus Chamados"
+            // Técnicos/Admins vão para "Chamados em Andamento"
+            const pageToNavigate = isColaborador ? 'my-tickets' : 'pending-tickets';
+            
+            console.log('NewTicketPage - Redirecionando após criar chamado:', {
+              pageToNavigate,
+              permissao: userInfo?.permissao,
+              isColaborador
+            });
+            
+            onNavigateToPage(pageToNavigate);
           }
         }, 1500);
         
