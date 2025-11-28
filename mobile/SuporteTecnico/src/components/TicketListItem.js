@@ -25,7 +25,8 @@ const TicketListItem = ({ ticket, onPress }) => {
     switch (status) {
       case 'Aberto':
         return '#dc3545';
-      case 'Em andamento':
+      case 'Em Atendimento':
+      case 'Em andamento': // Mantido para compatibilidade
         return '#fd7e14';
       case 'Fechado':
         return '#28a745';
@@ -38,7 +39,8 @@ const TicketListItem = ({ ticket, onPress }) => {
     switch (status) {
       case 'Aberto':
         return 'alert-circle-outline';
-      case 'Em andamento':
+      case 'Em Atendimento':
+      case 'Em andamento': // Mantido para compatibilidade
         return 'time-outline';
       case 'Fechado':
         return 'checkmark-circle-outline';

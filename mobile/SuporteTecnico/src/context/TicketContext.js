@@ -71,7 +71,7 @@ const ticketReducer = (state, action) => {
             ? {
                 ...ticket,
                 responses: [...ticket.responses, action.payload.response],
-                status: 'Em andamento',
+                status: 'Em Atendimento',
                 lastRespondedBy: action.payload.technicianName,
                 lastResponseDate: new Date().toLocaleString('pt-BR'),
               }
@@ -145,13 +145,12 @@ export const TicketProvider = ({ children }) => {
   };
 
   // Função auxiliar para converter status numérico para texto
+  // Conforme enum StatusChamado do backend: Aberto=1, EmAtendimento=2, Fechado=3
   const getStatusText = (status) => {
     const statusMap = {
       1: 'Aberto',
-      2: 'Em andamento',
-      3: 'Aguardando usuário',
-      4: 'Resolvido',
-      5: 'Fechado'
+      2: 'Em Atendimento',
+      3: 'Fechado'
     };
     return statusMap[status] || 'Aberto';
   };
@@ -228,8 +227,9 @@ export const TicketProvider = ({ children }) => {
       dispatch({ type: TICKET_ACTIONS.SET_LOADING, payload: true });
       
       // Atualizar o chamado na API com a resposta
+      // Conforme enum StatusChamado: EmAtendimento = 2
       await ApiService.atualizarChamado(ticketId, {
-        status: 2, // Em atendimento
+        status: 2, // Em Atendimento
         tecnicoResponsavelId: 1, // ID do técnico (deveria vir do contexto de autenticação)
       });
       
@@ -256,8 +256,9 @@ export const TicketProvider = ({ children }) => {
       dispatch({ type: TICKET_ACTIONS.SET_LOADING, payload: true });
       
       // Atualizar o chamado na API para status "Fechado"
+      // Conforme enum StatusChamado: Fechado = 3
       await ApiService.atualizarChamado(ticketId, {
-        status: 5, // Fechado
+        status: 3, // Fechado
         dataFechamento: new Date().toISOString(),
         tecnicoResponsavelId: 1, // ID do técnico (deveria vir do contexto de autenticação)
       });
