@@ -1,4 +1,16 @@
-# Sistema de Suporte Técnico com Inteligência Artificial
+<div align="center">
+  <img src="web/my-project/public/logo.png" alt="HelpWave Logo" width="250"/>
+  
+  # HelpWave
+  
+  ### Sistema de Suporte Técnico com Inteligência Artificial
+  
+  Sistema completo de suporte técnico auxiliado por IA para geração de sugestões aos técnicos
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
+
+---
 
 ## Visão Geral
 Este projeto tem como objetivo o desenvolvimento de um **sistema de suporte técnico de TI** auxiliado por **Inteligência Artificial** para geração de sugestões de solução aos técnicos de suporte. A IA analisa o contexto do chamado e fornece recomendações que auxiliam o técnico na resolução de problemas, agilizando o atendimento e melhorando a qualidade das soluções propostas.
