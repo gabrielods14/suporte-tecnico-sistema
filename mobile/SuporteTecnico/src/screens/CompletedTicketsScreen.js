@@ -11,17 +11,27 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useTickets } from '../context/TicketContext';
 
 const CompletedTicketsScreen = ({ navigation }) => {
-  const { getTicketsByStatus } = useTickets();
-  const [tickets, setTickets] = useState([]);
+  const { tickets, loadTickets, getTicketsByStatus } = useTickets();
+  const [completedTickets, setCompletedTickets] = useState([]);
 
   useEffect(() => {
+    // Carregar tickets da API quando a tela é montada
     loadTickets();
   }, []);
 
-  const loadTickets = () => {
-    const completedTickets = getTicketsByStatus('Fechado');
-    setTickets(completedTickets);
-  };
+  // Recarregar tickets quando a tela recebe foco
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTickets();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
+  // Atualizar lista de tickets concluídos quando os tickets mudarem
+  useEffect(() => {
+    const filtered = getTicketsByStatus('Fechado');
+    setCompletedTickets(filtered);
+  }, [tickets]);
 
   const getPriorityColor = (priority) => {
     switch (priority) {
@@ -115,7 +125,11 @@ const CompletedTicketsScreen = ({ navigation }) => {
         <Text style={styles.headerTitle}>Chamados Finalizados</Text>
         <TouchableOpacity 
           style={styles.refreshButton}
-          onPress={loadTickets}
+          onPress={() => {
+            loadTickets();
+            const filtered = getTicketsByStatus('Fechado');
+            setCompletedTickets(filtered);
+          }}
         >
           <Icon name="refresh-outline" size={24} color="#fff" />
         </TouchableOpacity>
@@ -125,17 +139,17 @@ const CompletedTicketsScreen = ({ navigation }) => {
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
           <Icon name="checkmark-circle" size={32} color="#28a745" />
-          <Text style={styles.statNumber}>{tickets.length}</Text>
+          <Text style={styles.statNumber}>{completedTickets.length}</Text>
           <Text style={styles.statLabel}>Chamados Finalizados</Text>
         </View>
         
-        {tickets.length > 0 && (
+        {completedTickets.length > 0 && (
           <View style={styles.technicianStats}>
             <Text style={styles.statsTitle}>Técnicos que Finalizaram:</Text>
             {(() => {
-              const technicians = [...new Set(tickets.map(ticket => ticket.completedBy).filter(Boolean))];
+              const technicians = [...new Set(completedTickets.map(ticket => ticket.completedBy).filter(Boolean))];
               return technicians.map((technician, index) => {
-                const count = tickets.filter(ticket => ticket.completedBy === technician).length;
+                const count = completedTickets.filter(ticket => ticket.completedBy === technician).length;
                 return (
                   <View key={index} style={styles.technicianItem}>
                     <Icon name="person-circle-outline" size={16} color="#dc3545" />
@@ -151,7 +165,7 @@ const CompletedTicketsScreen = ({ navigation }) => {
 
       {/* Tickets List */}
       <FlatList
-        data={tickets}
+        data={completedTickets}
         keyExtractor={(item) => item.id}
         renderItem={renderTicketItem}
         contentContainerStyle={styles.listContainer}

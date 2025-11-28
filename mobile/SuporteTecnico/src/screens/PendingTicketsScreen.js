@@ -36,12 +36,24 @@ const PendingTicketsScreen = ({ navigation }) => {
   const [ticketToFinalize, setTicketToFinalize] = useState(null);
 
   useEffect(() => {
+    // Carregar tickets quando a tela é montada
     loadTickets();
   }, []);
 
+  // Recarregar tickets quando a tela recebe foco (quando o usuário navega para ela)
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadTickets();
+    });
+    return unsubscribe;
+  }, [navigation]);
+
   // Filtrar tickets em andamento e abertos
+  // Status possíveis: 'Aberto' (1), 'Em Atendimento' (2), 'Fechado' (3)
   const pendingTickets = tickets.filter(ticket => 
-    ticket.status === 'Em andamento' || ticket.status === 'Aberto'
+    ticket.status === 'Em Atendimento' || 
+    ticket.status === 'Em andamento' || // Compatibilidade com formato antigo
+    ticket.status === 'Aberto'
   );
 
   const getPriorityColor = (priority) => {
@@ -56,7 +68,9 @@ const PendingTicketsScreen = ({ navigation }) => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'Aberto': return '#007bff';
-      case 'Em andamento': return '#ffc107';
+      case 'Em Atendimento':
+      case 'Em andamento': // Compatibilidade com formato antigo
+        return '#ffc107';
       case 'Fechado': return '#28a745';
       default: return '#6c757d';
     }
@@ -65,7 +79,9 @@ const PendingTicketsScreen = ({ navigation }) => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Aberto': return 'alert-circle-outline';
-      case 'Em andamento': return 'time-outline';
+      case 'Em Atendimento':
+      case 'Em andamento': // Compatibilidade com formato antigo
+        return 'time-outline';
       case 'Fechado': return 'checkmark-circle-outline';
       default: return 'help-circle-outline';
     }

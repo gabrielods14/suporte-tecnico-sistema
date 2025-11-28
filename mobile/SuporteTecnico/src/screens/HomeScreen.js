@@ -3,45 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   TouchableOpacity,
   Alert,
   ScrollView,
   StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import TicketListItem from '../components/TicketListItem';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const HomeScreen = ({ navigation }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [tickets] = useState([
-    {
-      id: '1',
-      title: 'Problema com impressora',
-      status: 'Aberto',
-      priority: 'Alta',
-      date: '2024-01-15',
-    },
-    {
-      id: '2',
-      title: 'Erro no sistema',
-      status: 'Em andamento',
-      priority: 'Média',
-      date: '2024-01-14',
-    },
-    {
-      id: '3',
-      title: 'Solicitação de acesso',
-      status: 'Fechado',
-      priority: 'Baixa',
-      date: '2024-01-13',
-    },
-  ]);
-
-  const handleTicketPress = (ticket) => {
-    navigation.navigate('TicketDetail', { ticket });
-  };
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -73,12 +44,6 @@ const HomeScreen = ({ navigation }) => {
       icon: 'checkmark-circle-outline',
       color: '#dc3545',
       onPress: () => navigation.navigate('CompletedTickets'),
-    },
-    {
-      id: '4',
-      title: 'RELATÓRIOS',
-      icon: 'bar-chart-outline',
-      color: '#dc3545',
     },
   ];
 
@@ -118,23 +83,6 @@ const HomeScreen = ({ navigation }) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Tickets Section */}
-        <View style={styles.ticketsSection}>
-          <Text style={styles.sectionTitle}>Tickets Recentes</Text>
-          <FlatList
-            data={tickets}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TicketListItem
-                ticket={item}
-                onPress={() => handleTicketPress(item)}
-              />
-            )}
-            scrollEnabled={false}
-            showsVerticalScrollIndicator={false}
-          />
         </View>
 
         {/* Footer */}
@@ -252,16 +200,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     letterSpacing: 0.5,
-  },
-  ticketsSection: {
-    paddingHorizontal: 20,
-    marginBottom: 30,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
   },
   footer: {
     paddingHorizontal: 30,

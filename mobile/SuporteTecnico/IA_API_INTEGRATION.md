@@ -173,3 +173,4 @@ console.log('Resposta do Flask:', data);
 3. Adicionar retry automático em caso de falha temporária
 4. Implementar métricas de uso da IA
 
+

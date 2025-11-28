@@ -107,3 +107,4 @@ npx react-native run-android
 
 A configuração está completa e pronta para uso. O sistema mobile agora está totalmente integrado com a API de IA do backend Flask!
 
+
