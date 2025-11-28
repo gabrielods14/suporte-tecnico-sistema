@@ -10,7 +10,7 @@ import { FaEye, FaEyeSlash, FaUser, FaTrash, FaEdit } from 'react-icons/fa';
 import { userService } from '../utils/api';
 import '../styles/register.css';
 
-const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigateToProfile }) => {
+const RegisterEmployeePage = ({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) => {
   // Lista de cargos corporativos pré-definidos
   const cargosCorporativos = [
     'Diretor',
@@ -458,7 +458,7 @@ const RegisterEmployeePage = ({ onLogout, onNavigateToHome, userInfo, onNavigate
   return (
     <div className="register-layout">
       <Header onLogout={onLogout} userName={userInfo?.nome || 'Usuário'} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage="register" onNavigate={() => {}} userInfo={userInfo} />
+      <Sidebar currentPage={currentPage || "register"} onNavigate={onNavigateToPage} userInfo={userInfo} />
       <main className="register-main-content">
         <div className="register-page-header">
           <h1>CADASTRO DE FUNCIONÁRIO</h1>

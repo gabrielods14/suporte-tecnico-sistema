@@ -420,6 +420,8 @@ function App() {
         <RegisterEmployeePage 
           onLogout={handleLogout}
           onNavigateToHome={navigateToHome}
+          onNavigateToPage={navigateToPage}
+          currentPage={currentPage}
           userInfo={userInfo}
           onNavigateToProfile={navigateToProfile}
         />
