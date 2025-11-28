@@ -44,7 +44,7 @@ O servidor estará disponível em `http://localhost:5000`
 ## 🔧 Configuração
 
 O backend está configurado para se conectar com a API externa do Azure:
-- **URL Base:** `https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net`
+- **URL Base:** `https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net`
 - **Endpoint de Login:** `/api/Autenticacao`
 - **Endpoint de Cadastro:** `/api/Usuarios`
 

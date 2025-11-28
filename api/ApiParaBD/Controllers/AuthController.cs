@@ -38,9 +38,14 @@ namespace ApiParaBD.Controllers
             }
 
             // Se chegou até aqui, as credenciais são válidas. Vamos gerar o token.
+            // ATUALIZADO: Retorna também o status do primeiro acesso
             var token = GenerateJwtToken(user);
 
-            return Ok(new LoginResponseDto { Token = token });
+            return Ok(new LoginResponseDto 
+            { Token = token, PrimeiroAcesso = user.PrimeiroAcesso }
+            );
+
+            
         }
 
         private string GenerateJwtToken(Usuario user)

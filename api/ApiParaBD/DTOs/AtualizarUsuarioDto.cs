@@ -1,3 +1,4 @@
+// DTO usado para atualizar informações de um usuário
 namespace ApiParaBD.DTOs
 {
     public class AtualizarUsuarioDto
@@ -9,8 +10,6 @@ namespace ApiParaBD.DTOs
         public string? Email { get; set; }
         public string? Telefone { get; set; }
         public string? Cargo { get; set; }
-
-        // Um admin poderia ter um DTO separado para atualizar a permissão
-        // public PermissaoUsuario? Permissao { get; set; } 
+        public PermissaoUsuario? Permissao { get; set; } 
     }
 }

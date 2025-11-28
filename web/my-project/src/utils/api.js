@@ -112,12 +112,28 @@ class ApiClient {
    * Processa a resposta da API
    */
   async handleResponse(response) {
+    // Respostas 204 (NoContent) não têm corpo
+    if (response.status === 204) {
+      return { message: 'Operação realizada com sucesso' };
+    }
+
     let data;
     
     try {
-      data = await response.json();
+      const text = await response.text();
+      // Se a resposta estiver vazia, retorna um objeto vazio
+      if (!text) {
+        data = {};
+      } else {
+        data = JSON.parse(text);
+      }
     } catch (error) {
-      data = { message: 'Erro interno do servidor.' };
+      // Se não conseguir fazer parse, pode ser que não tenha corpo
+      if (response.ok) {
+        data = { message: 'Operação realizada com sucesso' };
+      } else {
+        data = { message: 'Erro interno do servidor.' };
+      }
     }
 
     if (!response.ok) {
@@ -151,6 +167,98 @@ class ApiClient {
 
 // Instância global do cliente da API
 export const apiClient = new ApiClient();
+
+/**
+ * Utilitários para manipulação de dados do usuário
+ */
+
+/**
+ * Extrai o primeiro nome do usuário de forma segura
+ * @param {Object} userInfo - Objeto com informações do usuário
+ * @returns {string} Primeiro nome do usuário ou 'Usuário' como fallback
+ */
+export const getUserDisplayName = (userInfo) => {
+  const capitalizeWords = (s) => {
+    return s.split(/\s+/).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+  };
+
+  // Se o objeto userInfo tem nome completo, retorna primeiro + último nome
+  if (userInfo?.nome && typeof userInfo.nome === 'string' && userInfo.nome.trim()) {
+    const parts = userInfo.nome.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return capitalizeWords(`${parts[0]} ${parts[parts.length - 1]}`);
+    }
+    return capitalizeWords(parts[0]);
+  }
+
+  // Se não, tenta extrair do token (claims comuns)
+  try {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const nomeFromToken = payload.nome || payload.Nome || payload.name || payload.Name || payload.unique_name || payload.preferred_username || payload.upn || payload.email;
+      if (nomeFromToken && typeof nomeFromToken === 'string' && nomeFromToken.trim()) {
+        const parts = nomeFromToken.trim().split(/\s+/);
+        if (parts.length >= 2) {
+          return capitalizeWords(`${parts[0]} ${parts[parts.length - 1]}`);
+        }
+        // se for apenas um identificador (ex: email), tenta extrair prefixo antes do @
+        if (nomeFromToken.includes('@')) {
+          const prefix = nomeFromToken.split('@')[0];
+          const prefixParts = prefix.split(/[._-]+/);
+          return capitalizeWords(prefixParts[0]);
+        }
+        return capitalizeWords(nomeFromToken);
+      }
+    }
+  } catch (e) {
+    console.error('getUserDisplayName - erro ao extrair do token:', e);
+  }
+
+  // Fallback: se houver email em userInfo, usa prefixo
+  if (userInfo?.email && typeof userInfo.email === 'string') {
+    const prefix = userInfo.email.split('@')[0];
+    const prefixParts = prefix.split(/[._-]+/);
+    return capitalizeWords(prefixParts[0]);
+  }
+
+  return 'Usuário';
+};
+
+/**
+ * Obtém o nome completo do usuário de forma segura, verificando múltiplas fontes
+ * @param {Object} userInfo - Objeto com informações do usuário
+ * @returns {string} Nome completo do usuário ou 'Usuário' como fallback
+ */
+export const getUserFullName = (userInfo) => {
+  // Primeiro tenta obter do userInfo passado
+  if (userInfo) {
+    const nome = userInfo.nome || userInfo.Nome || userInfo.name || userInfo.Name;
+    if (nome && typeof nome === 'string' && nome.trim() && nome.trim() !== 'Usuário' && nome.trim() !== '') {
+      console.log('getUserFullName - Nome encontrado no userInfo:', nome.trim());
+      return nome.trim();
+    }
+  }
+  
+  // Se não encontrou, tenta obter do token JWT
+  try {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      // Suporta várias chaves possíveis que podem representar o nome do usuário
+      const nomeFromToken = payload.nome || payload.Nome || payload.name || payload.Name || payload.unique_name || payload.preferred_username || payload.upn || payload.email;
+      if (nomeFromToken && typeof nomeFromToken === 'string' && nomeFromToken.trim() && nomeFromToken.trim() !== 'Usuário' && nomeFromToken.trim() !== '') {
+        console.log('getUserFullName - Nome encontrado no token:', nomeFromToken.trim());
+        return nomeFromToken.trim();
+      }
+    }
+  } catch (error) {
+    console.error('getUserFullName - Erro ao obter nome do token:', error);
+  }
+  
+  console.warn('getUserFullName - Nome não encontrado, usando fallback "Usuário"');
+  return 'Usuário';
+};
 
 /**
  * Serviços específicos da API
@@ -205,24 +313,74 @@ export const userService = {
   },
 
   /**
-   * Obtém lista de usuários
+   * Altera a senha do usuário (primeiro acesso)
+   */
+  async alterarSenha(senhaAtual, novaSenha) {
+    return await apiClient.put('/api/Usuarios/alterar-senha', {
+      SenhaAtual: senhaAtual,
+      NovaSenha: novaSenha
+    });
+  },
+
+  /**
+   * Obtém lista de usuários e estatísticas
    */
   async getUsers() {
-    return await apiClient.get('/users');
+    return await apiClient.get('/api/Usuarios');
+  },
+
+  /**
+   * Obtém informações de um único usuário
+   * Note: /api/Usuarios/{id} endpoint may not be available, so we fallback to fetching all and filtering
+   */
+  async getUser(userId) {
+    try {
+      // Try direct endpoint first
+      return await apiClient.get(`/api/Usuarios/${userId}`);
+    } catch (error) {
+      console.warn(`Direct endpoint /api/Usuarios/${userId} failed, attempting fallback...`);
+      
+      // Fallback: fetch all users and find the one we need
+      try {
+        const allData = await this.getUsers();
+        let users = [];
+        
+        if (Array.isArray(allData)) {
+          users = allData;
+        } else if (allData?.usuarios && Array.isArray(allData.usuarios)) {
+          users = allData.usuarios;
+        } else if (allData?.items && Array.isArray(allData.items)) {
+          users = allData.items;
+        } else if (allData?.users && Array.isArray(allData.users)) {
+          users = allData.users;
+        }
+        
+        const foundUser = users.find(u => Number(u.id) === Number(userId));
+        if (foundUser) {
+          console.log(`User ${userId} found via fallback`);
+          return foundUser;
+        }
+        
+        throw new Error(`User ${userId} not found`);
+      } catch (fallbackError) {
+        console.error('Fallback also failed:', fallbackError);
+        throw error; // Throw original error
+      }
+    }
   },
 
   /**
    * Atualiza dados do usuário
    */
   async updateUser(userId, userData) {
-    return await apiClient.put(`/users/${userId}`, userData);
+    return await apiClient.put(`/api/Usuarios/${userId}`, userData);
   },
 
   /**
    * Remove usuário
    */
   async deleteUser(userId) {
-    return await apiClient.delete(`/users/${userId}`);
+    return await apiClient.delete(`/api/Usuarios/${userId}`);
   }
 };
 

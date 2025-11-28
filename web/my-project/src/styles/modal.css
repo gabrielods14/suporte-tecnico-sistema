@@ -41,6 +41,10 @@
 
 .modal-footer {
   padding: 0 20px 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .modal-button {
@@ -54,12 +58,49 @@
   width: auto;
   border: none;
   cursor: pointer;
+  min-width: 120px;
 }
 
 .modal-button:hover {
   background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-button-cancel {
+  background: #E5E5E5;
+  color: #333333;
+}
+
+.modal-button-cancel:hover {
+  background: #D0D0D0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modal-button-confirm {
+  background: var(--gradient-primary);
+  color: var(--text-inverse);
+}
+
+.modal-button-confirm:hover {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+}
+
+.modal-button-danger {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: var(--text-inverse);
+}
+
+.modal-button-danger:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* ===== CONFIRM MODAL SPECIFIC ===== */
+.confirm-modal {
+  max-width: 450px;
 }
 
 /* Animação simples para o modal aparecer */
@@ -72,4 +113,21 @@
     opacity: 1;
     transform: scale(1);
   }
+}
+
+/* Animação para spinner de loading */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.modal-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }

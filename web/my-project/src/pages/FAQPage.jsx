@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import '../styles/faq.css';
 import { 
   FaHome, 
@@ -16,12 +17,13 @@ import {
   FaChevronUp,
   FaInfoCircle,
   FaExclamationCircle,
-  FaLightbulb
+  FaLightbulb,
+  FaList
 } from 'react-icons/fa';
 
 function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
   const [openSection, setOpenSection] = useState(null);
-  const firstName = userInfo?.nome?.split(' ')[0] || 'Usuário';
+  const userName = userInfo?.nome || 'Usuário';
   const permissao = userInfo?.permissao; // 3=Admin, 2=SuporteTecnico, 1=Colaborador
 
   const toggleSection = (sectionId) => {
@@ -78,6 +80,11 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
           <p>O menu lateral está sempre visível e permite acesso rápido às principais áreas do sistema:</p>
           <ul className="feature-list">
             <li><strong>HOME:</strong> Retorna à página inicial com os cards de acesso rápido</li>
+            {isColaborador && (
+              <>
+                <li><strong>MEUS CHAMADOS:</strong> Visualiza todos os seus chamados criados (Colaborador)</li>
+              </>
+            )}
             {!isColaborador && (
               <>
                 <li><strong>CHAMADO:</strong> Visualiza chamados em andamento (Suporte e Admin)</li>
@@ -114,6 +121,20 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
             </ul>
             <p className="tip"><FaLightbulb /> <strong>Dica:</strong> Seja específico na descrição para facilitar o atendimento da equipe de suporte.</p>
           </div>
+
+          {isColaborador && (
+            <div className="card-info">
+              <h4><FaClipboardList /> MEUS CHAMADOS</h4>
+              <p><strong>Funcionalidade:</strong> Permite visualizar todos os seus chamados criados. Você pode:</p>
+              <ul>
+                <li>Visualizar lista de todos os seus chamados (abertos, em atendimento ou fechados)</li>
+                <li>Filtrar e buscar seus chamados por código ou título</li>
+                <li>Ordenar por código, título, prioridade ou data de abertura</li>
+                <li>Clicar em um chamado para ver detalhes completos e acompanhar o andamento</li>
+              </ul>
+              <p className="info"><FaInfoCircle /> <strong>Informação:</strong> Apenas você consegue visualizar seus próprios chamados. Os técnicos que estiverem atendendo seu chamado também poderão visualizá-lo.</p>
+            </div>
+          )}
 
           {!isColaborador && (
             <>
@@ -300,12 +321,14 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
     },
     {
       id: 'cadastro-usuario',
-      title: 'Cadastrar Funcionário (Admin)',
+      title: 'Cadastrar e Gerenciar Funcionários (Admin)',
       icon: <FaUserPlus />,
       visibleFor: [3], // Apenas Admin
       content: (
         <div>
           <p className="note-text"><strong>Disponível apenas para Administradores</strong></p>
+          
+          <h4>Cadastrar Novo Funcionário</h4>
           <ol className="step-list">
             <li>Acesse <strong>"CADASTRO DE FUNCIONÁRIO"</strong> pelo card na página inicial</li>
             <li>Preencha os dados do novo funcionário:
@@ -326,8 +349,60 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
             </li>
             <li>Clique em <strong>"CADASTRAR"</strong></li>
           </ol>
+
+          <h4>Lista de Usuários</h4>
+          <p>Na mesma página de cadastro, você encontrará uma lista completa de todos os usuários cadastrados no sistema:</p>
+          <ul className="feature-list">
+            <li>Visualize todos os usuários com suas informações principais</li>
+            <li>Use a <strong>barra de pesquisa</strong> para buscar usuários por nome, e-mail ou cargo</li>
+            <li>Veja o nível de permissão de cada usuário através de badges coloridos</li>
+          </ul>
+
+          <h4>Editar Usuário</h4>
+          <ol className="step-list">
+            <li>Na lista de usuários, clique no <strong>ícone de edição</strong> (lápis) ao lado do usuário desejado</li>
+            <li>Um modal será aberto com os dados do usuário</li>
+            <li>Você pode editar:
+              <ul>
+                <li><strong>Nome Completo</strong></li>
+                <li><strong>E-mail</strong></li>
+                <li><strong>Cargo</strong></li>
+                <li><strong>Telefone</strong></li>
+                <li><strong>Permissão</strong></li>
+              </ul>
+            </li>
+            <li><strong>Alterar Senha (Opcional):</strong>
+              <ul>
+                <li>Marque a opção <strong>"Alterar senha"</strong> para exibir os campos de nova senha</li>
+                <li>Digite a nova senha (mínimo 6 caracteres)</li>
+                <li>Confirme a nova senha</li>
+                <li>Se não marcar a opção, a senha atual será mantida</li>
+              </ul>
+            </li>
+            <li>Clique em <strong>"Salvar"</strong> para confirmar as alterações</li>
+            <li>Um modal de confirmação aparecerá antes de salvar</li>
+          </ol>
+
+          <h4>Excluir Usuário</h4>
+          <ol className="step-list">
+            <li>Na lista de usuários, clique no <strong>ícone de exclusão</strong> (lixeira) ao lado do usuário</li>
+            <li>Um modal de confirmação aparecerá solicitando confirmação</li>
+            <li>Confirme a exclusão clicando em <strong>"Excluir"</strong></li>
+            <li><strong>Atenção:</strong> Esta ação não pode ser desfeita</li>
+          </ol>
+
+          <div className="info-box">
+            <strong>Recursos de Segurança:</strong>
+            <ul>
+              <li>Modais de confirmação para edição e exclusão evitam ações acidentais</li>
+              <li>Indicadores de loading mostram quando operações estão em andamento</li>
+              <li>A alteração de senha é opcional e segura</li>
+            </ul>
+          </div>
+
           <div className="warning-box">
-            <FaExclamationCircle /> <strong>Importante:</strong> Escolha cuidadosamente o nível de permissão ao cadastrar um usuário.
+            <FaExclamationCircle /> <strong>Importante:</strong> Escolha cuidadosamente o nível de permissão ao cadastrar um usuário. 
+            Ao excluir um usuário, certifique-se de que não há chamados importantes associados a ele.
           </div>
         </div>
       )
@@ -372,7 +447,67 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
 
           <div className="faq-item">
             <h4>Como altero minha senha?</h4>
-            <p>Atualmente, a alteração de senha deve ser solicitada ao administrador. Entre em contato com a equipe de TI.</p>
+            <p>
+              {permissao === 3 ? (
+                <>
+                  Como administrador, você pode alterar a senha de qualquer usuário através da página de 
+                  <strong> Cadastro de Funcionário</strong>. Edite o usuário e marque a opção "Alterar senha" 
+                  para definir uma nova senha. Para alterar sua própria senha, você pode usar a mesma funcionalidade 
+                  ou solicitar a outro administrador.
+                </>
+              ) : (
+                <>
+                  A alteração de senha deve ser solicitada ao administrador. Entre em contato com a equipe de TI 
+                  ou com um administrador do sistema para redefinir sua senha.
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'melhorias-interface',
+      title: 'Melhorias de Interface e Experiência',
+      icon: <FaInfoCircle />,
+      content: (
+        <div>
+          <h4>Tela de Carregamento Padrão</h4>
+          <p>O sistema agora possui uma tela de carregamento padronizada que aparece quando as páginas estão buscando dados da API:</p>
+          <ul className="feature-list">
+            <li><strong>Design Consistente:</strong> Fundo branco com texto "Aguarde..." em cor escura</li>
+            <li><strong>Indicador Visual:</strong> Spinner animado mostra que o sistema está processando</li>
+            <li><strong>Experiência Uniforme:</strong> Todas as páginas que dependem de dados da API usam o mesmo padrão</li>
+            <li><strong>Páginas com Loading:</strong> Home, Chamados em Andamento, Meus Chamados, Chamados Concluídos, Relatórios, Detalhes do Chamado, entre outras</li>
+          </ul>
+
+          <h4>Modais de Confirmação</h4>
+          <p>Para evitar ações acidentais, o sistema agora possui modais de confirmação:</p>
+          <ul className="feature-list">
+            <li><strong>Edição de Usuário:</strong> Confirmação antes de salvar alterações</li>
+            <li><strong>Exclusão de Usuário:</strong> Confirmação obrigatória antes de excluir</li>
+            <li><strong>Indicadores de Loading:</strong> Os botões mostram "Salvando..." ou "Excluindo..." durante o processamento</li>
+            <li><strong>Estados Separados:</strong> Cada ação (cadastrar, editar, excluir) tem seu próprio indicador de loading</li>
+          </ul>
+
+          <h4>Melhorias na Edição de Usuários</h4>
+          <p>Na página de cadastro de funcionários, os administradores agora têm acesso a funcionalidades aprimoradas:</p>
+          <ul className="feature-list">
+            <li><strong>Lista Completa:</strong> Visualize todos os usuários cadastrados na mesma página</li>
+            <li><strong>Busca Rápida:</strong> Pesquise usuários por nome, e-mail ou cargo</li>
+            <li><strong>Edição Inline:</strong> Edite usuários diretamente da lista sem sair da página</li>
+            <li><strong>Alteração de Senha Opcional:</strong> Marque a opção para alterar senha ou deixe desmarcada para manter a atual</li>
+            <li><strong>Validação em Tempo Real:</strong> Campos são validados enquanto você digita</li>
+          </ul>
+
+          <div className="info-box">
+            <strong>Benefícios das Melhorias:</strong>
+            <ul>
+              <li>Interface mais limpa e profissional</li>
+              <li>Feedback visual claro sobre o status das operações</li>
+              <li>Prevenção de erros através de confirmações</li>
+              <li>Experiência de usuário mais fluida e intuitiva</li>
+            </ul>
           </div>
         </div>
       )
@@ -402,6 +537,20 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
             <FaLightbulb /> <strong>Atualize Seu Perfil:</strong> Mantenha suas informações de contato atualizadas para facilitar a comunicação.
           </div>
 
+          <div className="tip-box">
+            <FaLightbulb /> <strong>Tela de Carregamento:</strong> Quando as páginas estão carregando dados da API, 
+            você verá uma tela de loading com fundo branco e a mensagem "Aguarde...". Isso indica que o sistema está 
+            processando suas informações.
+          </div>
+
+          {permissao === 3 && (
+            <div className="tip-box">
+              <FaLightbulb /> <strong>Gerenciamento de Usuários:</strong> Como administrador, você pode editar e excluir 
+              usuários diretamente na página de cadastro. Use a lista de usuários para encontrar rapidamente quem precisa 
+              ser atualizado. Lembre-se de confirmar as ações nos modais de confirmação.
+            </div>
+          )}
+
           {!isColaborador && (
             <div className="tip-box">
               <FaLightbulb /> <strong>Explore a IA:</strong> Se você é técnico, experimente a função de sugestão de IA para respostas mais rápidas e profissionais.
@@ -420,10 +569,18 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
 
   return (
     <div className="faq-layout">
-      <Header onLogout={onLogout} userName={firstName} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       
       <main className="faq-main-content">
+        <button 
+          className="back-button" 
+          onClick={onNavigateToHome}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         <div className="faq-header">
           <h1>
             <FaQuestionCircle className="faq-title-icon" />
@@ -467,9 +624,9 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
 
         <div className="faq-footer">
           <p>Não encontrou o que procura? Entre em contato através do menu <strong>CONTATO</strong>.</p>
-          <p className="faq-copyright">© 2025 HelpWave - Simplificando o seu suporte</p>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ApiParaBD // Verifique se este é o namespace raiz do projeto
 {
@@ -31,17 +32,15 @@ namespace ApiParaBD // Verifique se este é o namespace raiz do projeto
     // Enums podem ficar aqui ou em arquivos separados
     public enum PrioridadeChamado
     {
-        Baixa = 1,
-        Media = 2,
-        Alta = 3,
+        Baixa = 1, // Menor urgência
+        Media = 2, // Urgência moderada
+        Alta = 3, // Alta urgência
     }
 
     public enum StatusChamado
     {
-        Aberto = 1,
-        EmAtendimento = 2,
-        AguardandoUsuario = 3,
-        Resolvido = 4,
-        Fechado = 5
+        Aberto = 1,          // O usuário abriu o chamado
+        EmAtendimento = 2,   // O técnico começou a trabalhar (leu ou atribuiu a si mesmo)
+        Fechado = 3          // O técnico resolveu e encerrou
     }
 }

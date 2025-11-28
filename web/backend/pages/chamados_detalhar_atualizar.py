@@ -1,8 +1,7 @@
 from flask import request, jsonify
-from app import app
 import requests
 
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 
 def detalhar_chamado(chamado_id: int):
@@ -40,14 +39,15 @@ def detalhar_chamado(chamado_id: int):
     if request.method == 'PUT':
         dados = request.json or {}
 
+        # Aceita tanto minúsculo quanto maiúsculo dos campos
         payload_api = {
-            'status': dados.get('status'),
-            'tecnicoResponsavelId': dados.get('tecnicoResponsavelId'),
-            'dataFechamento': dados.get('dataFechamento'),
-            'titulo': dados.get('titulo'),
-            'descricao': dados.get('descricao'),
-            'solucao': dados.get('solucao'),
-            'prioridade': dados.get('prioridade')
+            'Status': dados.get('status') or dados.get('Status'),
+            'TecnicoResponsavelId': dados.get('tecnicoResponsavelId') or dados.get('TecnicoResponsavelId'),
+            'DataFechamento': dados.get('dataFechamento') or dados.get('DataFechamento'),
+            'Titulo': dados.get('titulo') or dados.get('Titulo'),
+            'Descricao': dados.get('descricao') or dados.get('Descricao'),
+            'Solucao': dados.get('solucao') or dados.get('Solucao'),
+            'Prioridade': dados.get('prioridade') or dados.get('Prioridade')
         }
         payload_api = {k: v for k, v in payload_api.items() if v is not None}
 

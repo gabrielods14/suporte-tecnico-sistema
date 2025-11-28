@@ -1,7 +1,7 @@
 from flask import request, jsonify
 import requests
 
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 
 
 def listar_chamados():
@@ -17,13 +17,10 @@ def listar_chamados():
         if auth:
             headers['Authorization'] = auth
         
-        print(f'[DEBUG] Chamados listar - status_param: {status_param}, solicitante_id: {solicitante_id}')
-        
         # A API C# não suporta filtros por query parameters, então buscamos todos e filtramos aqui
         resp = requests.get(url, headers=headers)
         if resp.status_code == 200:
             chamados = resp.json()
-            print(f'[DEBUG] Total de chamados recebidos da API C#: {len(chamados)}')
             
             # Filtrar por solicitanteId se fornecido (para colaboradores verem apenas seus chamados)
             if solicitante_id:
@@ -34,9 +31,8 @@ def listar_chamados():
                         if (chamado.get('solicitanteId') == solicitante_id_int or 
                             chamado.get('SolicitanteId') == solicitante_id_int)
                     ]
-                    print(f'Filtrados {len(chamados)} chamados para solicitanteId={solicitante_id_int}')
                 except (ValueError, TypeError):
-                    print(f'Erro ao converter solicitanteId para int: {solicitante_id}')
+                    pass
             
             # Filtrar por status se fornecido
             if status_param:
@@ -51,15 +47,10 @@ def listar_chamados():
                 status_value = status_map.get(status_param.lower(), status_param)
                 try:
                     status_int = int(status_value)
-                    chamados_antes = len(chamados)
                     chamados = [c for c in chamados if c.get('status') == status_int]
-                    print(f'Filtrados por status {status_int}: {chamados_antes} → {len(chamados)} chamados')
-                except (ValueError, TypeError) as e:
-                    print(f'Erro ao filtrar por status: {status_param} - {e}')
+                except (ValueError, TypeError):
+                    pass
             
-            print(f'[DEBUG] Total de chamados retornados após filtros: {len(chamados)}')
-            if len(chamados) > 0:
-                print(f'[DEBUG] Exemplo de primeiro chamado: ID={chamados[0].get("id")}, Status={chamados[0].get("status")}')
             return jsonify(chamados)
 
         try:

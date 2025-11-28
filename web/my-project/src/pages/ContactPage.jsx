@@ -2,20 +2,25 @@
 import React from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import '../styles/contact.css';
 import { 
   FaPhone, 
   FaEnvelope, 
-  FaHeadset
+  FaHeadset,
+  FaClock,
+  FaMapMarkerAlt
 } from 'react-icons/fa';
 
 function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToProfile }) {
-  const firstName = userInfo?.nome?.split(' ')[0] || 'Usuário';
+  const userName = userInfo?.nome || 'Usuário';
 
   // Informações de contato do administrador
   const adminContact = {
-    email: 'admin@helpwave.com',
-    phone: '(11) 98765-4321'
+    email: 'admin2@helpwave.com',
+    phone: '(12) 99999-8888',
+    horario: 'Segunda a Sexta: 8h às 18h',
+    endereco: 'Sistema de Suporte Técnico HelpWave'
   };
 
   const handleEmailClick = () => {
@@ -28,10 +33,18 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
 
   return (
     <div className="contact-layout">
-      <Header onLogout={onLogout} userName={firstName} onNavigateToProfile={onNavigateToProfile} />
-      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} />
+      <Header onLogout={onLogout} userName={userName} userInfo={userInfo} onNavigateToProfile={onNavigateToProfile} />
+      <Sidebar currentPage={currentPage} onNavigate={onNavigateToPage} userInfo={userInfo} />
       
       <main className="contact-main-content">
+        <button 
+          className="back-button" 
+          onClick={() => onNavigateToPage('home')}
+          aria-label="Voltar para página inicial"
+        >
+          ← Voltar
+        </button>
+        
         <div className="contact-header">
           <h1>
             <FaHeadset className="contact-title-icon" />
@@ -44,7 +57,7 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
           <div className="contact-intro">
             <p>
               Precisa entrar em contato com o administrador do sistema? Utilize os canais abaixo para suporte, 
-              dúvidas ou solicitações.
+              dúvidas ou solicitações. Estamos prontos para ajudar!
             </p>
           </div>
 
@@ -56,7 +69,7 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
               </div>
               <h3>E-mail</h3>
               <p className="contact-card-description">
-                Envie um e-mail para o administrador
+                Envie um e-mail para o administrador do sistema
               </p>
               <a 
                 href={`mailto:${adminContact.email}?subject=Contato HelpWave`}
@@ -80,7 +93,7 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
               </div>
               <h3>Telefone</h3>
               <p className="contact-card-description">
-                Entre em contato por telefone
+                Entre em contato por telefone durante o horário comercial
               </p>
               <a 
                 href={`tel:${adminContact.phone}`}
@@ -98,15 +111,38 @@ function ContactPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage
             </div>
           </div>
 
+          {/* Informações Adicionais */}
+          <div className="contact-info-section">
+            <div className="info-box">
+              <FaClock className="info-icon" />
+              <div className="info-content">
+                <h4>Horário de Atendimento</h4>
+                <p>{adminContact.horario}</p>
+                <p className="info-note">Respostas por e-mail em até 24 horas úteis</p>
+              </div>
+            </div>
+
+            <div className="info-box">
+              <FaMapMarkerAlt className="info-icon" />
+              <div className="info-content">
+                <h4>Localização</h4>
+                <p>{adminContact.endereco}</p>
+                <p className="info-note">Sistema online disponível 24/7</p>
+              </div>
+            </div>
+          </div>
+
           {/* Informação Adicional */}
           <div className="contact-info-box">
             <p>
               <strong>Observação:</strong> Para questões relacionadas a chamados técnicos, 
-              utilize a funcionalidade de criar novo chamado no sistema.
+              utilize a funcionalidade de criar novo chamado no sistema. O suporte técnico 
+              responderá através do próprio sistema de chamados.
             </p>
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }
