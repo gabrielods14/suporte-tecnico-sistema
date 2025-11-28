@@ -1,0 +1,3 @@
+GEMINI_API_KEY=AIzaSyDoCI67rZ_Ko9-V0_cBsN0kfd7mf8d_Gvc
+GEMINI_MODEL=gemini-2.0-flash
+API_ENDPOINT=/api/gemini/sugerir-resposta

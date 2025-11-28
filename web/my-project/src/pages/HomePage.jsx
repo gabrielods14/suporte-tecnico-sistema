@@ -3,6 +3,7 @@ import React from 'react';
 import '../styles/home.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 // Importando os ícones para os cards
 import { FaEdit, FaClipboardList, FaCheckCircle, FaChartBar, FaUserPlus, FaList } from 'react-icons/fa';
 //import { MdOutlineSupportAgent } from "react-icons/md"; // Exemplo de outro pacote de ícones
@@ -113,12 +114,8 @@ function HomePage({ onLogout, onNavigateToRegister, onNavigateToNewTicket, onNav
             </article>
           )}
         </section>
-
-        <footer className="home-footer">
-          <p>HelpWave — Simplificando o seu suporte.</p>
-          <p>© 2025 HelpWave</p>
-        </footer>
       </main>
+      <Footer />
     </div>
   );
 }

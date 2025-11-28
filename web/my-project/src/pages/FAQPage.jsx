@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import '../styles/faq.css';
 import { 
   FaHome, 
@@ -623,9 +624,9 @@ function FAQPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, us
 
         <div className="faq-footer">
           <p>Não encontrou o que procura? Entre em contato através do menu <strong>CONTATO</strong>.</p>
-          <p className="faq-copyright">© 2025 HelpWave - Simplificando o seu suporte</p>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

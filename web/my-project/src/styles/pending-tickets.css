@@ -220,6 +220,74 @@
   color: white;
 }
 
+.priority-badge-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  position: relative;
+}
+
+.priority-badge-editable {
+  transition: all 0.2s ease;
+}
+
+.priority-badge-container:hover .priority-badge-editable {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.priority-edit-icon {
+  font-size: 0.75rem;
+  color: var(--neutral-600);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.priority-badge-container:hover .priority-edit-icon {
+  opacity: 1;
+}
+
+.priority-edit-container {
+  display: inline-block;
+}
+
+.priority-select {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+  border: 2px solid transparent;
+  cursor: pointer;
+  background-color: var(--neutral-700);
+  outline: none;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 2rem;
+}
+
+.priority-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(169, 50, 38, 0.1);
+}
+
+.priority-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.priority-select option {
+  background-color: white;
+  color: var(--neutral-800);
+  padding: 0.5rem;
+}
+
 .date-cell {
   font-family: monospace;
   font-size: 0.875rem;

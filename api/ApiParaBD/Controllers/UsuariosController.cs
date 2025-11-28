@@ -93,7 +93,12 @@ namespace ApiParaBD.Controllers
             if (dto.Nome != null) usuario.Nome = dto.Nome;
             if (dto.Email != null) usuario.Email = dto.Email;
             if (dto.Telefone != null) usuario.Telefone = dto.Telefone;
-            if (dto.Cargo != null) usuario.Cargo = dto.Cargo;
+            
+            // Cargo só pode ser alterado se o usuário for administrador
+            if (dto.Cargo != null && usuario.Permissao == PermissaoUsuario.Administrador)
+            {
+                usuario.Cargo = dto.Cargo;
+            }
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Perfil atualizado." });
@@ -129,6 +134,18 @@ namespace ApiParaBD.Controllers
                 return NotFound(new { message = "Usuário não encontrado." });
             }
             
+            // Validação de e-mail duplicado ANTES de fazer alterações (se o e-mail foi alterado)
+            if (!string.IsNullOrEmpty(dto.Email))
+            {
+                var emailExistente = await _context.Usuarios
+                    .FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower() && u.Id != id);
+                 
+                if (emailExistente != null)
+                {
+                    return BadRequest(new { message = "E-mail já está em uso por outra conta." });
+                }
+            }
+            
             // Atualiza dados básicos (apenas se enviados)
             if (!string.IsNullOrEmpty(dto.Nome)) usuario.Nome = dto.Nome;
             if (!string.IsNullOrEmpty(dto.Email)) usuario.Email = dto.Email.ToLower();
@@ -141,31 +158,33 @@ namespace ApiParaBD.Controllers
             // --- A LÓGICA INTELIGENTE DE SENHA ESTÁ AQUI ---
             // Só altera a senha se o admin enviou algo no campo 'NovaSenha'.
             // Se ele deixar vazio ou null no JSON, a senha antiga permanece intacta.
+            bool senhaAlterada = false;
             if (!string.IsNullOrEmpty(dto.NovaSenha))
             {
+                // Validação mínima da senha
+                if (dto.NovaSenha.Length < 6)
+                {
+                    return BadRequest(new { message = "A senha deve ter pelo menos 6 caracteres." });
+                }
+
                 usuario.SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
                 
-                // Opcional: Se o admin trocou a senha, talvez queira forçar 
-                // o usuário a trocá-la novamente no próximo login.
-                usuario.PrimeiroAcesso = true; 
+                // IMPORTANTE: Se o admin alterou a senha, força o primeiro acesso
+                // para que o usuário troque a senha no próximo login (medida de segurança).
+                // Isso garante que mesmo que o usuário já tenha feito o primeiro acesso,
+                // ele precisará trocar a senha definida pelo admin.
+                usuario.PrimeiroAcesso = true;
+                senhaAlterada = true;
             }
 
-            // Validação de e-mail duplicado (se o e-mail foi alterado)
-            if (!string.IsNullOrEmpty(dto.Email))
-            {
-                 var emailExistente = await _context.Usuarios
-                    .FirstOrDefaultAsync(u => u.Email == usuario.Email && u.Id != usuario.Id);
-                 
-                 if (emailExistente != null)
-                 {
-                     return BadRequest(new { message = "E-mail já está em uso por outra conta." });
-                 }
-            }
-
+            // Salva todas as alterações no banco de dados
             await _context.SaveChangesAsync();
             
             usuario.SenhaHash = ""; // Não retorna o hash
-            return Ok(new { message = "Usuário atualizado com sucesso.", usuario });
+            string mensagem = senhaAlterada 
+                ? "Usuário atualizado com sucesso. A senha foi alterada e o usuário precisará trocá-la no próximo login." 
+                : "Usuário atualizado com sucesso.";
+            return Ok(new { message = mensagem, usuario, senhaAlterada, primeiroAcesso = usuario.PrimeiroAcesso });
         }
 
         // --- 7. ENDPOINT: EXCLUIR USUÁRIO (SÓ ADMIN) ---

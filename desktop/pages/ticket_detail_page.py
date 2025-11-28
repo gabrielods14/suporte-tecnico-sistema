@@ -6,6 +6,8 @@ from pages.base_page import BasePage
 from api_client import TicketService, AIService
 from components.toast import show_toast
 from components.confirm_modal import ConfirmModal
+from config import COLORS
+import customtkinter as ctk
 import threading
 from datetime import datetime
 
@@ -27,6 +29,7 @@ class TicketDetailPage(BasePage):
         self.solution = ""
         self.sugestao = ""
         self.carregando_sugestao = False
+        self.animation_job = None  # Para controlar a animação
         self.confirm_modal = None
         
         self._create_ui()
@@ -58,8 +61,58 @@ class TicketDetailPage(BasePage):
         
         canvas.bind("<Configure>", on_canvas_configure)
         
+        # Habilita scroll do mouse no Canvas (Windows e Mac)
+        def on_mousewheel(event):
+            # Windows e Mac usam delta, Linux usa Button-4/Button-5
+            if event.num == 4 or event.delta > 0:
+                canvas.yview_scroll(-1, "units")
+            elif event.num == 5 or event.delta < 0:
+                canvas.yview_scroll(1, "units")
+        
+        def bind_mousewheel(event):
+            # Windows e Mac
+            canvas.bind_all("<MouseWheel>", on_mousewheel)
+            # Linux
+            canvas.bind_all("<Button-4>", on_mousewheel)
+            canvas.bind_all("<Button-5>", on_mousewheel)
+        
+        def unbind_mousewheel(event):
+            canvas.unbind_all("<MouseWheel>")
+            canvas.unbind_all("<Button-4>")
+            canvas.unbind_all("<Button-5>")
+        
+        # Bind quando o mouse entra no canvas
+        canvas.bind("<Enter>", bind_mousewheel)
+        canvas.bind("<Leave>", unbind_mousewheel)
+        
+        # Também permite scroll quando o mouse está sobre o frame scrollável
+        scrollable_frame.bind("<Enter>", bind_mousewheel)
+        scrollable_frame.bind("<Leave>", unbind_mousewheel)
+        
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
+        
+        # Botão voltar
+        back_frame = tk.Frame(scrollable_frame, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
+        
+        def go_back():
+            if self.previous_page:
+                self.on_navigate_to_page(self.previous_page)
+            else:
+                self.on_navigate_to_home()
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=go_back
+        )
+        back_btn.pack(side="left")
         
         # Container de conteúdo interno (será preenchido quando ticket carregar)
         self.inner_content = tk.Frame(scrollable_frame, bg="#F8F9FA")
@@ -112,7 +165,11 @@ class TicketDetailPage(BasePage):
             permissao = self.user_info.get('permissao', 1)
             if ticket_status == 1 and permissao in [2, 3]:
                 try:
-                    TicketService.update_ticket(self.ticket_id, {'status': 2})
+                    # API .NET: Atribui técnico e atualiza status para EmAtendimento (2)
+                    TicketService.update_ticket(self.ticket_id, {
+                        'Status': 2,  # EmAtendimento
+                        'TecnicoResponsavelId': int(self.user_info.get('id', 0))
+                    })
                     self.ticket['status'] = 2
                     print('Chamado atualizado para "Em Atendimento"')
                 except Exception as e:
@@ -172,28 +229,67 @@ class TicketDetailPage(BasePage):
             ])
         
         # Descrição
-        desc_frame = tk.Frame(self.inner_content, bg="#F8F9FA")
+        desc_frame = tk.Frame(self.inner_content, bg="#FFFFFF", bd=1, relief=tk.SOLID)
         desc_frame.pack(fill=tk.X, pady=(0, 24))
         
-        tk.Label(desc_frame, text="Descrição do Problema", font=("Inter", 16, "bold"),
-                bg="#F8F9FA", fg="#000000", anchor="w").pack(fill=tk.X, pady=(0, 8))
+        # Título com linha azul
+        title_frame = tk.Frame(desc_frame, bg="#FFFFFF")
+        title_frame.pack(fill=tk.X, padx=24, pady=(24, 8))
         
-        desc_text = tk.Text(desc_frame, font=("Inter", 14), bg="#FFFFFF", fg="#000000",
-                           bd=1, relief=tk.SOLID, wrap=tk.WORD, height=6)
+        tk.Label(title_frame, text="Descrição do Problema", font=("Inter", 16, "bold"),
+                bg="#FFFFFF", fg="#000000", anchor="w").pack(fill=tk.X)
+        
+        # Linha azul separadora
+        separator = tk.Frame(title_frame, bg="#007BFF", height=2)
+        separator.pack(fill=tk.X, pady=(8, 0))
+        
+        # Container para o campo de texto com linha azul vertical
+        text_container = tk.Frame(desc_frame, bg="#FFFFFF")
+        text_container.pack(fill=tk.X, padx=24, pady=(16, 24))
+        
+        # Linha azul vertical à esquerda
+        left_border = tk.Frame(text_container, bg="#007BFF", width=4)
+        left_border.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 0))
+        
+        # Campo de texto
+        desc_text = tk.Text(text_container, font=("Inter", 14), bg="#FFFFFF", fg="#000000",
+                           bd=0, relief=tk.FLAT, wrap=tk.WORD, height=6, padx=12, pady=12)
         desc_text.insert("1.0", self.ticket.get('descricao', 'N/A'))
         desc_text.config(state=tk.DISABLED)
-        desc_text.pack(fill=tk.X)
+        desc_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        
+        # Força a linha azul a ter a mesma altura do texto
+        def update_border_height():
+            try:
+                text_height = desc_text.winfo_reqheight()
+                left_border.config(height=text_height)
+            except:
+                pass
+        
+        desc_text.after(100, update_border_height)
         
         # Solução (se já existe)
         if self.ticket.get('solucao'):
-            sol_frame = tk.Frame(self.inner_content, bg="#F8F9FA")
+            sol_frame = tk.Frame(self.inner_content, bg="#FFFFFF", bd=1, relief=tk.SOLID)
             sol_frame.pack(fill=tk.X, pady=(0, 24))
             
-            tk.Label(sol_frame, text="Solução Registrada", font=("Inter", 16, "bold"),
-                    bg="#F8F9FA", fg="#000000", anchor="w").pack(fill=tk.X, pady=(0, 8))
+            # Título com linha azul
+            title_frame = tk.Frame(sol_frame, bg="#FFFFFF")
+            title_frame.pack(fill=tk.X, padx=24, pady=(24, 8))
             
-            sol_text = tk.Text(sol_frame, font=("Inter", 14), bg="#E8F5E9", fg="#000000",
-                              bd=1, relief=tk.SOLID, wrap=tk.WORD, height=6)
+            tk.Label(title_frame, text="Solução Registrada", font=("Inter", 16, "bold"),
+                    bg="#FFFFFF", fg="#000000", anchor="w").pack(fill=tk.X)
+            
+            # Linha azul separadora
+            separator = tk.Frame(title_frame, bg="#007BFF", height=2)
+            separator.pack(fill=tk.X, pady=(8, 0))
+            
+            # Container para o campo de texto
+            text_container = tk.Frame(sol_frame, bg="#FFFFFF")
+            text_container.pack(fill=tk.X, padx=24, pady=(16, 24))
+            
+            sol_text = tk.Text(text_container, font=("Inter", 14), bg="#E8F5E9", fg="#000000",
+                              bd=0, relief=tk.FLAT, wrap=tk.WORD, height=6, padx=12, pady=12)
             sol_text.insert("1.0", self.ticket.get('solucao', ''))
             sol_text.config(state=tk.DISABLED)
             sol_text.pack(fill=tk.X)
@@ -230,53 +326,100 @@ class TicketDetailPage(BasePage):
         section_frame = tk.Frame(self.inner_content, bg="#FFFFFF", bd=1, relief=tk.SOLID)
         section_frame.pack(fill=tk.X, pady=(0, 24))
         
-        tk.Label(section_frame, text=title, font=("Inter", 16, "bold"),
-                bg="#FFFFFF", fg="#000000", anchor="w").pack(fill=tk.X, padx=24, pady=(24, 16))
+        # Título da seção
+        title_frame = tk.Frame(section_frame, bg="#FFFFFF")
+        title_frame.pack(fill=tk.X, padx=24, pady=(24, 8))
+        
+        tk.Label(title_frame, text=title, font=("Inter", 16, "bold"),
+                bg="#FFFFFF", fg="#000000", anchor="w").pack(fill=tk.X)
+        
+        # Linha azul separadora
+        separator = tk.Frame(title_frame, bg="#007BFF", height=2)
+        separator.pack(fill=tk.X, pady=(8, 0))
+        
+        # Conteúdo da seção
+        content_frame = tk.Frame(section_frame, bg="#FFFFFF")
+        content_frame.pack(fill=tk.X, padx=24, pady=(16, 24))
         
         for label, value in items:
-            item_frame = tk.Frame(section_frame, bg="#FFFFFF")
-            item_frame.pack(fill=tk.X, padx=24, pady=8)
+            item_frame = tk.Frame(content_frame, bg="#FFFFFF")
+            item_frame.pack(fill=tk.X, pady=8)
             
             tk.Label(item_frame, text=label, font=("Inter", 12, "bold"),
                     bg="#FFFFFF", fg="#666666", width=20, anchor="w").pack(side=tk.LEFT)
-            tk.Label(item_frame, text=str(value), font=("Inter", 12),
-                    bg="#FFFFFF", fg="#000000", anchor="w").pack(side=tk.LEFT, fill=tk.X, expand=True)
-        
-        tk.Label(section_frame, text="", bg="#FFFFFF", height=1).pack()  # Espaço final
+            
+            # Verifica se o valor é um badge (Status ou Prioridade)
+            if label in ["Status:", "Prioridade:"]:
+                badge_frame = tk.Frame(item_frame, bg="#FFFFFF")
+                badge_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+                
+                if label == "Status:":
+                    # Badge cinza para status
+                    status_text = str(value).upper()
+                    badge = tk.Label(badge_frame, text=status_text, font=("Inter", 11, "bold"),
+                                    bg="#6C757D", fg="#FFFFFF", padx=12, pady=6,
+                                    relief=tk.FLAT, bd=0)
+                    badge.pack(side=tk.LEFT)
+                elif label == "Prioridade:":
+                    # Badge amarelo para prioridade
+                    priority_text = str(value).upper()
+                    badge = tk.Label(badge_frame, text=priority_text, font=("Inter", 11, "bold"),
+                                    bg="#FFC107", fg="#000000", padx=12, pady=6,
+                                    relief=tk.FLAT, bd=0)
+                    badge.pack(side=tk.LEFT)
+            else:
+                tk.Label(item_frame, text=str(value), font=("Inter", 12),
+                        bg="#FFFFFF", fg="#000000", anchor="w").pack(side=tk.LEFT, fill=tk.X, expand=True)
     
     def _create_solution_section(self):
         """Cria seção de solução"""
-        section_frame = tk.Frame(self.inner_content, bg="#F8F9FA")
+        section_frame = tk.Frame(self.inner_content, bg="#FFFFFF", bd=2, relief=tk.SOLID, highlightbackground="#28A745", highlightthickness=2)
         section_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 24))
         
-        # Header com botão de IA
-        header_frame = tk.Frame(section_frame, bg="#F8F9FA")
-        header_frame.pack(fill=tk.X, pady=(0, 16))
+        # Header com título e botão de IA
+        header_frame = tk.Frame(section_frame, bg="#FFFFFF")
+        header_frame.pack(fill=tk.X, padx=24, pady=(24, 8))
         
-        tk.Label(header_frame, text="Registrar Solução", font=("Inter", 18, "bold"),
-                bg="#F8F9FA", fg="#262626", anchor="w").pack(side=tk.LEFT)
+        # Título com linha azul
+        title_container = tk.Frame(header_frame, bg="#FFFFFF")
+        title_container.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
+        tk.Label(title_container, text="Registrar Solução", font=("Inter", 16, "bold"),
+                bg="#FFFFFF", fg="#000000", anchor="w").pack(fill=tk.X)
+        
+        # Linha azul separadora
+        separator = tk.Frame(title_container, bg="#007BFF", height=2)
+        separator.pack(fill=tk.X, pady=(8, 0))
+        
+        # Botão de IA roxo - com largura fixa para evitar mudanças durante animação
+        button_text = "🤖 Gerar Sugestão com IA" if not self.carregando_sugestao else "🔄 Gerando Sugestão..."
         ai_btn = tk.Button(
             header_frame,
-            text="🤖 Gerar Sugestão com IA" if not self.carregando_sugestao else "🔄 Gerando Sugestão...",
+            text=button_text,
             font=("Inter", 14),
-            bg="#17A2B8",
+            bg="#6F42C1",
             fg="white",
-            activebackground="#138496",
+            activebackground="#5A32A3",
             activeforeground="white",
+            disabledforeground="white",  # Mantém texto branco quando desabilitado
             bd=0,
             relief=tk.FLAT,
             padx=20,
             pady=10,
+            width=25,  # Largura fixa em caracteres para manter tamanho constante
             cursor="hand2" if not self.carregando_sugestao else "wait",
             command=self._handle_gerar_sugestao,
             state=tk.NORMAL if not self.carregando_sugestao else tk.DISABLED
         )
-        ai_btn.pack(side=tk.RIGHT)
+        ai_btn.pack(side=tk.RIGHT, padx=(16, 0))
         self.ai_button = ai_btn
         
-        # Caixa de sugestão de IA (inicialmente oculta)
-        self.suggestion_box = tk.Frame(section_frame, bg="#E3F2FD", bd=1, relief=tk.SOLID)
+        # Container principal para sugestão e campo de solução
+        main_content_frame = tk.Frame(section_frame, bg="#FFFFFF")
+        main_content_frame.pack(fill=tk.BOTH, expand=True, padx=24, pady=(16, 24))
+        
+        # Caixa de sugestão de IA (inicialmente oculta, mas posicionada ANTES do campo)
+        self.suggestion_box = tk.Frame(main_content_frame, bg="#E3F2FD", bd=1, relief=tk.SOLID)
         self.suggestion_box.pack_forget()
         
         suggestion_inner = tk.Frame(self.suggestion_box, bg="#E3F2FD")
@@ -325,22 +468,41 @@ class TicketDetailPage(BasePage):
         )
         close_btn.pack(side=tk.LEFT)
         
+        # Frame para conter o Text e a Scrollbar
+        text_frame = tk.Frame(suggestion_inner, bg="#E3F2FD")
+        text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Scrollbar para o texto de sugestão (armazenada como atributo)
+        self.suggestion_scrollbar = tk.Scrollbar(text_frame, orient=tk.VERTICAL, width=16)
+        self.suggestion_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        # Text widget para sugestão (maior e com scrollbar)
         self.suggestion_text = tk.Text(
-            suggestion_inner,
+            text_frame,
             font=("Inter", 13),
             bg="#FFFFFF",
             fg="#262626",
-            bd=0,
-            relief=tk.FLAT,
+            bd=1,
+            relief=tk.SOLID,
             wrap=tk.WORD,
-            height=4
+            height=12,  # Aumentado para 12 linhas (maior área visível)
+            yscrollcommand=self.suggestion_scrollbar.set,
+            padx=12,
+            pady=12
         )
-        self.suggestion_text.pack(fill=tk.X)
+        self.suggestion_text.pack(fill=tk.BOTH, expand=True, side=tk.LEFT)
         self.suggestion_text.config(state=tk.DISABLED)
+        
+        # Configura a scrollbar para controlar o Text
+        self.suggestion_scrollbar.config(command=self.suggestion_text.yview)
+        
+        # Container para textarea e botão (DEPOIS da sugestão)
+        self.content_container = tk.Frame(main_content_frame, bg="#FFFFFF")
+        self.content_container.pack(fill=tk.BOTH, expand=True)
         
         # Textarea de solução
         self.solution_textarea = tk.Text(
-            section_frame,
+            self.content_container,
             font=("Inter", 14),
             bg="#FFFFFF",
             fg="#000000",
@@ -348,7 +510,9 @@ class TicketDetailPage(BasePage):
             relief=tk.SOLID,
             wrap=tk.WORD,
             height=8,
-            insertbackground="#262626"
+            insertbackground="#262626",
+            padx=12,
+            pady=12
         )
         self.solution_textarea.pack(fill=tk.BOTH, expand=True, pady=(0, 16))
         self.solution_textarea.insert("1.0", "Descreva aqui a solução sugerida para o problema. Use o botão acima para gerar uma sugestão com IA...")
@@ -370,14 +534,18 @@ class TicketDetailPage(BasePage):
         self.solution_textarea.bind("<FocusOut>", on_solution_focus_out)
         self.solution_textarea.bind("<KeyRelease>", lambda e: self._update_solution())
         
-        # Botão concluir
+        # Container para botão no canto inferior direito
+        button_container = tk.Frame(self.content_container, bg="#FFFFFF")
+        button_container.pack(fill=tk.X)
+        
+        # Botão concluir (cinza escuro no canto direito)
         conclude_btn = tk.Button(
-            section_frame,
+            button_container,
             text="Enviar Solução" if not self.saving else "Enviando...",
             font=("Inter", 14, "bold"),
-            bg="#28A745",
+            bg="#495057",
             fg="white",
-            activebackground="#218838",
+            activebackground="#343A40",
             activeforeground="white",
             bd=0,
             relief=tk.FLAT,
@@ -387,7 +555,7 @@ class TicketDetailPage(BasePage):
             command=self._handle_send_solution,
             state=tk.NORMAL if not self.saving else tk.DISABLED
         )
-        conclude_btn.pack()
+        conclude_btn.pack(side=tk.RIGHT)
         self.conclude_button = conclude_btn
     
     def _update_solution(self):
@@ -417,8 +585,47 @@ class TicketDetailPage(BasePage):
         
         self.carregando_sugestao = True
         if hasattr(self, 'ai_button'):
-            self.ai_button.config(text="🔄 Gerando Sugestão...", state=tk.DISABLED)
+            self.ai_button.config(text="🔄 Gerando Sugestão", state=tk.DISABLED, fg="white", disabledforeground="white")
+        # Inicia animação
+        self._start_loading_animation()
         threading.Thread(target=self._do_gerar_sugestao, daemon=True).start()
+    
+    def _start_loading_animation(self):
+        """Inicia animação de loading no botão"""
+        if not self.carregando_sugestao or not hasattr(self, 'ai_button'):
+            return
+        
+        # Estados da animação: pontos que aparecem e desaparecem
+        # Usa espaços para manter a mesma largura do texto
+        animation_states = [
+            "🔄 Gerando Sugestão   ",  # 3 espaços
+            "🔄 Gerando Sugestão.  ",  # 2 espaços
+            "🔄 Gerando Sugestão.. ",  # 1 espaço
+            "🔄 Gerando Sugestão..."   # 0 espaços
+        ]
+        
+        # Contador para ciclo da animação
+        if not hasattr(self, '_animation_counter'):
+            self._animation_counter = 0
+        
+        # Atualiza o texto do botão
+        state_index = self._animation_counter % len(animation_states)
+        self.ai_button.config(text=animation_states[state_index], fg="white", disabledforeground="white")
+        
+        # Incrementa contador
+        self._animation_counter += 1
+        
+        # Agenda próxima atualização (500ms)
+        if self.carregando_sugestao:
+            self.animation_job = self.after(500, self._start_loading_animation)
+    
+    def _stop_loading_animation(self):
+        """Para a animação de loading"""
+        if self.animation_job:
+            self.after_cancel(self.animation_job)
+            self.animation_job = None
+        if hasattr(self, '_animation_counter'):
+            self._animation_counter = 0
     
     def _do_gerar_sugestao(self):
         """Faz geração de sugestão"""
@@ -433,21 +640,42 @@ class TicketDetailPage(BasePage):
                 self.after(0, lambda: self._show_suggestion_box())
                 self.after(0, lambda: show_toast(self, 'Sugestão gerada com sucesso! Clique em "Usar Sugestão" para aplicá-la.', 'success'))
             else:
-                self.after(0, lambda: show_toast(self, 'Não foi possível gerar uma sugestão. Tente novamente.', 'error'))
+                self.after(0, lambda: show_toast(self, 'Não foi possível gerar uma sugestão. A resposta da API não contém sugestão.', 'error'))
         except Exception as e:
-            error_msg = str(e)
-            # Não mostra erro se for apenas problema de conexão (já está usando mock)
-            if 'connection' not in error_msg.lower() and 'conectar' not in error_msg.lower():
-                if 'erro' in error_msg.lower():
-                    msg = error_msg
-                else:
-                    msg = 'Erro ao gerar sugestão. Usando sugestão padrão.'
-                self.after(0, lambda: show_toast(self, msg, 'error'))
-            # Se for erro de conexão, a sugestão mock já foi retornada, então não mostra erro
+            # Log detalhado para debug
+            print(f"[AIService] Erro ao gerar sugestão: {e}")
+            print(f"[AIService] Tipo do erro: {type(e)}")
+            if hasattr(e, 'status_code'):
+                print(f"[AIService] Status code: {e.status_code}")
+            if hasattr(e, 'data'):
+                print(f"[AIService] Dados do erro: {e.data}")
+            
+            # Extrai mensagem de erro igual ao web TicketDetailPage.jsx (linha 138)
+            # error.data?.erro || error.message || 'Erro ao gerar sugestão. Verifique se a API do Gemini está configurada.'
+            if hasattr(e, 'data') and e.data:
+                error_detail = e.data.get('erro') or e.data.get('message', '')
+            else:
+                error_detail = ''
+            
+            # Usa error.message se não tiver error.data.erro
+            if not error_detail:
+                error_detail = str(e) if hasattr(e, '__str__') else 'Erro desconhecido'
+            
+            # Fallback para mensagem padrão se ainda estiver vazio
+            if not error_detail:
+                error_detail = 'Erro ao gerar sugestão. Verifique se a API do Gemini está configurada.'
+            
+            # Mostra mensagem de erro (igual ao web)
+            self.after(0, lambda msg=error_detail: show_toast(self, msg, 'error'))
         finally:
             self.after(0, lambda: setattr(self, 'carregando_sugestao', False))
+            self.after(0, self._stop_loading_animation)
             if hasattr(self, 'ai_button'):
-                self.after(0, lambda: self.ai_button.config(text="🤖 Gerar Sugestão com IA", state=tk.NORMAL))
+                self.after(0, lambda: self.ai_button.config(
+                    text="🤖 Gerar Sugestão com IA", 
+                    state=tk.NORMAL,
+                    fg="white"
+                ))
     
     def _show_suggestion_box(self):
         """Mostra caixa de sugestão"""
@@ -456,7 +684,30 @@ class TicketDetailPage(BasePage):
             self.suggestion_text.delete("1.0", tk.END)
             self.suggestion_text.insert("1.0", self.sugestao)
             self.suggestion_text.config(state=tk.DISABLED)
-            self.suggestion_box.pack(fill=tk.X, pady=(0, 16))
+            # Atualiza a scrollbar após inserir o texto
+            self.suggestion_text.update_idletasks()
+            # Empacota ANTES do content_container para aparecer antes do campo de descrição
+            # Define altura máxima para que a scrollbar apareça quando necessário
+            if hasattr(self, 'content_container'):
+                self.suggestion_box.pack(fill=tk.BOTH, pady=(0, 16), before=self.content_container)
+            else:
+                self.suggestion_box.pack(fill=tk.BOTH, pady=(0, 16))
+            
+            # Força atualização da scrollbar após mostrar a caixa
+            self.suggestion_text.see("1.0")
+            self.suggestion_text.update_idletasks()
+            
+            # Atualiza a configuração da scrollbar para garantir que apareça
+            if hasattr(self, 'suggestion_scrollbar'):
+                # Verifica se o conteúdo excede a altura visível
+                line_count = int(self.suggestion_text.index('end-1c').split('.')[0])
+                visible_lines = self.suggestion_text['height']
+                if line_count > visible_lines:
+                    # Força a scrollbar a aparecer
+                    self.suggestion_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+                else:
+                    # Remove a scrollbar se não for necessária (opcional)
+                    pass  # Mantém sempre visível para consistência visual
     
     def _handle_send_solution(self):
         """Abre modal de confirmação antes de enviar solução"""
@@ -504,11 +755,12 @@ class TicketDetailPage(BasePage):
     def _do_send_solution(self, solution):
         """Faz envio da solução"""
         try:
+            # API .NET: Quando tem Solução, fecha automaticamente (status 3 = Fechado)
             update_data = {
-                'solucao': solution,
-                'status': 3,  # Fechado (conforme enum StatusChamado na web)
-                'tecnicoResponsavelId': self.ticket.get('tecnicoResponsavelId') or (int(self.user_info.get('id', 0)) if self.user_info.get('id') else None),
-                'dataFechamento': datetime.now().isoformat()
+                'Solucao': solution,
+                'Status': 3,  # Fechado (conforme enum StatusChamado na API .NET)
+                'TecnicoResponsavelId': self.ticket.get('tecnicoResponsavelId') or self.ticket.get('TecnicoResponsavelId') or (int(self.user_info.get('id', 0)) if self.user_info.get('id') else None),
+                'DataFechamento': datetime.now().isoformat()
             }
             
             TicketService.update_ticket(self.ticket_id, update_data)

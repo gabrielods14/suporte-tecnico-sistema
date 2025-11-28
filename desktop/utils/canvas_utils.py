@@ -41,3 +41,6 @@ def create_shadow_effect(parent, widget, shadow_color='rgba(0,0,0,0.1)', offset_
 
 
 
+
+
+

@@ -1,21 +1,28 @@
 """
-NewTicketPage - Replica EXATAMENTE NewTicketPage.jsx do web
+NewTicketPage - Página de novo chamado
+Mesma identidade visual da página de cadastro de funcionários
 """
+import customtkinter as ctk
 import tkinter as tk
-from tkinter import ttk
-from pages.base_page import BasePage
 from api_client import TicketService
 from components.toast import show_toast
 from components.confirm_modal import ConfirmModal
+from components.form_validator import FormValidator, validate_required, validate_min_length
+from config import COLORS
 import threading
 
-class NewTicketPage(BasePage):
-    """Página de novo ticket - layout IDÊNTICO ao web"""
+
+class NewTicketPage(ctk.CTkFrame):
+    """Página de novo chamado - mesma identidade visual do cadastro de funcionários"""
     
     def __init__(self, parent, on_logout, on_navigate_to_home, on_navigate_to_page, user_info):
-        super().__init__(parent, on_logout, on_navigate_to_page, 'newticket', user_info, page_title="NOVO CHAMADO", create_header_sidebar=False)
+        super().__init__(parent, fg_color="#F8F9FA")
         
+        self.on_logout = on_logout
         self.on_navigate_to_home = on_navigate_to_home
+        self.on_navigate_to_page = on_navigate_to_page
+        self.user_info = user_info
+        
         self.is_loading = False
         self.errors = {}
         self.form_data = {
@@ -24,467 +31,408 @@ class NewTicketPage(BasePage):
             'descricao': ''
         }
         
+        # Inicializa validador
+        self.validator = FormValidator()
+        self.validator.add_validator('tipoChamado', validate_required, 'Tipo de chamado é obrigatório')
+        self.validator.add_validator('titulo', validate_required, 'Título é obrigatório')
+        self.validator.add_validator('titulo', validate_min_length(3), 'Título deve ter pelo menos 3 caracteres')
+        self.validator.add_validator('descricao', validate_required, 'Descrição é obrigatória')
+        self.validator.add_validator('descricao', validate_min_length(10), 'Descrição deve ter pelo menos 10 caracteres')
+        
         self.tipos_chamado = [
-            ('', 'Selecione o tipo de chamado'),
-            ('Suporte', 'Suporte'),
-            ('Manutenção', 'Manutenção'),
-            ('Instalação', 'Instalação'),
-            ('Consultoria', 'Consultoria'),
-            ('Emergência', 'Emergência')
+            'Suporte',
+            'Manutenção',
+            'Instalação',
+            'Consultoria',
+            'Emergência'
         ]
         
         self._create_ui()
     
     def _create_ui(self):
-        """Cria interface moderna e elegante - estilo web melhorado"""
+        """Cria interface com mesma identidade visual do cadastro de funcionários"""
         # Container principal com scroll
-        scroll_container = tk.Frame(self.main_content, bg="#F8F9FA")
-        scroll_container.pack(fill=tk.BOTH, expand=True)
-        
-        # Canvas para scroll suave
-        canvas = tk.Canvas(scroll_container, bg="#F8F9FA", highlightthickness=0)
-        scrollbar = tk.Scrollbar(scroll_container, orient="vertical", command=canvas.yview)
-        scrollable_frame = tk.Frame(canvas, bg="#F8F9FA")
-        
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        self.main_scrollable = ctk.CTkScrollableFrame(
+            self,
+            fg_color="#F8F9FA",
+            corner_radius=0
         )
+        self.main_scrollable.pack(fill="both", expand=True)
+        self.main_scrollable.grid_columnconfigure(0, weight=1)
         
-        canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
+        # Container interno com padding
+        main_container = ctk.CTkFrame(self.main_scrollable, fg_color="#F8F9FA")
+        main_container.pack(fill="both", expand=True, padx=48, pady=48)
+        main_container.grid_columnconfigure(0, weight=1)
         
-        # Configurar canvas para atualizar largura do frame interno
-        def configure_scroll_region(event):
-            canvas.configure(scrollregion=canvas.bbox("all"))
-            # Ajustar largura do frame interno para corresponder ao canvas
-            canvas_width = event.width
-            canvas.itemconfig(canvas_window, width=canvas_width)
+        # Botão voltar
+        back_btn = ctk.CTkButton(
+            main_container,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
+        )
+        back_btn.pack(fill="x", anchor="w", pady=(0, 20))
         
-        canvas.bind('<Configure>', configure_scroll_region)
-        scrollable_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        # === FORMULÁRIO (Card branco) ===
+        form_card = ctk.CTkFrame(main_container, fg_color="#FFFFFF", corner_radius=16)
+        form_card.pack(fill="both", expand=True)
+        form_card.grid_columnconfigure(0, weight=1)
         
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
-        
-        # Container principal - padding reduzido apenas nas laterais
-        container = tk.Frame(scrollable_frame, bg="#F8F9FA")
-        container.pack(fill=tk.BOTH, expand=True, padx=24, pady=32)
-        
-        # Bind mousewheel para scroll
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
-        
-        
-        # Container do formulário - ocupa toda largura disponível
-        form_wrapper = tk.Frame(container, bg="#F8F9FA")
-        form_wrapper.pack(fill=tk.BOTH, expand=True)
-        form_wrapper.grid_columnconfigure(0, weight=1)
-        
-        # Formulário branco moderno - ocupa toda largura
-        form_frame = tk.Frame(form_wrapper, bg="#FFFFFF", bd=2, relief=tk.SOLID, highlightbackground="#E5E5E5")
-        form_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 24))
-        
-        # Frame interno para padding - reduzido nas laterais
-        form_inner = tk.Frame(form_frame, bg="#FFFFFF")
-        form_inner.pack(fill=tk.BOTH, expand=True, padx=24, pady=32)
-        
-        # Frame central para conter o formulário - ocupa toda largura
-        form_content = tk.Frame(form_inner, bg="#FFFFFF")
-        form_content.pack(fill=tk.BOTH, expand=True)
+        # Padding interno
+        form_inner = ctk.CTkFrame(form_card, fg_color="transparent")
+        form_inner.pack(fill="both", expand=True, padx=48, pady=48)
+        form_inner.grid_columnconfigure(0, weight=1)
         
         # Tipo de chamado
-        self._create_select_field(form_content, "TIPO DE CHAMADO *", "tipoChamado", 
-                                  self.tipos_chamado, row=0)
+        self._create_tipo_field(form_inner, row=0)
         
-        # Título
-        self._create_text_field(form_content, "TÍTULO DO CHAMADO *", "titulo", 
-                               row=1, max_length=100)
+        # Título do chamado
+        self._create_text_field(form_inner, "Título do Chamado *", "titulo", row=1, max_length=100)
         
         # Descrição
-        self._create_textarea_field(form_content, "DESCRIÇÃO *", "descricao", 
-                                   row=2, max_length=1000, rows=8)
+        self._create_textarea_field(form_inner, "Descrição *", "descricao", row=2, max_length=1000, rows=8)
         
-        # Botão enviar - moderno com hover effect
-        submit_btn = tk.Button(
-            form_content,
+        # Botão enviar
+        self.submit_btn = ctk.CTkButton(
+            form_inner,
             text="ENVIAR",
-            font=("Inter", 18, "bold"),
-            bg="#A93226",
-            fg="white",
-            activebackground="#8B0000",
-            activeforeground="white",
-            bd=0,
-            relief=tk.FLAT,
-            padx=24,
-            pady=18,
-            cursor="hand2",
-            command=self._handle_submit
+            font=ctk.CTkFont(size=18, weight="bold"),
+            fg_color="#A93226",
+            hover_color="#8B0000",
+            height=50,
+            command=self._handle_submit,
+            state="normal"
         )
-        submit_btn.pack(fill=tk.X, pady=(32, 0))
+        self.submit_btn.grid(row=3, column=0, sticky="ew", pady=(24, 8))
         
-        # Ajuda - centralizado
-        help_label = tk.Label(
-            form_content,
+        # Ajuda
+        help_label = ctk.CTkLabel(
+            form_inner,
             text="* Campos obrigatórios",
-            font=("Inter", 14),
-            fg="#666666",
-            bg="#FFFFFF"
+            font=ctk.CTkFont(size=12),
+            text_color="#666666"
         )
-        help_label.pack(pady=(16, 0))
-        
-        # Atualizar scrollregion após todos os widgets serem criados
-        def update_scroll():
-            canvas.update_idletasks()
-            canvas.config(scrollregion=canvas.bbox("all"))
-        
-        scrollable_frame.after(100, update_scroll)
+        help_label.grid(row=4, column=0, sticky="w")
     
-    def _create_select_field(self, parent, label_text, field_name, options, row):
-        """Cria campo de seleção moderno com sombras e bordas arredondadas"""
-        frame = tk.Frame(parent, bg="#FFFFFF")
-        frame.pack(fill=tk.X, pady=(0, 32))
+    def _create_tipo_field(self, parent, row):
+        """Cria campo de tipo de chamado"""
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.grid(row=row, column=0, sticky="ew", pady=(0, 24))
+        frame.grid_columnconfigure(0, weight=1)
         
-        # Label moderno
-        label = tk.Label(
+        label = ctk.CTkLabel(
             frame,
-            text=label_text,
-            font=("Inter", 13, "bold"),
-            fg="#333333",
-            bg="#FFFFFF",
+            text="Tipo de Chamado *",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#333333",
             anchor="w"
         )
-        label.pack(fill=tk.X, pady=(0, 12))
+        label.grid(row=0, column=0, sticky="w", pady=(0, 8))
         
-        # Container do select - simplificado
-        select_container = tk.Frame(frame, bg="#FFFFFF")
-        select_container.pack(fill=tk.X)
-        
-        var = tk.StringVar(value=options[0][0] if options else '')
-        var.trace('w', lambda *args: self._update_form_data(field_name, var.get()))
-        
-        # Select com estilo moderno - ocupa toda largura
-        option_menu = tk.OptionMenu(select_container, var, *[opt[0] for opt in options],
-                                   command=lambda v: self._update_form_data(field_name, v))
-        
-        # Estilização moderna do select
-        option_menu.config(
-            font=("Inter", 15),
-            bg="#FFFFFF",
-            fg="#1A1A1A",
-            activebackground="#F0F0F0",
-            activeforeground="#1A1A1A",
-            bd=2,
-            relief=tk.SOLID,
-            highlightthickness=1,
-            highlightbackground="#E5E5E5",
-            highlightcolor="#A93226",
-            padx=16,
-            pady=14,
-            anchor="w",
-            cursor="hand2",
-            direction="below"  # Abre para baixo
+        self.tipoChamado_var = tk.StringVar(value="")
+        tipo_combo = ctk.CTkComboBox(
+            frame,
+            values=[""] + self.tipos_chamado,
+            variable=self.tipoChamado_var,
+            command=self._on_tipo_change,
+            font=ctk.CTkFont(size=16),
+            height=50,
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5",
+            button_color="#E5E5E5",
+            button_hover_color="#D5D5D5",
+            dropdown_fg_color="#FFFFFF",
+            dropdown_text_color="#1A1A1A",
+            dropdown_hover_color="#F0F0F0"
         )
-        # Usar pack para garantir que ocupe toda largura
-        option_menu.pack(fill=tk.X, expand=True)
+        # Acessibilidade: aria-label
+        if hasattr(tipo_combo, 'configure'):
+            try:
+                tipo_combo.configure(tooltip="Selecione o tipo de chamado")
+            except:
+                pass
+        tipo_combo.grid(row=1, column=0, sticky="ew")
+        self.tipoChamado_combo = tipo_combo
+        self.tipoChamado_var.trace('w', lambda *args: self._update_form_data('tipoChamado', self.tipoChamado_var.get()))
         
-        # Bind para hover effect
-        def on_enter(e):
-            option_menu.config(highlightbackground="#A93226")
-        def on_leave(e):
-            option_menu.config(highlightbackground="#E5E5E5")
-        option_menu.bind("<Enter>", on_enter)
-        option_menu.bind("<Leave>", on_leave)
-        
-        setattr(self, f"{field_name}_var", var)
-        
-        # Mensagem de erro
-        error_label = tk.Label(
+        # Label de erro
+        error_label = ctk.CTkLabel(
             frame,
             text="",
-            font=("Inter", 12),
-            fg="#DC3545",
-            bg="#FFFFFF",
+            font=ctk.CTkFont(size=10),
+            text_color="#DC3545",
             anchor="w"
         )
-        error_label.pack(fill=tk.X, pady=(6, 0))
-        setattr(self, f"{field_name}_error", error_label)
+        error_label.grid(row=2, column=0, sticky="w", pady=(4, 0))
+        setattr(self, "tipoChamado_error", error_label)
+    
+    def _on_tipo_change(self, value):
+        """Callback quando tipo muda"""
+        self.form_data['tipoChamado'] = value
+        self._validate_field('tipoChamado', value)
     
     def _create_text_field(self, parent, label_text, field_name, row, max_length=None):
-        """Cria campo de texto moderno com sombras e bordas arredondadas"""
-        frame = tk.Frame(parent, bg="#FFFFFF")
-        frame.pack(fill=tk.X, pady=(0, 32))
+        """Cria campo de texto"""
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.grid(row=row, column=0, sticky="ew", pady=(0, 24))
+        frame.grid_columnconfigure(0, weight=1)
         
-        # Label moderno
-        label = tk.Label(
+        label = ctk.CTkLabel(
             frame,
             text=label_text,
-            font=("Inter", 13, "bold"),
-            fg="#333333",
-            bg="#FFFFFF",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#333333",
             anchor="w"
         )
-        label.pack(fill=tk.X, pady=(0, 12))
+        label.grid(row=0, column=0, sticky="w", pady=(0, 8))
         
-        # Input moderno com estilo melhorado
-        entry = tk.Entry(
+        entry = ctk.CTkEntry(
             frame,
-            font=("Inter", 15),
-            bg="#FFFFFF",
-            fg="#1A1A1A",
-            bd=2,
-            relief=tk.SOLID,
-            highlightthickness=1,
-            insertbackground="#000000",
-            highlightbackground="#E5E5E5",
-            highlightcolor="#A93226"
+            placeholder_text="Digite um título descritivo para o chamado" if field_name == 'titulo' else "",
+            font=ctk.CTkFont(size=16),
+            height=50,
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5"
         )
-        entry.pack(fill=tk.X, ipady=14, padx=0)
-        
-        # Placeholder (simulado com bind)
-        placeholder_text = "Digite um título descritivo para o chamado"
-        entry.insert(0, placeholder_text)
-        entry.config(fg="#666666")
-        
-        def on_focus_in(e):
-            if entry.get() == placeholder_text:
-                entry.delete(0, tk.END)
-                entry.config(fg="#1A1A1A", highlightbackground="#A93226")
-            else:
-                entry.config(highlightbackground="#A93226")
-        
-        def on_focus_out(e):
-            if not entry.get():
-                entry.insert(0, placeholder_text)
-                entry.config(fg="#666666", highlightbackground="#E5E5E5")
-            else:
-                entry.config(highlightbackground="#E5E5E5")
-        
-        # Hover effect
-        def on_enter(e):
-            if entry.get() != placeholder_text:
-                entry.config(highlightbackground="#A93226")
-        def on_leave(e):
-            if entry.get() != placeholder_text:
-                entry.config(highlightbackground="#E5E5E5")
-        
-        entry.bind("<FocusIn>", on_focus_in)
-        entry.bind("<FocusOut>", on_focus_out)
-        entry.bind("<Enter>", on_enter)
-        entry.bind("<Leave>", on_leave)
-        entry.bind("<KeyRelease>", lambda e: self._validate_field(field_name, entry.get(), max_length))
+        # Acessibilidade: aria-label
+        if hasattr(entry, 'configure'):
+            try:
+                entry.configure(tooltip=f"Campo {label_text.lower()}")
+            except:
+                pass
+        entry.grid(row=1, column=0, sticky="ew")
+        entry.bind("<FocusIn>", lambda e: entry.configure(border_color="#A93226"))
+        entry.bind("<FocusOut>", lambda e: entry.configure(border_color="#E5E5E5") if field_name not in self.errors else None)
         
         setattr(self, f"{field_name}_entry", entry)
         
-        # Contador de caracteres moderno
+        # Contador de caracteres
         if max_length:
-            count_label = tk.Label(
+            count_label = ctk.CTkLabel(
                 frame,
                 text=f"0/{max_length} caracteres",
-                font=("Inter", 11),
-                fg="#666666",
-                bg="#FFFFFF",
+                font=ctk.CTkFont(size=11),
+                text_color="#666666",
                 anchor="e"
             )
-            count_label.pack(fill=tk.X, pady=(6, 0))
-            setattr(self, f"{field_name}_count", count_label)
+            count_label.grid(row=2, column=0, sticky="e", pady=(4, 0))
             
-            def update_count(e):
+            def update_count(e=None):
                 text = entry.get()
-                if text == placeholder_text:
-                    text = ""
-                count_label.config(text=f"{len(text)}/{max_length} caracteres")
+                count_label.configure(text=f"{len(text)}/{max_length} caracteres")
+                # Também atualiza form_data e valida
+                self._on_field_change(field_name, text, max_length)
+            
             entry.bind("<KeyRelease>", update_count)
+            setattr(self, f"{field_name}_count", count_label)
+        else:
+            # Se não tem contador, apenas valida
+            entry.bind("<KeyRelease>", lambda e: self._on_field_change(field_name, entry.get(), max_length))
         
-        # Mensagem de erro
-        error_label = tk.Label(
+        # Label de erro
+        error_label = ctk.CTkLabel(
             frame,
             text="",
-            font=("Inter", 12),
-            fg="#DC3545",
-            bg="#FFFFFF",
+            font=ctk.CTkFont(size=10),
+            text_color="#DC3545",
             anchor="w"
         )
-        error_label.pack(fill=tk.X, pady=(6, 0))
+        error_row = 3 if max_length else 2
+        error_label.grid(row=error_row, column=0, sticky="w", pady=(4, 0))
         setattr(self, f"{field_name}_error", error_label)
     
     def _create_textarea_field(self, parent, label_text, field_name, row, max_length=None, rows=8):
-        """Cria textarea moderno com sombras e bordas arredondadas"""
-        frame = tk.Frame(parent, bg="#FFFFFF")
-        frame.pack(fill=tk.BOTH, expand=True, pady=(0, 32))
+        """Cria campo de texto multilinha"""
+        frame = ctk.CTkFrame(parent, fg_color="transparent")
+        frame.grid(row=row, column=0, sticky="ew", pady=(0, 24))
+        frame.grid_columnconfigure(0, weight=1)
         
-        # Label moderno
-        label = tk.Label(
+        label = ctk.CTkLabel(
             frame,
             text=label_text,
-            font=("Inter", 13, "bold"),
-            fg="#333333",
-            bg="#FFFFFF",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            text_color="#333333",
             anchor="w"
         )
-        label.pack(fill=tk.X, pady=(0, 12))
+        label.grid(row=0, column=0, sticky="w", pady=(0, 8))
         
-        # Textarea moderno
-        textarea = tk.Text(
+        textarea = ctk.CTkTextbox(
             frame,
-            font=("Inter", 15),
-            bg="#FFFFFF",
-            fg="#1A1A1A",
-            bd=2,
-            relief=tk.SOLID,
-            insertbackground="#000000",
-            wrap=tk.WORD,
-            height=rows,
-            highlightthickness=1,
-            highlightbackground="#E5E5E5",
-            highlightcolor="#A93226"
+            font=ctk.CTkFont(size=16),
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5",
+            height=rows * 20,
+            wrap="word"
         )
-        textarea.pack(fill=tk.BOTH, expand=True, ipady=14, padx=0)
+        textarea.grid(row=1, column=0, sticky="ew")
+        # Bind será feito no update_count para incluir validação e contador
+        textarea.bind("<FocusIn>", lambda e: textarea.configure(border_color="#A93226"))
+        textarea.bind("<FocusOut>", lambda e: textarea.configure(border_color="#E5E5E5") if field_name not in self.errors else None)
         
-        # Placeholder (simulado)
+        # Placeholder
         placeholder_text = "Descreva detalhadamente o problema ou solicitação"
         textarea.insert("1.0", placeholder_text)
-        textarea.config(fg="#666666")
+        textarea.configure(text_color="#666666")
         
         def on_focus_in(e):
-            if textarea.get("1.0", tk.END).strip() == placeholder_text:
+            content = textarea.get("1.0", tk.END).strip()
+            if content == placeholder_text:
                 textarea.delete("1.0", tk.END)
-                textarea.config(fg="#1A1A1A", highlightbackground="#A93226")
-            else:
-                textarea.config(highlightbackground="#A93226")
+                textarea.configure(text_color="#1A1A1A")
+            textarea.configure(border_color="#A93226")
         
         def on_focus_out(e):
-            if not textarea.get("1.0", tk.END).strip():
+            content = textarea.get("1.0", tk.END).strip()
+            if not content:
                 textarea.insert("1.0", placeholder_text)
-                textarea.config(fg="#666666", highlightbackground="#E5E5E5")
-            else:
-                textarea.config(highlightbackground="#E5E5E5")
-        
-        # Hover effect
-        def on_enter(e):
-            if textarea.get("1.0", tk.END).strip() != placeholder_text:
-                textarea.config(highlightbackground="#A93226")
-        def on_leave(e):
-            if textarea.get("1.0", tk.END).strip() != placeholder_text:
-                textarea.config(highlightbackground="#E5E5E5")
+                textarea.configure(text_color="#666666")
+            if field_name not in self.errors:
+                textarea.configure(border_color="#E5E5E5")
         
         textarea.bind("<FocusIn>", on_focus_in)
         textarea.bind("<FocusOut>", on_focus_out)
-        textarea.bind("<Enter>", on_enter)
-        textarea.bind("<Leave>", on_leave)
-        textarea.bind("<KeyRelease>", lambda e: self._validate_field(field_name, textarea.get("1.0", tk.END).strip(), max_length))
         
         setattr(self, f"{field_name}_entry", textarea)
         
-        # Contador de caracteres moderno
+        # Contador de caracteres
         if max_length:
-            count_label = tk.Label(
+            count_label = ctk.CTkLabel(
                 frame,
                 text=f"0/{max_length} caracteres",
-                font=("Inter", 11),
-                fg="#666666",
-                bg="#FFFFFF",
+                font=ctk.CTkFont(size=11),
+                text_color="#666666",
                 anchor="e"
             )
-            count_label.pack(fill=tk.X, pady=(6, 0))
-            setattr(self, f"{field_name}_count", count_label)
+            count_label.grid(row=2, column=0, sticky="e", pady=(4, 0))
             
-            def update_count(e):
+            def update_count(e=None):
                 content = textarea.get("1.0", tk.END).strip()
-                if content == placeholder_text:
+                is_placeholder = content == placeholder_text
+                if is_placeholder:
                     content = ""
-                count_label.config(text=f"{len(content)}/{max_length} caracteres")
+                count_label.configure(text=f"{len(content)}/{max_length} caracteres")
+                # Também atualiza form_data e valida
+                self._on_field_change(field_name, content, max_length)
+            
+            # Remove bind anterior e adiciona novo
+            textarea.unbind("<KeyRelease>")
             textarea.bind("<KeyRelease>", update_count)
+            setattr(self, f"{field_name}_count", count_label)
         
-        # Mensagem de erro
-        error_label = tk.Label(
+        # Label de erro
+        error_label = ctk.CTkLabel(
             frame,
             text="",
-            font=("Inter", 12),
-            fg="#DC3545",
-            bg="#FFFFFF",
+            font=ctk.CTkFont(size=10),
+            text_color="#DC3545",
             anchor="w"
         )
-        error_label.pack(fill=tk.X, pady=(6, 0))
+        error_row = 3 if max_length else 2
+        error_label.grid(row=error_row, column=0, sticky="w", pady=(4, 0))
         setattr(self, f"{field_name}_error", error_label)
     
     def _update_form_data(self, field_name, value):
         """Atualiza form_data"""
         self.form_data[field_name] = value
     
+    def _on_field_change(self, field_name, value, max_length=None):
+        """Callback quando campo muda"""
+        self._update_form_data(field_name, value)
+        self._validate_field(field_name, value, max_length)
+    
     def _validate_field(self, name, value, max_length=None):
-        """Valida campo"""
-        # Remove placeholder se presente
-        if name == 'titulo' and value == "Digite um título descritivo para o chamado":
-            value = ""
-        elif name == 'descricao' and value == "Descreva detalhadamente o problema ou solicitação":
-            value = ""
+        """Valida campo usando FormValidator"""
+        # Valida usando o validator
+        is_valid = self.validator.validate_field(name, value)
+        error_msg = self.validator.get_error(name)
         
-        error_msg = ""
+        # Validação adicional de comprimento máximo
+        if is_valid and max_length and len(value.strip()) > max_length:
+            is_valid = False
+            error_msg = f'{name.capitalize()} deve ter no máximo {max_length} caracteres'
+            self.validator.errors[name] = error_msg
         
-        if name == 'tipoChamado':
-            if not value.strip():
-                error_msg = 'Tipo de chamado é obrigatório'
-        elif name == 'titulo':
-            if not value.strip():
-                error_msg = 'Título é obrigatório'
-            elif len(value.strip()) < 5:
-                error_msg = 'Título deve ter pelo menos 5 caracteres'
-            elif max_length and len(value.strip()) > max_length:
-                error_msg = f'Título deve ter no máximo {max_length} caracteres'
-        elif name == 'descricao':
-            if not value.strip():
-                error_msg = 'Descrição é obrigatória'
-            elif len(value.strip()) < 10:
-                error_msg = 'Descrição deve ter pelo menos 10 caracteres'
-            elif max_length and len(value.strip()) > max_length:
-                error_msg = f'Descrição deve ter no máximo {max_length} caracteres'
+        if error_msg:
+            self.errors[name] = error_msg
+        elif name in self.errors:
+            del self.errors[name]
         
-        if name in self.errors:
-            if not error_msg:
-                del self.errors[name]
-        else:
-            if error_msg:
-                self.errors[name] = error_msg
-        
+        # Atualiza UI
         error_label = getattr(self, f"{name}_error", None)
         if error_label:
-            error_label.config(text=error_msg)
+            error_label.configure(text=error_msg if error_msg else "")
+            # Acessibilidade: aria-describedby
+            if hasattr(error_label, 'winfo_name'):
+                widget_id = error_label.winfo_name()
+        
+        # Atualiza borda do campo (indicador visual de válido/inválido)
+        if name == 'tipoChamado':
+            combo = getattr(self, 'tipoChamado_combo', None)
+            if combo:
+                if error_msg:
+                    combo.configure(border_color="#DC3545")
+                elif value and value.strip():
+                    combo.configure(border_color="#28a745")
+                else:
+                    combo.configure(border_color="#E5E5E5")
+        elif name in ['titulo', 'descricao']:
+            entry = getattr(self, f"{name}_entry", None)
+            if entry:
+                if error_msg:
+                    entry.configure(border_color="#DC3545")
+                elif value and value.strip() and not error_msg:
+                    entry.configure(border_color="#28a745")
+                else:
+                    entry.configure(border_color="#E5E5E5")
     
     def _handle_submit(self):
-        """Processa envio"""
-        # Obtém valores reais (sem placeholder)
+        """Processa envio do formulário"""
+        # Coleta dados
         tipo = self.tipoChamado_var.get()
         titulo = self.titulo_entry.get()
-        if titulo == "Digite um título descritivo para o chamado":
-            titulo = ""
         descricao = self.descricao_entry.get("1.0", tk.END).strip()
-        if descricao == "Descreva detalhadamente o problema ou solicitação":
+        
+        # Remove placeholder se presente
+        placeholder_desc = "Descreva detalhadamente o problema ou solicitação"
+        if descricao == placeholder_desc:
             descricao = ""
         
         self.form_data['tipoChamado'] = tipo
         self.form_data['titulo'] = titulo
         self.form_data['descricao'] = descricao
         
-        self._validate_field('tipoChamado', self.form_data['tipoChamado'])
-        self._validate_field('titulo', self.form_data['titulo'], 100)
-        self._validate_field('descricao', self.form_data['descricao'], 1000)
+        # Valida todos os campos
+        self._validate_field('tipoChamado', tipo)
+        self._validate_field('titulo', titulo, 100)
+        self._validate_field('descricao', descricao, 1000)
         
-        if self.errors or not all([self.form_data['tipoChamado'], 
-                                   self.form_data['titulo'], 
-                                   self.form_data['descricao']]):
+        # Verifica erros
+        if self.errors or not all([tipo, titulo, descricao]):
             show_toast(self, 'Por favor, preencha todos os campos obrigatórios corretamente.', 'error')
             return
         
         if self.is_loading:
             return
         
-        # Abre modal de confirmação (igual à versão web)
-        ConfirmModal(
+        # Abre modal de confirmação
+        self.confirm_modal = ConfirmModal(
             self,
             title="CONFIRMAR CHAMADO",
-            message=f'Tem certeza que deseja enviar o chamado com o título "{self.form_data["titulo"]}"?',
+            message=f'Tem certeza que deseja enviar o chamado com o título "{titulo}"?',
             confirm_text="Confirmar",
             cancel_text="Cancelar",
             on_confirm=self._perform_submit,
@@ -497,6 +445,7 @@ class NewTicketPage(BasePage):
             return
         
         self.is_loading = True
+        self.submit_btn.configure(state="disabled", text="ENVIANDO...")
         threading.Thread(target=self._do_submit, daemon=True).start()
     
     def _do_submit(self):
@@ -519,31 +468,39 @@ class NewTicketPage(BasePage):
             if response:
                 self.after(0, lambda: show_toast(self, 'Chamado criado com sucesso!', 'success'))
                 self.after(0, self._clear_form)
-                self.after(1500, lambda: self.on_navigate_to_page('pending-tickets'))
+                # Redireciona baseado na permissão do usuário
+                user_permissao = self.user_info.get('permissao') or self.user_info.get('Permissao', 1)
+                # permissao 1 = Colaborador (deve ir para Meus Chamados)
+                # permissao 2 = Suporte Técnico, 3 = Administrador (podem ver todos os chamados)
+                if user_permissao == 1:
+                    self.after(1500, lambda: self.on_navigate_to_page('my-tickets'))
+                else:
+                    self.after(1500, lambda: self.on_navigate_to_page('pending-tickets'))
             else:
                 self.after(0, lambda: show_toast(self, 'Erro ao criar chamado.', 'error'))
         except Exception as e:
             self.after(0, lambda: show_toast(self, f'Erro de conexão: {str(e)}', 'error'))
         finally:
             self.after(0, lambda: setattr(self, 'is_loading', False))
+            self.after(0, lambda: self.submit_btn.configure(state="normal", text="ENVIAR"))
     
     def _clear_form(self):
         """Limpa formulário"""
-        self.tipoChamado_var.set('')
+        self.tipoChamado_var.set("")
         self.titulo_entry.delete(0, tk.END)
-        self.titulo_entry.insert(0, "Digite um título descritivo para o chamado")
-        self.titulo_entry.config(fg="#666666")
         self.descricao_entry.delete("1.0", tk.END)
-        self.descricao_entry.insert("1.0", "Descreva detalhadamente o problema ou solicitação")
-        self.descricao_entry.config(fg="#666666")
+        placeholder_desc = "Descreva detalhadamente o problema ou solicitação"
+        self.descricao_entry.insert("1.0", placeholder_desc)
+        self.descricao_entry.configure(text_color="#666666")
         self.errors = {}
+        # Limpa labels de erro
         for field in ['tipoChamado', 'titulo', 'descricao']:
             error_label = getattr(self, f"{field}_error", None)
             if error_label:
-                error_label.config(text="")
+                error_label.configure(text="")
             count_label = getattr(self, f"{field}_count", None)
             if count_label:
                 if field == 'titulo':
-                    count_label.config(text="0/100 caracteres")
+                    count_label.configure(text="0/100 caracteres")
                 elif field == 'descricao':
-                    count_label.config(text="0/1000 caracteres")
+                    count_label.configure(text="0/1000 caracteres")

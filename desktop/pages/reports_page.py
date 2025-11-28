@@ -2,9 +2,12 @@
 ReportsPage - Replica ReportsPage.jsx do web
 """
 import tkinter as tk
+import customtkinter as ctk
 from pages.base_page import BasePage
-from api_client import TicketService, UserService
+from api_client import TicketService, UserService, AIService, api_client
+from config import COLORS
 import threading
+import requests
 
 class ReportsPage(BasePage):
     """Página de relatórios - replica ReportsPage.jsx"""
@@ -36,6 +39,21 @@ class ReportsPage(BasePage):
         container = tk.Frame(self.main_content, bg="#F8F9FA")
         container.pack(fill=tk.BOTH, expand=True, padx=32, pady=32)
         
+        # Botão voltar
+        back_frame = tk.Frame(container, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
+        )
+        back_btn.pack(side="left")
         
         # Cards de estatísticas - layout horizontal (ícone à esquerda, conteúdo à direita)
         stats_frame = tk.Frame(container, bg="#F8F9FA")
@@ -337,20 +355,20 @@ class ReportsPage(BasePage):
                            bg="#f7fafc", fg="#2d3748", anchor="w")
         ai_title.pack(anchor="w")
         
-        ai_status_frame = tk.Frame(ai_info, bg="#f7fafc")
-        ai_status_frame.pack(anchor="w", pady=(8, 0))
+        self.ai_status_frame = tk.Frame(ai_info, bg="#f7fafc")
+        self.ai_status_frame.pack(anchor="w", pady=(8, 0))
         
-        ai_status_icon = tk.Label(ai_status_frame, text="🚫", font=("Inter", 14), 
-                                  bg="#f7fafc", fg="#6c757d")
-        ai_status_icon.pack(side=tk.LEFT, padx=(0, 8))
+        self.ai_status_icon = tk.Label(self.ai_status_frame, text="🔄", font=("Inter", 14), 
+                                  bg="#f7fafc", fg="#ffc107")
+        self.ai_status_icon.pack(side=tk.LEFT, padx=(0, 8))
         
-        ai_status_label = tk.Label(ai_status_frame, text="Não Implementado", 
-                                   font=("Inter", 14), bg="#f7fafc", fg="#6c757d", anchor="w")
-        ai_status_label.pack(side=tk.LEFT)
+        self.ai_status_label = tk.Label(self.ai_status_frame, text="Verificando...", 
+                                   font=("Inter", 14), bg="#f7fafc", fg="#ffc107", anchor="w")
+        self.ai_status_label.pack(side=tk.LEFT)
         
-        ai_response_label = tk.Label(ai_info, text="Implementação Futura", font=("Inter", 12), 
+        self.ai_response_label = tk.Label(ai_info, text="", font=("Inter", 12), 
                                     bg="#f7fafc", fg="#718096", anchor="w")
-        ai_response_label.pack(anchor="w", pady=(4, 0))
+        self.ai_response_label.pack(anchor="w", pady=(4, 0))
     
     def _load_reports(self):
         """Carrega relatórios"""
@@ -394,7 +412,7 @@ class ReportsPage(BasePage):
             
             # Verifica status da API de banco de dados
             api_status = {'database': {'status': 'checking', 'responseTime': None}, 
-                         'ai': {'status': 'not-implemented', 'responseTime': None}}
+                         'ai': {'status': 'checking', 'responseTime': None}}
             try:
                 import time
                 start_time = time.time()
@@ -404,6 +422,45 @@ class ReportsPage(BasePage):
                 api_status['database'] = {'status': 'online', 'responseTime': response_time}
             except:
                 api_status['database'] = {'status': 'offline', 'responseTime': None}
+            
+            # Verifica status da API de IA
+            try:
+                import time
+                from config import FLASK_BASE_URL
+                import requests
+                
+                start_time = time.time()
+                # Tenta fazer uma requisição de teste ao endpoint de IA
+                flask_url = FLASK_BASE_URL or 'http://localhost:5000'
+                test_url = f'{flask_url}/api/gemini/sugerir-resposta'
+                
+                token = api_client.get_auth_token()
+                headers = {'Content-Type': 'application/json'}
+                if token:
+                    headers['Authorization'] = f'Bearer {token}'
+                
+                response = requests.post(
+                    test_url,
+                    json={'descricaoChamado': 'Test'},
+                    headers=headers,
+                    timeout=5
+                )
+                
+                end_time = time.time()
+                response_time = int((end_time - start_time) * 1000)
+                
+                if response.status_code == 200:
+                    api_status['ai'] = {'status': 'online', 'responseTime': response_time}
+                elif response.status_code == 501 or response.status_code == 404:
+                    api_status['ai'] = {'status': 'not-implemented', 'responseTime': None}
+                else:
+                    api_status['ai'] = {'status': 'offline', 'responseTime': None}
+            except requests.exceptions.RequestException:
+                # Erro de conexão
+                api_status['ai'] = {'status': 'offline', 'responseTime': None}
+            except Exception as e:
+                # Outros erros - assume não implementado
+                api_status['ai'] = {'status': 'not-implemented', 'responseTime': None}
             
             self.reports = {
                 'totalUsuarios': total_usuarios,
@@ -510,6 +567,33 @@ class ReportsPage(BasePage):
                     self.db_response_label.config(text=f"Tempo de Resposta: {db_response_time}ms")
                 else:
                     self.db_response_label.config(text="")
+            
+            # Atualiza status da API de IA
+            ai_status = self.reports.get('apiStatus', {}).get('ai', {})
+            ai_status_text = ai_status.get('status', 'checking')
+            ai_response_time = ai_status.get('responseTime')
+            
+            ai_status_configs = {
+                'online': ('✅', 'Online', '#28a745'),
+                'offline': ('❌', 'Offline', '#dc3545'),
+                'checking': ('🔄', 'Verificando...', '#ffc107'),
+                'not-implemented': ('🚫', 'Não Implementado', '#6c757d')
+            }
+            
+            ai_icon, ai_text, ai_color = ai_status_configs.get(ai_status_text, ('🔄', 'Verificando...', '#ffc107'))
+            
+            if hasattr(self, 'ai_status_icon') and self.ai_status_icon and self.ai_status_icon.winfo_exists():
+                self.ai_status_icon.config(text=ai_icon, fg=ai_color)
+            if hasattr(self, 'ai_status_label') and self.ai_status_label and self.ai_status_label.winfo_exists():
+                self.ai_status_label.config(text=ai_text, fg=ai_color)
+            
+            if hasattr(self, 'ai_response_label') and self.ai_response_label and self.ai_response_label.winfo_exists():
+                if ai_response_time is not None:
+                    self.ai_response_label.config(text=f"Tempo de Resposta: {ai_response_time}ms")
+                elif ai_status_text == 'not-implemented':
+                    self.ai_response_label.config(text="Implementação Futura")
+                else:
+                    self.ai_response_label.config(text="")
         except tk.TclError:
             # Widgets foram destruídos
             pass

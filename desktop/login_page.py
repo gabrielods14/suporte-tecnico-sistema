@@ -6,8 +6,10 @@ import customtkinter as ctk
 import tkinter as tk
 from api_client import AuthService, api_client
 from components.toast import show_toast
+from components.forgot_password_modal import ForgotPasswordModal
 from config import COLORS, ADMIN_USER
 import threading
+import os
 
 
 class LoginPage(ctk.CTkFrame):
@@ -20,6 +22,11 @@ class LoginPage(ctk.CTkFrame):
         self.is_loading = False
         self.login_canvas = None
         self.update_scroll_region = None
+        self.forgot_password_modal = None
+        self.remember_email_file = os.path.join(os.path.expanduser('~'), '.helpwave_remembered_email')
+        
+        # Carrega email lembrado se existir
+        self.remembered_email = self._load_remembered_email()
         
         # Configuração do frame - gradiente vermelho como fundo
         self.configure(fg_color=COLORS['primary'])
@@ -155,6 +162,9 @@ class LoginPage(ctk.CTkFrame):
         )
         self.username_entry.pack(fill="x", pady=(0, 20))
         
+        # Foca no campo de usuário após renderização
+        self.after(150, lambda: self.username_entry.focus_set())
+        
         # Campo de senha
         password_frame = ctk.CTkFrame(form_content, fg_color="transparent")
         password_frame.pack(fill="x", pady=(0, 20))
@@ -188,12 +198,14 @@ class LoginPage(ctk.CTkFrame):
         options_frame = ctk.CTkFrame(form_content, fg_color="transparent")
         options_frame.pack(fill="x", pady=(0, 20))
         
+        self.remember_var = ctk.BooleanVar(value=bool(self.remembered_email))
         remember_check = ctk.CTkCheckBox(
             options_frame,
             text="Lembrar",
             font=ctk.CTkFont(size=12),
             fg_color=COLORS['primary'],
-            hover_color=COLORS['primary_dark']
+            hover_color=COLORS['primary_dark'],
+            variable=self.remember_var
         )
         remember_check.pack(side="left")
         
@@ -250,7 +262,17 @@ class LoginPage(ctk.CTkFrame):
     
     def handle_forgot_password(self):
         """Lida com esqueci a senha"""
-        show_toast(self, "Funcionalidade em desenvolvimento", "info")
+        if not hasattr(self, 'forgot_password_modal') or not self.forgot_password_modal:
+            self.forgot_password_modal = ForgotPasswordModal(
+                self,
+                is_open=True,
+                on_close=self._close_forgot_password_modal
+            )
+    
+    def _close_forgot_password_modal(self):
+        """Fecha o modal de esqueci senha"""
+        if hasattr(self, 'forgot_password_modal'):
+            self.forgot_password_modal = None
     
     def handle_login(self):
         """Processa o login"""
@@ -264,6 +286,12 @@ class LoginPage(ctk.CTkFrame):
             show_toast(self, "Por favor, preencha usuário e senha", "error")
             return
         
+        # Handle remember me logic - igual ao web
+        if self.remember_var.get():
+            self._save_remembered_email(username)
+        else:
+            self._clear_remembered_email()
+        
         # Desabilita o botão e mostra loading
         self.is_loading = True
         self.login_button.configure(text="ENTRANDO...", state="disabled")
@@ -272,6 +300,32 @@ class LoginPage(ctk.CTkFrame):
         
         # Faz login em thread separada para não travar a UI
         threading.Thread(target=self._do_login, args=(username, password), daemon=True).start()
+    
+    def _load_remembered_email(self):
+        """Carrega email lembrado do arquivo"""
+        try:
+            if os.path.exists(self.remember_email_file):
+                with open(self.remember_email_file, 'r') as f:
+                    return f.read().strip()
+        except Exception:
+            pass
+        return ''
+    
+    def _save_remembered_email(self, email):
+        """Salva email para lembrar"""
+        try:
+            with open(self.remember_email_file, 'w') as f:
+                f.write(email)
+        except Exception:
+            pass
+    
+    def _clear_remembered_email(self):
+        """Remove email lembrado"""
+        try:
+            if os.path.exists(self.remember_email_file):
+                os.remove(self.remember_email_file)
+        except Exception:
+            pass
     
     def _do_login(self, username, password):
         """Faz o login de fato - exatamente como no web"""
@@ -315,37 +369,46 @@ class LoginPage(ctk.CTkFrame):
             
             response = AuthService.login(username, password)
             
-            # Salva o token se fornecido (igual ao web: localStorage.setItem('authToken', data.token))
-            token = response.get('token') or response.get('access_token')
+            # API .NET retorna { Token: string, PrimeiroAcesso: bool }
+            token = response.get('Token') or response.get('token') or response.get('access_token')
+            primeiro_acesso = response.get('PrimeiroAcesso', False)
+            
             if token:
                 api_client.save_auth_token(token)
             
-            # Busca dados completos do usuário via /api/Usuarios/meu-perfil (igual ao web)
-            user_data = response.get('user', {})
-            
-            # Se tem token, tenta buscar perfil completo
+            # Busca dados completos do usuário via /api/Usuarios/meu-perfil (API .NET)
+            user_data = {}
             if token:
                 try:
                     from api_client import UserService
                     full_user_data = UserService.get_meu_perfil()
                     # Usa dados completos se disponíveis
                     if full_user_data:
-                        user_data = full_user_data
+                        # Normaliza campos PascalCase para camelCase
+                        user_data = {
+                            'id': full_user_data.get('Id') or full_user_data.get('id'),
+                            'nome': full_user_data.get('Nome') or full_user_data.get('nome', ''),
+                            'email': full_user_data.get('Email') or full_user_data.get('email', ''),
+                            'telefone': full_user_data.get('Telefone') or full_user_data.get('telefone'),
+                            'cargo': full_user_data.get('Cargo') or full_user_data.get('cargo', ''),
+                            'permissao': full_user_data.get('Permissao') or full_user_data.get('permissao', 1),
+                            'primeiroAcesso': full_user_data.get('PrimeiroAcesso') or full_user_data.get('primeiroAcesso', primeiro_acesso)
+                        }
                 except Exception as e:
                     print(f"[LOGIN] Erro ao buscar perfil completo: {e}")
-                    # Usa dados do login como fallback
-                    if not user_data:
-                        user_data = {
-                            'nome': username.split('@')[0] if '@' in username else username,
-                            'email': username
-                        }
-            else:
-                # Fallback se não tiver token
-                if not user_data:
+                    # Fallback se não conseguir buscar perfil
                     user_data = {
                         'nome': username.split('@')[0] if '@' in username else username,
-                        'email': username
+                        'email': username,
+                        'primeiroAcesso': primeiro_acesso
                     }
+            else:
+                # Fallback se não tiver token
+                user_data = {
+                    'nome': username.split('@')[0] if '@' in username else username,
+                    'email': username,
+                    'primeiroAcesso': primeiro_acesso
+                }
             
             # Sucesso - volta para thread principal
             self.after(0, self._login_success, user_data)

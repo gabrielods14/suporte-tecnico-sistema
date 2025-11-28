@@ -12,12 +12,55 @@ class DropdownMenu:
         self.on_logout = on_logout
         self.on_navigate_to_profile = on_navigate_to_profile
         
+        # Obtém a janela principal para calcular limites
+        toplevel = parent.winfo_toplevel()
+        
         # Cria uma janela popup
         self.window = tk.Toplevel(parent)
         self.window.overrideredirect(True)
         self.window.attributes("-topmost", True)
-        self.window.geometry(f"+{x}+{y}")
         self.window.configure(bg="#FFFFFF", bd=1, relief=tk.SOLID)
+        
+        # Configura posição inicial
+        self.window.geometry(f"+{x}+{y}")
+        
+        # Aguarda um momento para que o conteúdo seja renderizado
+        self.window.update_idletasks()
+        
+        # Obtém dimensões reais do dropdown
+        dropdown_width = self.window.winfo_reqwidth()
+        dropdown_height = self.window.winfo_reqheight()
+        
+        # Obtém limites da janela principal
+        window_x = toplevel.winfo_x()
+        window_y = toplevel.winfo_y()
+        window_width = toplevel.winfo_width()
+        window_height = toplevel.winfo_height()
+        
+        window_right = window_x + window_width
+        window_bottom = window_y + window_height
+        
+        # Ajusta posição se necessário
+        final_x = x
+        final_y = y
+        
+        # Ajusta horizontalmente
+        if final_x + dropdown_width > window_right:
+            final_x = window_right - dropdown_width - 5
+        if final_x < window_x:
+            final_x = window_x + 5
+        
+        # Ajusta verticalmente
+        if final_y + dropdown_height > window_bottom:
+            # Tenta posicionar acima
+            final_y = y - dropdown_height - 20
+            if final_y < window_y:
+                # Se não couber acima, alinha no topo
+                final_y = window_y + 5
+        
+        # Aplica posição final
+        if final_x != x or final_y != y:
+            self.window.geometry(f"+{final_x}+{final_y}")
         
         # Frame do menu
         menu_frame = tk.Frame(self.window, bg="#FFFFFF", bd=0)

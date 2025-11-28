@@ -1,6 +1,6 @@
-# HelpWave - Sistema de Suporte Técnico
+# HelpWave - Sistema de Suporte Técnico (Web)
 
-Sistema completo de suporte técnico com interface moderna e integração backend/frontend.
+Sistema web completo de suporte técnico com interface moderna e integração backend/frontend. Desenvolvido com React e Flask, oferecendo uma experiência de usuário intuitiva e responsiva.
 
 ## 🚀 Funcionalidades
 
@@ -48,9 +48,13 @@ Sistema completo de suporte técnico com interface moderna e integração backen
 ## 📦 Instalação
 
 ### Pré-requisitos
-- Node.js 18+ 
-- Python 3.8+
+
+Antes de executar a aplicação, certifique-se de ter instalado:
+
+- [Node.js 18+](https://nodejs.org/)
+- [Python 3.8+](https://www.python.org/downloads/)
 - pip (gerenciador de pacotes Python)
+- Conexão com a internet (para comunicação com a API)
 
 ### Frontend (React)
 
@@ -115,15 +119,37 @@ O sistema está configurado para integrar com uma API externa. Para configurar:
 
 ### Acesso ao Sistema
 
+Após iniciar os servidores:
+
 1. **Frontend**: http://localhost:5173
 2. **Backend**: http://localhost:5000
 
 ### Navegação
 
-1. **Login**: Página de autenticação com validação
-2. **Dashboard**: Cards de navegação para funcionalidades
-3. **Cadastro**: Formulário para novos funcionários
-4. **Tickets**: Criação e gestão de chamados
+1. **Login**: Página de autenticação com validação de credenciais
+2. **Dashboard**: Cards de navegação para funcionalidades principais
+3. **Meus Chamados**: Visualização e gestão dos próprios chamados
+4. **Novo Chamado**: Formulário para criação de novos tickets
+5. **Chamados Pendentes**: Lista de chamados aguardando atendimento (técnicos)
+6. **Detalhes do Chamado**: Visualização completa com histórico
+
+### Funcionalidades por Permissão
+
+#### Colaborador
+- Criar chamados
+- Visualizar próprios chamados
+- Acompanhar status e histórico
+
+#### Técnico
+- Todas as funcionalidades de Colaborador
+- Atender chamados pendentes
+- Propor soluções
+- Visualizar todos os chamados
+
+#### Administrador
+- Todas as funcionalidades anteriores
+- Gerenciar usuários
+- Acessar relatórios e estatísticas
 
 ## 📱 Responsividade
 
@@ -200,30 +226,72 @@ web/
 ## 🧪 Testes
 
 ### Frontend
+
 ```bash
 cd web/my-project
 npm run lint    # Verificar código
 npm run build   # Build de produção
+npm run preview # Preview do build de produção
 ```
 
 ### Backend
+
 ```bash
 cd web/backend
 python -m pytest  # Executar testes (se implementados)
+python test_final.py  # Testes específicos da aplicação
 ```
+
+## 🚨 Troubleshooting
+
+### Problemas Comuns
+
+1. **Erro de Conexão com API**
+   - Verifique se a API centralizada está rodando
+   - Confirme a URL em `web/backend/config.py`
+   - Verifique conexão com internet
+
+2. **Erro ao Instalar Dependências**
+   - Limpe o cache: `npm cache clean --force`
+   - Reinstale: `rm -rf node_modules && npm install`
+
+3. **Erro no Backend Flask**
+   - Verifique se o ambiente virtual está ativado
+   - Confirme se todas as dependências estão instaladas
+   - Verifique logs de erro no terminal
+
+4. **Porta já em uso**
+   - Frontend: Altere a porta no `vite.config.js`
+   - Backend: Altere a porta no `app.py`
 
 ## 🚀 Deploy
 
 ### Frontend (Vercel/Netlify)
+
 ```bash
+cd web/my-project
 npm run build
 # Deploy da pasta dist/
 ```
 
 ### Backend (Heroku/Railway)
+
 ```bash
+cd web/backend
 # Configurar Procfile
 # Deploy do código Python
+# Configurar variáveis de ambiente
+```
+
+### Variáveis de Ambiente para Deploy
+
+Configure as seguintes variáveis no ambiente de produção:
+
+```env
+SECRET_KEY=sua-chave-secreta-producao
+JWT_SECRET_KEY=sua-jwt-secreta-producao
+API_URL_BASE=https://sua-api-producao.com
+FLASK_ENV=production
 ```
 
 ## 🤝 Contribuição
@@ -238,12 +306,30 @@ npm run build
 
 Este projeto está sob a licença MIT. Veja o arquivo LICENSE para detalhes.
 
+## 📝 Desenvolvimento
+
+### Adicionando Novas Funcionalidades
+
+1. Crie componentes em `web/my-project/src/components/`
+2. Adicione páginas em `web/my-project/src/pages/`
+3. Configure rotas conforme necessário
+4. Adicione estilos em `web/my-project/src/styles/`
+
+### Estrutura de Componentes
+
+- **Components**: Componentes reutilizáveis (Header, Footer, etc.)
+- **Pages**: Páginas principais da aplicação
+- **Hooks**: Hooks personalizados para lógica reutilizável
+- **Utils**: Funções utilitárias e helpers
+- **Styles**: Arquivos CSS por componente/página
+
 ## 📞 Suporte
 
 Para suporte técnico ou dúvidas:
-- Email: suporte@helpwave.com
-- Documentação: [docs.helpwave.com](https://docs.helpwave.com)
+- Abra uma issue no repositório
+- Entre em contato com a equipe de desenvolvimento
+- Consulte a documentação da API centralizada
 
 ---
 
-**HelpWave** - Simplificando o seu suporte técnico 🚀
+**HelpWave Web** - Simplificando o seu suporte técnico 🚀

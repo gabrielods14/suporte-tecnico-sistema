@@ -90,6 +90,10 @@ class Sidebar(tk.Frame):
                 menu_items.append(("📊", "DASHBOARD", "dashboard"))
             menu_items.append(("📊", "RELATÓRIOS", "reports"))
         
+        # Administração - apenas admin
+        if self.is_admin:
+            menu_items.append(("⚙️", "ADMINISTRAÇÃO", "admin"))
+        
         # Todos veem FQA e CONTATO
         menu_items.append(("❓", "FQA", "faq"))
         menu_items.append(("📞", "CONTATO", "contact"))

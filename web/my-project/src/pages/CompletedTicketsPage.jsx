@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/completed-tickets.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
 import { FaCheckCircle, FaSearch, FaFilter } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
@@ -330,6 +331,7 @@ function CompletedTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, cu
           </table>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

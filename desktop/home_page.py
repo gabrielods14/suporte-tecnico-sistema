@@ -19,6 +19,7 @@ from pages.user_activity_page import UserActivityPage
 from pages.contact_page import ContactPage
 from pages.faq_page import FAQPage
 from pages.user_profile_page import UserProfilePage
+from pages.admin_page import AdminPage
 
 
 class HomePage(ctk.CTkFrame):
@@ -206,7 +207,8 @@ class HomePage(ctk.CTkFrame):
             'ticket-detail': 'DETALHES DO CHAMADO',
             'user-activity': 'ATIVIDADE DO USUÁRIO',
             'faq': 'FQA',
-            'contact': 'CONTATO'
+            'contact': 'CONTATO',
+            'admin': 'ADMINISTRAÇÃO'
         }
         title = page_titles.get(page_id, '')
         self.set_header_title(title)
@@ -275,9 +277,8 @@ class HomePage(ctk.CTkFrame):
         elif page_id == 'register':
             self.current_content = RegisterEmployeePage(
                 self.content_frame,
-                self.on_logout,
-                lambda: self.navigate('home'),
-                self.user_info
+                self.user_info,
+                lambda: self.navigate('home')
             )
         elif page_id == 'reports':
             # Reports mostra UsersReportPage (relatório de usuários)

@@ -130,7 +130,8 @@ def get_mock_tickets(filters=None):
     # Aplica filtros
     if filters:
         if filters.get('solicitanteId'):
-            tickets = [t for t in tickets if t.get('solicitanteId') == filters['solicitanteId']]
+            solicitante_id = int(filters['solicitanteId'])  # Garante que é int
+            tickets = [t for t in tickets if int(t.get('solicitanteId', 0)) == solicitante_id]
         
         if filters.get('status'):
             status_filter = filters['status']

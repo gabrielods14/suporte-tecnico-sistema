@@ -14,10 +14,23 @@ import { TicketProvider } from '../context/TicketContext';
 const Stack = createStackNavigator();
 
 const AppNavigator = () => {
+  console.log('AppNavigator: Renderizando...');
+  
   return (
     <TicketProvider>
       <NavigationContainer>
-        <Stack.Navigator initialRouteName="Login">
+        <Stack.Navigator 
+          initialRouteName="Login"
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#dc3545',
+            },
+            headerTintColor: '#fff',
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        >
           <Stack.Screen 
             name="Login" 
             component={LoginScreen} 

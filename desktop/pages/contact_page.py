@@ -2,8 +2,10 @@
 ContactPage - Replica ContactPage.jsx do web
 """
 import tkinter as tk
+import customtkinter as ctk
 import webbrowser
 from pages.base_page import BasePage
+from config import COLORS
 
 class ContactPage(BasePage):
     """Página de contato - replica ContactPage.jsx"""
@@ -27,6 +29,21 @@ class ContactPage(BasePage):
         container = tk.Frame(self.main_content, bg="#F8F9FA")
         container.pack(fill=tk.BOTH, expand=True, padx=48, pady=48)
         
+        # Botão voltar
+        back_frame = tk.Frame(container, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
+        )
+        back_btn.pack(side="left")
         
         # Header da página
         header_frame = tk.Frame(container, bg="#F8F9FA")

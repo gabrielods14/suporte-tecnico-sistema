@@ -1,6 +1,6 @@
 # 🚀 API Centralizada de Suporte Técnico
 
-Esta é uma **API REST centralizada** desenvolvida em C# (.NET 9.0) que integra **três sistemas** em uma única solução, conectando-se a um **banco de dados SQL Server** hospedado no Azure. A API gerencia um sistema completo de suporte técnico com usuários, técnicos e histórico de atendimento.
+Esta é uma **API REST centralizada** desenvolvida em C# (.NET 8.0) que integra **três sistemas** em uma única solução, conectando-se a um **banco de dados SQL Server** hospedado no Azure. A API gerencia um sistema completo de suporte técnico com usuários, técnicos e histórico de atendimento.
 
 ## 🎯 Visão Geral da Arquitetura Centralizada
 
@@ -48,12 +48,12 @@ A API centraliza **três sistemas principais**:
 
 | Tecnologia | Versão | Propósito |
 |------------|--------|-----------|
-| **.NET 9.0** | Latest | Framework principal |
-| **Entity Framework Core** | 9.0.9 | ORM para acesso ao banco |
+| **.NET 8.0** | Latest | Framework principal |
+| **Entity Framework Core** | 8.0.0 | ORM para acesso ao banco |
 | **SQL Server** | Azure | Banco de dados centralizado |
-| **JWT Bearer** | 9.0.10 | Autenticação segura |
+| **JWT Bearer** | 8.0.0 | Autenticação segura |
 | **BCrypt** | 4.0.3 | Hash de senhas |
-| **Swagger** | 9.0.5 | Documentação automática |
+| **Swagger** | 6.5.0 | Documentação automática |
 
 ### **Fluxo de Dados Centralizado**
 
@@ -84,7 +84,7 @@ graph LR
 
 Antes de executar a aplicação, certifique-se de ter instalado:
 
-- [.NET 9.0 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/pt-br/downloads/) ou [Visual Studio Code](https://code.visualstudio.com/)
 - [SQL Server Management Studio (SSMS)](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms) (opcional, para gerenciar o banco)
 
@@ -94,11 +94,13 @@ Antes de executar a aplicação, certifique-se de ter instalado:
 
 | Pacote | Versão | Descrição |
 |--------|--------|-----------|
-| `Microsoft.EntityFrameworkCore.SqlServer` | 9.0.9 | Provider SQL Server para Entity Framework |
-| `Microsoft.EntityFrameworkCore.Tools` | 9.0.9 | Ferramentas para migrations e scaffolding |
-| `Azure.Identity` | 1.16.0 | Autenticação com Azure Active Directory |
-| `Swashbuckle.AspNetCore` | 9.0.5 | Geração automática de documentação Swagger |
-| `Microsoft.AspNetCore.OpenApi` | 9.0.8 | Suporte a OpenAPI 3.0 |
+| `Microsoft.EntityFrameworkCore.SqlServer` | 8.0.0 | Provider SQL Server para Entity Framework |
+| `Microsoft.EntityFrameworkCore.Tools` | 8.0.0 | Ferramentas para migrations e scaffolding |
+| `Azure.Identity` | 1.12.1 | Autenticação com Azure Active Directory |
+| `Swashbuckle.AspNetCore` | 6.5.0 | Geração automática de documentação Swagger |
+| `Microsoft.AspNetCore.OpenApi` | 8.0.0 | Suporte a OpenAPI 3.0 |
+| `BCrypt.Net-Next` | 4.0.3 | Hash de senhas |
+| `Microsoft.AspNetCore.Authentication.JwtBearer` | 8.0.0 | Autenticação JWT |
 
 ### Configuração de Conexão
 
@@ -349,15 +351,6 @@ Para habilitar logs detalhados, modifique o `appsettings.Development.json`:
   }
 }
 ```
-
-## 📝 Próximos Passos
-
-- [ ] Implementar autenticação JWT
-- [ ] Adicionar validação de senhas com BCrypt
-- [ ] Criar endpoints para gerenciamento de chamados
-- [ ] Implementar sistema de notificações
-- [ ] Adicionar testes unitários
-- [ ] Configurar CI/CD com Azure DevOps
 
 ## 🤝 Contribuição
 

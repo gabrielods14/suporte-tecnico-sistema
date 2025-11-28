@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmModal from '../components/ConfirmModal';
 import '../styles/newticket.css';
@@ -147,10 +148,23 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
         });
         setErrors({});
         
-        // Navega para a página de chamados em andamento após 1.5s
+        // Navega para a página apropriada baseada na permissão do usuário
         setTimeout(() => {
           if (onNavigateToPage) {
-            onNavigateToPage('pending-tickets');
+            // Verifica a permissão do usuário
+            const isColaborador = userInfo?.permissao === 1;
+            
+            // Colaboradores vão para "Meus Chamados"
+            // Técnicos/Admins vão para "Chamados em Andamento"
+            const pageToNavigate = isColaborador ? 'my-tickets' : 'pending-tickets';
+            
+            console.log('NewTicketPage - Redirecionando após criar chamado:', {
+              pageToNavigate,
+              permissao: userInfo?.permissao,
+              isColaborador
+            });
+            
+            onNavigateToPage(pageToNavigate);
           }
         }, 1500);
         
@@ -278,6 +292,7 @@ const NewTicketPage = ({ onLogout, onNavigateToHome, onNavigateToPage, userInfo,
           </div>
         </form>
       </main>
+      <Footer />
       
       <Toast
         isVisible={toast.isVisible}

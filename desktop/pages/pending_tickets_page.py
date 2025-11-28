@@ -1,387 +1,316 @@
 """
-PendingTicketsPage - Layout moderno igual à versão web
+PendingTicketsPage - Página de chamados abertos
+Mesma identidade visual da página de cadastro de funcionários
 """
+import customtkinter as ctk
 import tkinter as tk
-from tkinter import ttk
-from pages.base_page import BasePage
 from api_client import TicketService
 from components.toast import show_toast
+from config import COLORS
 import threading
 from datetime import datetime, timedelta
-from PIL import Image, ImageDraw, ImageTk
 
-def create_rounded_badge(parent, text, bg_color, fg_color="white", font=("Inter", 10, "bold"), padx=12, pady=4, radius=12):
-    """Cria um badge com bordas arredondadas usando PIL"""
-    # Calcula tamanho do texto
-    temp_label = tk.Label(parent, text=text, font=font)
-    temp_label.update()
-    text_width = temp_label.winfo_reqwidth()
-    text_height = temp_label.winfo_reqheight()
-    temp_label.destroy()
-    
-    # Dimensões do badge
-    width = text_width + (padx * 2)
-    height = text_height + (pady * 2)
-    
-    # Cria imagem com bordas arredondadas
-    img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
-    
-    # Converte cor hex para RGB
-    if bg_color.startswith('#'):
-        bg_rgb = tuple(int(bg_color[i:i+2], 16) for i in (1, 3, 5))
-    else:
-        bg_rgb = (220, 53, 69)  # Vermelho padrão
-    
-    # Desenha retângulo arredondado (compatível com versões antigas do PIL)
-    try:
-        # PIL 9.0.0+ tem rounded_rectangle
-        draw.rounded_rectangle([(0, 0), (width-1, height-1)], radius=radius, fill=bg_rgb)
-    except AttributeError:
-        # Fallback para versões antigas: desenha retângulo normal
-        draw.rectangle([(0, 0), (width-1, height-1)], fill=bg_rgb)
-    
-    # Converte para PhotoImage
-    photo = ImageTk.PhotoImage(img)
-    
-    # Cria label com a imagem
-    badge = tk.Label(parent, image=photo, text=text, compound=tk.CENTER,
-                    font=font, fg=fg_color, bg=parent.cget('bg'))
-    badge.image = photo  # Mantém referência
-    
-    return badge
 
-class ScrollableFrame(tk.Frame):
-    """Frame com scrollbar moderna"""
-    def __init__(self, parent, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        
-        # Canvas para scroll
-        self.canvas = tk.Canvas(self, bg="#FFFFFF", highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas, bg="#FFFFFF")
-        
-        def update_scrollregion(event=None):
-            self.canvas.update_idletasks()
-            bbox = self.canvas.bbox("all")
-            if bbox:
-                self.canvas.configure(scrollregion=bbox)
-        
-        self.scrollable_frame.bind("<Configure>", update_scrollregion)
-        
-        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-        
-        # Atualiza largura do frame interno quando canvas muda de tamanho
-        def on_canvas_configure(event):
-            canvas_width = event.width
-            # Verifica se a scrollbar está visível e subtrai sua largura
-            try:
-                if self.scrollbar.winfo_ismapped():
-                    scrollbar_width = self.scrollbar.winfo_width()
-                    canvas_width = canvas_width - scrollbar_width
-            except:
-                pass
-            if canvas_width > 0:
-                self.canvas.itemconfig(self.canvas_window, width=canvas_width)
-        
-        self.canvas.bind("<Configure>", on_canvas_configure)
-        
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar.pack(side="right", fill="y")
-        
-        # Bind mousewheel apenas quando o mouse está sobre o canvas
-        self.canvas.bind("<Enter>", lambda e: self.canvas.bind_all("<MouseWheel>", self._on_mousewheel))
-        self.canvas.bind("<Leave>", lambda e: self.canvas.unbind_all("<MouseWheel>"))
-        
-        # Guarda função de atualização
-        self.update_scroll = update_scrollregion
-    
-    def _on_mousewheel(self, event):
-        try:
-            # Verifica se o canvas ainda existe antes de tentar fazer scroll
-            if self.canvas.winfo_exists():
-                self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        except tk.TclError:
-            # Widget foi destruído, ignora o evento
-            pass
-
-class PendingTicketsPage(BasePage):
-    """Página de chamados em andamento - layout moderno igual à versão web"""
+class PendingTicketsPage(ctk.CTkFrame):
+    """Página de chamados em andamento - mesma identidade visual do cadastro de funcionários"""
     
     def __init__(self, parent, on_logout, on_navigate_to_home, on_navigate_to_page, 
                  current_page, user_info, on_navigate_to_ticket_detail):
-        super().__init__(parent, on_logout, on_navigate_to_page, current_page, user_info, page_title="CHAMADOS ABERTOS", create_header_sidebar=False)
+        super().__init__(parent, fg_color="#F8F9FA")
         
+        self.on_logout = on_logout
         self.on_navigate_to_home = on_navigate_to_home
+        self.on_navigate_to_page = on_navigate_to_page
+        self.current_page = current_page
+        self.user_info = user_info
         self.on_navigate_to_ticket_detail = on_navigate_to_ticket_detail
         
         self.tickets = []
         self.filtered_tickets = []
         self.loading = True
-        self.search_term = ""
+        self.search_term = tk.StringVar(value="")
+        self.search_term.trace('w', self._on_search_change)
         self.sort_by = "codigo"
-        self.sort_order = "asc"
+        self.sort_order = "desc"
         
         self._create_ui()
         self._load_tickets()
     
     def _create_ui(self):
-        """Cria interface moderna igual à versão web"""
+        """Cria interface com mesma identidade visual do cadastro de funcionários"""
         # Container principal
-        container = tk.Frame(self.main_content, bg="#F8F9FA")
-        container.pack(fill=tk.BOTH, expand=True, padx=32, pady=32)
+        main_container = ctk.CTkFrame(self, fg_color="#F8F9FA")
+        main_container.pack(fill="both", expand=True, padx=48, pady=48)
+        main_container.grid_columnconfigure(0, weight=1)
+        main_container.grid_rowconfigure(2, weight=1)
         
-        
-        # Filtros - card branco
-        filters_frame = tk.Frame(container, bg="#FFFFFF", bd=0, relief=tk.FLAT)
-        filters_frame.pack(fill=tk.X, pady=(0, 32))
-        
-        filters_inner = tk.Frame(filters_frame, bg="#FFFFFF")
-        filters_inner.pack(fill=tk.BOTH, expand=True, padx=32, pady=32)
-        
-        # Busca com ícone
-        search_container = tk.Frame(filters_inner, bg="#F5F5F5", bd=1, relief=tk.SOLID)
-        search_container.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 24))
-        
-        search_icon = tk.Label(search_container, text="🔍", font=("Inter", 16), bg="#F5F5F5", fg="#737373")
-        search_icon.pack(side=tk.LEFT, padx=16)
-        
-        self.search_entry = tk.Entry(
-            search_container,
-            font=("Inter", 16),
-            bg="#F5F5F5",
-            fg="#262626",
-            bd=0,
-            relief=tk.FLAT
+        # Botão voltar
+        back_btn = ctk.CTkButton(
+            main_container,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
         )
-        self.search_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 16), pady=16)
-        self.search_entry.insert(0, "Buscar por código ou título...")
-        self.search_entry.config(fg="#737373")
+        back_btn.grid(row=0, column=0, sticky="w", pady=(0, 20))
         
-        def on_focus_in(e):
-            if self.search_entry.get() == "Buscar por código ou título...":
-                self.search_entry.delete(0, tk.END)
-                self.search_entry.config(fg="#262626")
+        # === FILTROS E BUSCA (Card branco) ===
+        filters_card = ctk.CTkFrame(main_container, fg_color="#FFFFFF", corner_radius=16)
+        filters_card.grid(row=1, column=0, sticky="ew", pady=(0, 24))
+        filters_card.grid_columnconfigure(0, weight=1)
         
-        def on_focus_out(e):
-            if not self.search_entry.get():
-                self.search_entry.insert(0, "Buscar por código ou título...")
-                self.search_entry.config(fg="#737373")
+        filters_inner = ctk.CTkFrame(filters_card, fg_color="transparent")
+        filters_inner.pack(fill="both", expand=True, padx=48, pady=32)
+        filters_inner.grid_columnconfigure(0, weight=1)
         
-        self.search_entry.bind("<FocusIn>", on_focus_in)
-        self.search_entry.bind("<FocusOut>", on_focus_out)
-        self.search_entry.bind("<KeyRelease>", lambda e: self._on_search_change(
-            self.search_entry.get() if self.search_entry.get() != "Buscar por código ou título..." else ""
-        ))
+        # Container para busca e ordenação
+        controls_frame = ctk.CTkFrame(filters_inner, fg_color="transparent")
+        controls_frame.grid(row=0, column=0, sticky="ew", pady=(0, 0))
+        controls_frame.grid_columnconfigure(0, weight=1)
+        controls_frame.grid_columnconfigure(1, weight=0)
         
-        # Ordenação
-        sort_frame = tk.Frame(filters_inner, bg="#FFFFFF")
-        sort_frame.pack(side=tk.RIGHT)
+        # Campo de busca
+        search_entry = ctk.CTkEntry(
+            controls_frame,
+            placeholder_text="Buscar por código ou título...",
+            font=ctk.CTkFont(size=16),
+            height=50,
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5",
+            textvariable=self.search_term
+        )
+        search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 16))
+        search_entry.bind("<FocusIn>", lambda e: search_entry.configure(border_color="#A93226"))
+        search_entry.bind("<FocusOut>", lambda e: search_entry.configure(border_color="#E5E5E5"))
         
-        tk.Label(sort_frame, text="🔽 Ordenar por:", font=("Inter", 14, "bold"), 
-                bg="#FFFFFF", fg="#262626").pack(side=tk.LEFT, padx=(0, 8))
+        # Frame de ordenação
+        sort_frame = ctk.CTkFrame(controls_frame, fg_color="transparent")
+        sort_frame.grid(row=0, column=1, sticky="e")
         
-        self.sort_var = tk.StringVar(value="codigo")
-        sort_menu = tk.OptionMenu(sort_frame, self.sort_var, "codigo", "titulo", "prioridade", "dataLimite",
-                                  command=lambda v: self._on_sort_change(v, self.sort_order))
-        sort_menu.config(font=("Inter", 14), bg="#F5F5F5", fg="#262626", bd=1, relief=tk.SOLID, padx=16, pady=16)
-        sort_menu.pack(side=tk.LEFT, padx=(0, 8))
+        sort_label = ctk.CTkLabel(
+            sort_frame,
+            text="Ordenar por:",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            text_color="#333333"
+        )
+        sort_label.pack(side="left", padx=(0, 8))
         
-        self.order_var = tk.StringVar(value="asc")
-        order_menu = tk.OptionMenu(sort_frame, self.order_var, "asc", "desc",
-                                   command=lambda v: self._on_sort_change(self.sort_by, v))
-        order_menu.config(font=("Inter", 14), bg="#F5F5F5", fg="#262626", bd=1, relief=tk.SOLID, padx=16, pady=16)
-        order_menu.pack(side=tk.LEFT)
+        self.sort_var = tk.StringVar(value="Código")
+        sort_combo = ctk.CTkComboBox(
+            sort_frame,
+            values=["Código", "Título", "Prioridade", "Data Limite"],
+            variable=self.sort_var,
+            command=self._on_sort_combo_change,
+            font=ctk.CTkFont(size=14),
+            height=50,
+            width=150,
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5",
+            button_color="#E5E5E5",
+            button_hover_color="#D5D5D5",
+            dropdown_fg_color="#FFFFFF",
+            dropdown_text_color="#1A1A1A",
+            dropdown_hover_color="#F0F0F0"
+        )
+        sort_combo.pack(side="left", padx=(0, 8))
         
-        # Tabela - card branco com largura mínima
-        table_frame = tk.Frame(container, bg="#FFFFFF", bd=0, relief=tk.FLAT)
-        table_frame.pack(fill=tk.BOTH, expand=True)
-        table_frame.config(width=900)  # Largura mínima para evitar quebra
+        self.order_var = tk.StringVar(value="Decrescente")
+        order_combo = ctk.CTkComboBox(
+            sort_frame,
+            values=["Crescente", "Decrescente"],
+            variable=self.order_var,
+            command=self._on_order_combo_change,
+            font=ctk.CTkFont(size=14),
+            height=50,
+            width=150,
+            corner_radius=8,
+            fg_color="#FFFFFF",
+            text_color="#1A1A1A",
+            border_width=2,
+            border_color="#E5E5E5",
+            button_color="#E5E5E5",
+            button_hover_color="#D5D5D5",
+            dropdown_fg_color="#FFFFFF",
+            dropdown_text_color="#1A1A1A",
+            dropdown_hover_color="#F0F0F0"
+        )
+        order_combo.pack(side="left")
         
-        # Container interno para garantir largura mínima
-        table_inner = tk.Frame(table_frame, bg="#FFFFFF")
-        table_inner.pack(fill=tk.BOTH, expand=True)
+        # === TABELA (Card branco) ===
+        table_card = ctk.CTkFrame(main_container, fg_color="#FFFFFF", corner_radius=16)
+        table_card.grid(row=2, column=0, sticky="nsew")
+        table_card.grid_columnconfigure(0, weight=1)
+        table_card.grid_rowconfigure(1, weight=1)
         
-        # Container para cabeçalho que reserva espaço para scrollbar
-        header_container = tk.Frame(table_inner, bg="#FFFFFF")
-        header_container.pack(fill=tk.X)
+        # Padding interno
+        table_inner = ctk.CTkFrame(table_card, fg_color="transparent")
+        table_inner.pack(fill="both", expand=True, padx=48, pady=48)
+        table_inner.grid_columnconfigure(0, weight=1)
+        table_inner.grid_rowconfigure(1, weight=1)
         
-        # Cabeçalho da tabela - usa frames com larguras fixas em pixels
-        header_frame = tk.Frame(header_container, bg="#A93226", height=50)
-        header_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        # Cabeçalho da tabela
+        header_frame = ctk.CTkFrame(table_inner, fg_color="#A93226", corner_radius=8, height=50)
+        header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+        header_frame.grid_columnconfigure(0, weight=0, minsize=120)
+        header_frame.grid_columnconfigure(1, weight=1)
+        header_frame.grid_columnconfigure(2, weight=0, minsize=150)
+        header_frame.grid_columnconfigure(3, weight=0, minsize=150)
+        header_frame.grid_columnconfigure(4, weight=0, minsize=180)
         header_frame.pack_propagate(False)
         
-        # Inicializa header_labels ANTES de usar
+        # Colunas do cabeçalho
+        headers = [
+            ("CÓDIGO", 0),
+            ("TÍTULO", 1),
+            ("PRIORIDADE", 2),
+            ("DATA LIMITE", 3),
+            ("DIAS P/ VENCER", 4)
+        ]
+        
         self.header_labels = {}
+        for text, col in headers:
+            label = ctk.CTkLabel(
+                header_frame,
+                text=text,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                text_color="#FFFFFF",
+                anchor="w" if col > 0 else "center"
+            )
+            label.grid(row=0, column=col, sticky="ew", padx=16, pady=16)
+            if col in [0, 1, 2, 3]:  # Colunas clicáveis
+                label.bind("<Button-1>", lambda e, c=col: self._handle_sort_click(c))
+                label.configure(cursor="hand2")
+                self.header_labels[col] = label
         
-        # Colunas do cabeçalho (clicáveis) - frames com larguras fixas
-        # CÓDIGO - 120px
-        code_header_frame = tk.Frame(header_frame, bg="#A93226", width=120)
-        code_header_frame.pack(side=tk.LEFT, fill=tk.Y)
-        code_header_frame.pack_propagate(False)
-        code_label = tk.Label(
-            code_header_frame,
-            text="CÓDIGO",
-            font=("Inter", 12, "bold"),
-            bg="#A93226",
-            fg="white",
-            anchor="center",
-            pady=16
+        # Container para o corpo da tabela usando Canvas para controle preciso
+        body_container = ctk.CTkFrame(table_inner, fg_color="transparent")
+        body_container.grid(row=1, column=0, sticky="nsew")
+        body_container.grid_columnconfigure(0, weight=1)
+        body_container.grid_rowconfigure(0, weight=1)
+        
+        # Canvas e Scrollbar para controle preciso das larguras
+        self.table_canvas = tk.Canvas(
+            body_container,
+            bg="#FFFFFF",
+            highlightthickness=0,
+            bd=0
         )
-        code_label.pack(fill=tk.BOTH, expand=True)
-        code_label.bind("<Button-1>", lambda e: self._handle_sort_click("codigo"))
-        code_label.config(cursor="hand2")
-        self.header_labels["codigo"] = code_label
-        
-        # TÍTULO - expande
-        title_header_frame = tk.Frame(header_frame, bg="#A93226")
-        title_header_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        title_label = tk.Label(
-            title_header_frame,
-            text="TÍTULO",
-            font=("Inter", 12, "bold"),
-            bg="#A93226",
-            fg="white",
-            anchor="w",
-            padx=16,
-            pady=16
+        self.table_scrollbar = tk.Scrollbar(
+            body_container,
+            orient="vertical",
+            command=self.table_canvas.yview
         )
-        title_label.pack(fill=tk.BOTH, expand=True)
-        title_label.bind("<Button-1>", lambda e: self._handle_sort_click("titulo"))
-        title_label.config(cursor="hand2")
-        self.header_labels["titulo"] = title_label
         
-        # PRIORIDADE - 150px fixo (ajustado para esquerda)
-        priority_header_frame = tk.Frame(header_frame, bg="#A93226", width=150)
-        priority_header_frame.pack(side=tk.LEFT, fill=tk.Y)
-        priority_header_frame.pack_propagate(False)
-        priority_label = tk.Label(
-            priority_header_frame,
-            text="PRIORIDADE",
-            font=("Inter", 12, "bold"),
-            bg="#A93226",
-            fg="white",
-            anchor="w",  # Alinha à esquerda
-            pady=16,
-            padx=8
+        # Frame wrapper que terá exatamente a mesma largura do cabeçalho
+        self.table_body_wrapper = ctk.CTkFrame(
+            self.table_canvas,
+            fg_color="transparent"
         )
-        priority_label.pack(fill=tk.Y, expand=True, anchor="w", padx=8)
-        priority_label.bind("<Button-1>", lambda e: self._handle_sort_click("prioridade"))
-        priority_label.config(cursor="hand2")
-        self.header_labels["prioridade"] = priority_label
         
-        # DATA LIMITE - 150px fixo (ajustado para esquerda)
-        date_header_frame = tk.Frame(header_frame, bg="#A93226", width=150)
-        date_header_frame.pack(side=tk.LEFT, fill=tk.Y)
-        date_header_frame.pack_propagate(False)
-        date_label = tk.Label(
-            date_header_frame,
-            text="DATA LIMITE",
-            font=("Inter", 12, "bold"),
-            bg="#A93226",
-            fg="white",
-            anchor="w",  # Alinha à esquerda
-            pady=16,
-            padx=8
+        # Configura as mesmas colunas do cabeçalho
+        self.table_body_wrapper.grid_columnconfigure(0, weight=0, minsize=120)
+        self.table_body_wrapper.grid_columnconfigure(1, weight=1)
+        self.table_body_wrapper.grid_columnconfigure(2, weight=0, minsize=150)
+        self.table_body_wrapper.grid_columnconfigure(3, weight=0, minsize=150)
+        self.table_body_wrapper.grid_columnconfigure(4, weight=0, minsize=180)
+        
+        # Cria janela no canvas
+        self.canvas_window = self.table_canvas.create_window(
+            (0, 0),
+            window=self.table_body_wrapper,
+            anchor="nw"
         )
-        date_label.pack(fill=tk.Y, expand=True, anchor="w", padx=8)
-        date_label.bind("<Button-1>", lambda e: self._handle_sort_click("dataLimite"))
-        date_label.config(cursor="hand2")
-        self.header_labels["dataLimite"] = date_label
         
-        # DIAS P/ VENCER - 180px fixo (ajustado para esquerda)
-        days_header_frame = tk.Frame(header_frame, bg="#A93226", width=180)
-        days_header_frame.pack(side=tk.LEFT, fill=tk.Y)
-        days_header_frame.pack_propagate(False)
-        days_label = tk.Label(
-            days_header_frame,
-            text="DIAS P/ VENCER",
-            font=("Inter", 12, "bold"),
-            bg="#A93226",
-            fg="white",
-            anchor="w",  # Alinha à esquerda
-            pady=16,
-            padx=8
-        )
-        days_label.pack(fill=tk.Y, expand=True, anchor="w", padx=8)
-        self.header_labels[None] = None
+        # Configura scroll
+        self.table_canvas.configure(yscrollcommand=self.table_scrollbar.set)
         
-        # Guarda referências dos frames do cabeçalho para usar nas linhas
-        self.header_frames = {
-            'codigo': code_header_frame,
-            'titulo': title_header_frame,
-            'prioridade': priority_header_frame,
-            'data': date_header_frame,
-            'dias': days_header_frame
-        }
-        self.header_frame_ref = header_frame  # Guarda referência do cabeçalho completo
-        
-        # Frame scrollável para o corpo da tabela (ao lado do cabeçalho)
-        scrollable_container = tk.Frame(table_inner, bg="#FFFFFF")
-        scrollable_container.pack(fill=tk.BOTH, expand=True)
-        
-        self.scrollable_frame = ScrollableFrame(scrollable_container)
-        self.scrollable_frame.pack(fill=tk.BOTH, expand=True)
-        
-        self.table_body = self.scrollable_frame.scrollable_frame
-        self.header_container = header_container  # Guarda referência
-        self.scrollable_container = scrollable_container  # Guarda referência
-        
-        # Garante que o cabeçalho e o corpo tenham a mesma largura (considerando scrollbar)
-        def sync_table_width(event=None):
+        # Função para sincronizar larguras com o cabeçalho
+        def sync_width(event=None):
             try:
-                # Largura disponível do container interno
-                container_width = table_inner.winfo_width()
-                if container_width > 1:
-                    # Verifica se a scrollbar está visível
-                    scrollbar_width = 0
-                    try:
-                        if self.scrollable_frame.scrollbar.winfo_ismapped():
-                            scrollbar_width = self.scrollable_frame.scrollbar.winfo_width()
-                    except:
-                        pass
-                    
-                    # Largura do conteúdo (sem scrollbar)
-                    content_width = container_width - scrollbar_width
-                    if content_width > 0:
-                        # Atualiza largura do cabeçalho
-                        header_frame.config(width=content_width)
-                        
-                        # Atualiza largura do canvas window
-                        self.scrollable_frame.canvas.itemconfig(
-                            self.scrollable_frame.canvas_window,
-                            width=content_width
-                        )
-                        # Força atualização do scrollregion
-                        self.scrollable_frame.update_scroll()
+                # Obtém largura do cabeçalho
+                header_width = header_frame.winfo_width()
+                canvas_width = self.table_canvas.winfo_width()
+                
+                if header_width > 1 and canvas_width > 1:
+                    # Usa a largura do cabeçalho para o frame interno
+                    self.table_canvas.itemconfig(self.canvas_window, width=header_width)
+                    # Atualiza scrollregion
+                    self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
             except:
                 pass
         
-        # Sincroniza quando o container ou a janela mudarem de tamanho
-        table_inner.bind("<Configure>", sync_table_width)
-        header_container.bind("<Configure>", sync_table_width)
-        scrollable_container.bind("<Configure>", sync_table_width)
+        self.table_body_wrapper.bind("<Configure>", lambda e: self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all")))
+        self.table_canvas.bind("<Configure>", sync_width)
+        header_frame.bind("<Configure>", sync_width)
         
-        # Atualiza quando a scrollbar aparecer ou desaparecer
-        def on_scrollbar_change(event=None):
-            self.after(10, sync_table_width)
+        # Pack canvas e scrollbar
+        self.table_canvas.grid(row=0, column=0, sticky="nsew")
+        self.table_scrollbar.grid(row=0, column=1, sticky="ns")
         
-        try:
-            self.scrollable_frame.scrollbar.bind("<Map>", on_scrollbar_change)
-            self.scrollable_frame.scrollbar.bind("<Unmap>", on_scrollbar_change)
-        except:
-            pass
+        # Bind mousewheel - funciona em toda a área da tabela
+        def on_mousewheel(event):
+            if hasattr(self, 'table_canvas') and self.table_canvas.winfo_exists():
+                try:
+                    self.table_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+                except:
+                    pass
         
-        self.after(100, sync_table_width)
+        # Bind em múltiplos widgets para capturar scroll em toda a área da tabela
+        self.table_canvas.bind("<MouseWheel>", on_mousewheel)
+        body_container.bind("<MouseWheel>", on_mousewheel)
+        table_inner.bind("<MouseWheel>", on_mousewheel)
+        if hasattr(self, 'table_body_wrapper'):
+            self.table_body_wrapper.bind("<MouseWheel>", on_mousewheel)
         
-        # Atualiza quando a janela principal for redimensionada
-        def on_window_resize(event=None):
-            sync_table_width()
+        # Armazena função de scroll para usar nas linhas da tabela
+        self._on_mousewheel = on_mousewheel
+    
+    def _on_sort_combo_change(self, value):
+        """Callback quando combo de ordenação muda"""
+        sort_map = {"Código": "codigo", "Título": "titulo", "Prioridade": "prioridade", "Data Limite": "dataLimite"}
+        self.sort_by = sort_map.get(value, "codigo")
+        self._apply_filters_and_sort()
+    
+    def _on_order_combo_change(self, value):
+        """Callback quando combo de ordem muda"""
+        order_map = {"Crescente": "asc", "Decrescente": "desc"}
+        self.sort_order = order_map.get(value, "asc")
+        self._apply_filters_and_sort()
+    
+    def _on_search_change(self, *args):
+        """Callback quando busca muda"""
+        self._apply_filters_and_sort()
+    
+    def _handle_sort_click(self, column):
+        """Handle clique na coluna do cabeçalho"""
+        column_map = {0: "codigo", 1: "titulo", 2: "prioridade", 3: "dataLimite"}
+        column_name = column_map.get(column)
         
-        # Bind no root para detectar redimensionamento da janela
-        root = self.winfo_toplevel()
-        root.bind("<Configure>", lambda e: sync_table_width() if e.widget == root else None)
+        if not column_name:
+            return
+        
+        if self.sort_by == column_name:
+            self.sort_order = "desc" if self.sort_order == "asc" else "asc"
+        else:
+            self.sort_by = column_name
+            self.sort_order = "asc"
+        
+        # Atualiza combo boxes
+        sort_map = {"codigo": "Código", "titulo": "Título", "prioridade": "Prioridade", "dataLimite": "Data Limite"}
+        self.sort_var.set(sort_map.get(self.sort_by, "Código"))
+        order_map = {"asc": "Crescente", "desc": "Decrescente"}
+        self.order_var.set(order_map.get(self.sort_order, "Decrescente"))
+        
+        self._apply_filters_and_sort()
     
     def _get_priority_color(self, priority):
         """Retorna cor da prioridade"""
@@ -454,34 +383,15 @@ class PendingTicketsPage(BasePage):
             self.loading = False
             self.after(0, self._apply_filters_and_sort)
     
-    def _on_search_change(self, term):
-        """Atualiza busca"""
-        self.search_term = term.lower()
-        self._apply_filters_and_sort()
-    
-    def _on_sort_change(self, sort_by, sort_order):
-        """Atualiza ordenação"""
-        self.sort_by = sort_by
-        self.sort_order = sort_order
-        self._apply_filters_and_sort()
-    
-    def _handle_sort_click(self, column):
-        """Handle clique na coluna"""
-        if self.sort_by == column:
-            self.sort_order = "desc" if self.sort_order == "asc" else "asc"
-        else:
-            self.sort_by = column
-            self.sort_order = "asc"
-        self._apply_filters_and_sort()
-    
     def _apply_filters_and_sort(self):
         """Aplica filtros e ordenação"""
         filtered = [t for t in self.tickets]
         
-        if self.search_term:
+        search = self.search_term.get().lower()
+        if search:
             filtered = [t for t in filtered if 
-                       self.search_term in t['titulo'].lower() or 
-                       self.search_term in t['codigo'].lower()]
+                       search in t['titulo'].lower() or 
+                       search in t['codigo'].lower()]
         
         def sort_key(ticket):
             if self.sort_by == 'codigo':
@@ -503,211 +413,190 @@ class PendingTicketsPage(BasePage):
         self._update_table()
     
     def _update_table(self):
-        """Atualiza tabela com layout moderno"""
-        # Verifica se o widget ainda existe
-        try:
-            if not self.table_body.winfo_exists():
-                return
-        except tk.TclError:
+        """Atualiza tabela"""
+        # Verifica se o widget ainda existe antes de usar
+        if not hasattr(self, 'table_body_wrapper') or not self.table_body_wrapper.winfo_exists():
             return
         
         # Limpa tabela
         try:
-            for widget in self.table_body.winfo_children():
+            for widget in self.table_body_wrapper.winfo_children():
                 widget.destroy()
-        except tk.TclError:
-            # Widget foi destruído durante a iteração
+        except Exception:
             return
         
         # Atualiza indicadores de ordenação no cabeçalho
-        for key, label in self.header_labels.items():
-            if label and key:
+        column_map = {0: "codigo", 1: "titulo", 2: "prioridade", 3: "dataLimite"}
+        for col, label in self.header_labels.items():
+            if label:
                 try:
-                    if not label.winfo_exists():
-                        continue
-                    if self.sort_by == key:
+                    column_name = column_map.get(col)
+                    if column_name and self.sort_by == column_name:
                         arrow = "▲" if self.sort_order == "asc" else "▼"
-                        text = label.cget("text").split()[0]  # Remove arrow se existir
-                        label.config(text=f"{text} {arrow}")
+                        text = label.cget("text").split()[0] if " " in label.cget("text") else label.cget("text")
+                        label.configure(text=f"{text} {arrow}")
                     else:
-                        text = label.cget("text").split()[0]
-                        label.config(text=text)
-                except tk.TclError:
-                    # Widget foi destruído
-                    continue
+                        text = label.cget("text").split()[0] if " " in label.cget("text") else label.cget("text")
+                        label.configure(text=text)
+                except:
+                    pass
         
         if self.loading:
-            loading_label = tk.Label(
-                self.table_body,
-                text="Carregando...",
-                font=("Inter", 14),
-                bg="#FFFFFF",
-                fg="#737373",
-                pady=48
-            )
-            loading_label.pack(pady=48)
-            # Atualiza scrollregion
-            self.after(10, lambda: self.scrollable_frame.update_scroll())
+            try:
+                loading_label = ctk.CTkLabel(
+                    self.table_body_wrapper,
+                    text="Carregando...",
+                    font=ctk.CTkFont(size=14),
+                    text_color="#666666",
+                    fg_color="transparent"
+                )
+                loading_label.grid(row=0, column=0, columnspan=5, pady=48)
+                if hasattr(self, 'table_canvas') and self.table_canvas.winfo_exists():
+                    self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
+            except Exception:
+                pass
             return
         
         if not self.filtered_tickets:
-            no_data_label = tk.Label(
-                self.table_body,
-                text="Nenhum chamado encontrado",
-                font=("Inter", 14),
-                bg="#FFFFFF",
-                fg="#737373",
-                pady=48
-            )
-            no_data_label.pack(pady=48)
-            # Atualiza scrollregion
-            self.after(10, lambda: self.scrollable_frame.update_scroll())
+            try:
+                no_data_label = ctk.CTkLabel(
+                    self.table_body_wrapper,
+                    text="Nenhum chamado encontrado",
+                    font=ctk.CTkFont(size=14),
+                    text_color="#999999",
+                    fg_color="transparent"
+                )
+                no_data_label.grid(row=0, column=0, columnspan=5, pady=48)
+                if hasattr(self, 'table_canvas') and self.table_canvas.winfo_exists():
+                    self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
+            except Exception:
+                pass
             return
         
-        # Cria linhas da tabela - usa EXATAMENTE as mesmas larguras do cabeçalho
+        # Cria linhas da tabela usando CTkFrame para cada linha
         for i, ticket in enumerate(self.filtered_tickets):
             row_bg = "#FFFFFF" if i % 2 == 0 else "#FAFAFA"
-            row_frame = tk.Frame(self.table_body, bg=row_bg, cursor="hand2", height=60)
-            row_frame.pack(fill=tk.X, pady=0)
-            row_frame.pack_propagate(False)
-            row_frame.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
             
-            # Obtém larguras reais dos frames do cabeçalho
-            try:
-                code_width = self.header_frames['codigo'].winfo_width()
-                priority_width = self.header_frames['prioridade'].winfo_width()
-                date_width = self.header_frames['data'].winfo_width()
-                days_width = self.header_frames['dias'].winfo_width()
-            except:
-                # Fallback para larguras fixas se não conseguir obter
-                code_width = 120
-                priority_width = 150
-                date_width = 150
-                days_width = 180
+            # Frame da linha com as mesmas colunas do cabeçalho
+            row_frame = ctk.CTkFrame(
+                self.table_body_wrapper,
+                fg_color=row_bg,
+                corner_radius=0,
+                height=60
+            )
+            row_frame.grid(row=i, column=0, columnspan=5, sticky="ew", padx=0, pady=1)
             
-            # Código - usa largura EXATA do cabeçalho
-            code_cell = tk.Frame(row_frame, bg=row_bg, width=code_width)
-            code_cell.pack(side=tk.LEFT, fill=tk.Y)
-            code_cell.pack_propagate(False)
-            code_label = tk.Label(
-                code_cell,
+            # Configura as mesmas colunas do cabeçalho
+            row_frame.grid_columnconfigure(0, weight=0, minsize=120)
+            row_frame.grid_columnconfigure(1, weight=1)
+            row_frame.grid_columnconfigure(2, weight=0, minsize=150)
+            row_frame.grid_columnconfigure(3, weight=0, minsize=150)
+            row_frame.grid_columnconfigure(4, weight=0, minsize=180)
+            
+            # Bind para clique
+            def make_click_handler(tid):
+                def handler(event=None):
+                    self._on_ticket_click(tid)
+                return handler
+            
+            click_handler = make_click_handler(ticket['id'])
+            row_frame.bind("<Button-1>", click_handler)
+            row_frame.configure(cursor="hand2")
+            
+            # Adiciona bind de scroll também no row_frame
+            if hasattr(self, '_on_mousewheel'):
+                row_frame.bind("<MouseWheel>", self._on_mousewheel)
+            
+            # Código
+            code_label = ctk.CTkLabel(
+                row_frame,
                 text=ticket['codigo'],
-                font=("Inter", 14, "bold"),
-                bg=row_bg,
-                fg="#A93226",
-                anchor="center"
+                font=ctk.CTkFont(size=14, weight="bold"),
+                text_color="#A93226",
+                anchor="center",
+                fg_color="transparent"
             )
-            code_label.pack(fill=tk.BOTH, expand=True)
-            code_label.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
+            code_label.grid(row=0, column=0, sticky="ew", padx=(16, 8), pady=16)
+            code_label.bind("<Button-1>", click_handler)
+            code_label.configure(cursor="hand2")
+            if hasattr(self, '_on_mousewheel'):
+                code_label.bind("<MouseWheel>", self._on_mousewheel)
             
-            # Título - frame que expande (igual ao cabeçalho)
-            title_cell = tk.Frame(row_frame, bg=row_bg)
-            title_cell.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-            title_label = tk.Label(
-                title_cell,
+            # Título
+            title_label = ctk.CTkLabel(
+                row_frame,
                 text=ticket['titulo'],
-                font=("Inter", 14),
-                bg=row_bg,
-                fg="#262626",
+                font=ctk.CTkFont(size=14),
+                text_color="#262626",
                 anchor="w",
-                padx=16
+                fg_color="transparent"
             )
-            title_label.pack(fill=tk.BOTH, expand=True)
-            title_label.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
+            title_label.grid(row=0, column=1, sticky="ew", padx=8, pady=16)
+            title_label.bind("<Button-1>", click_handler)
+            title_label.configure(cursor="hand2")
+            if hasattr(self, '_on_mousewheel'):
+                title_label.bind("<MouseWheel>", self._on_mousewheel)
             
-            # Prioridade (badge colorido) - usa largura EXATA do cabeçalho
-            priority_cell = tk.Frame(row_frame, bg=row_bg, width=priority_width)
-            priority_cell.pack(side=tk.LEFT, fill=tk.Y)
-            priority_cell.pack_propagate(False)
+            # Prioridade (badge) - usando CTkLabel com corner_radius
             priority_color = self._get_priority_color(ticket['prioridade'])
-            priority_badge = tk.Label(
-                priority_cell,
+            priority_badge = ctk.CTkLabel(
+                row_frame,
                 text=ticket['prioridade'],
-                font=("Inter", 10, "bold"),
-                bg=priority_color,
-                fg="white",
-                padx=12,
-                pady=4,
-                relief=tk.FLAT,
+                font=ctk.CTkFont(size=12, weight="bold"),
+                fg_color=priority_color,
+                text_color="#FFFFFF",
+                corner_radius=999,
                 anchor="center"
             )
-            priority_badge.pack(expand=True)
-            priority_badge.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
+            priority_badge.grid(row=0, column=2, sticky="ew", padx=8, pady=16)
+            priority_badge.bind("<Button-1>", click_handler)
+            priority_badge.configure(cursor="hand2")
+            if hasattr(self, '_on_mousewheel'):
+                priority_badge.bind("<MouseWheel>", self._on_mousewheel)
             
-            # Data Limite - usa largura EXATA do cabeçalho
-            date_cell = tk.Frame(row_frame, bg=row_bg, width=date_width)
-            date_cell.pack(side=tk.LEFT, fill=tk.Y)
-            date_cell.pack_propagate(False)
+            # Data Limite
             try:
                 data = datetime.fromisoformat(ticket['dataLimite'].replace('Z', '+00:00')).strftime('%d/%m/%Y')
             except:
                 data = "N/A"
-            date_label = tk.Label(
-                date_cell,
+            date_label = ctk.CTkLabel(
+                row_frame,
                 text=data,
-                font=("Inter", 14),
-                bg=row_bg,
-                fg="#737373",
-                anchor="center"
+                font=ctk.CTkFont(size=14),
+                text_color="#666666",
+                anchor="w",
+                fg_color="transparent"
             )
-            date_label.pack(fill=tk.BOTH, expand=True)
-            date_label.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
+            date_label.grid(row=0, column=3, sticky="ew", padx=8, pady=16)
+            date_label.bind("<Button-1>", click_handler)
+            date_label.configure(cursor="hand2")
+            if hasattr(self, '_on_mousewheel'):
+                date_label.bind("<MouseWheel>", self._on_mousewheel)
             
-            # Dias para vencer - usa largura EXATA do cabeçalho
-            days_cell = tk.Frame(row_frame, bg=row_bg, width=days_width)
-            days_cell.pack(side=tk.LEFT, fill=tk.Y)
-            days_cell.pack_propagate(False)
+            # Dias para vencer
             days = self._calculate_days_to_expire(ticket['dataLimite'])
             is_overdue = 'Vencido' in days
             days_color = "#dc3545" if is_overdue else "#262626"
-            days_font = ("Inter", 14, "bold") if is_overdue else ("Inter", 14)
-            days_label = tk.Label(
-                days_cell,
+            days_font = ctk.CTkFont(size=14, weight="bold") if is_overdue else ctk.CTkFont(size=14)
+            days_label = ctk.CTkLabel(
+                row_frame,
                 text=days,
                 font=days_font,
-                bg=row_bg,
-                fg=days_color,
-                anchor="center"
+                text_color=days_color,
+                anchor="w",
+                fg_color="transparent"
             )
-            days_label.pack(fill=tk.BOTH, expand=True)
-            days_label.bind("<Button-1>", lambda e, tid=ticket['id']: self._on_ticket_click(tid))
+            days_label.grid(row=0, column=4, sticky="ew", padx=(8, 16), pady=16)
+            days_label.bind("<Button-1>", click_handler)
+            days_label.configure(cursor="hand2")
+            if hasattr(self, '_on_mousewheel'):
+                days_label.bind("<MouseWheel>", self._on_mousewheel)
         
-        # Atualiza scrollregion após adicionar todos os widgets
-        # Também força atualização das larguras após renderização
-        def update_after_render():
-            self.scrollable_frame.update_scroll()
-            # Força atualização das larguras das células após renderização completa
-            self.after(50, self._update_row_widths)
-        
-        self.after(10, update_after_render)
-    
-    def _update_row_widths(self):
-        """Atualiza larguras das células das linhas para corresponder ao cabeçalho"""
+        # Atualiza scrollregion
         try:
-            # Obtém larguras reais dos frames do cabeçalho
-            code_width = self.header_frames['codigo'].winfo_width()
-            priority_width = self.header_frames['prioridade'].winfo_width()
-            date_width = self.header_frames['data'].winfo_width()
-            days_width = self.header_frames['dias'].winfo_width()
-            
-            # Atualiza todas as células das linhas
-            for row_frame in self.table_body.winfo_children():
-                if isinstance(row_frame, tk.Frame):
-                    cells = row_frame.winfo_children()
-                    if len(cells) >= 5:
-                        # Código
-                        if cells[0].winfo_width() != code_width:
-                            cells[0].config(width=code_width)
-                        # Prioridade
-                        if cells[2].winfo_width() != priority_width:
-                            cells[2].config(width=priority_width)
-                        # Data
-                        if cells[3].winfo_width() != date_width:
-                            cells[3].config(width=date_width)
-                        # Dias
-                        if cells[4].winfo_width() != days_width:
-                            cells[4].config(width=days_width)
-        except:
+            if hasattr(self, 'table_canvas') and self.table_canvas.winfo_exists():
+                self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
+        except Exception:
             pass
     
     def _calculate_days_to_expire(self, data_limite):

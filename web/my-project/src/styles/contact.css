@@ -277,14 +277,21 @@
 
 /* ===== BOX DE INFORMAÇÃO ===== */
 .contact-info-box {
-  background: #FFFFFF;
-  border: 2px solid #E5E5E5;
+  background: linear-gradient(135deg, #FFF9E6 0%, #FFFFFF 100%);
+  border: 2px solid #FFE082;
+  border-left: 4px solid #FFC107;
   border-radius: var(--radius-xl);
   padding: var(--space-xl);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   text-align: center;
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 900px;
+  margin: var(--space-2xl) auto 0;
+  transition: var(--transition-fast);
+}
+
+.contact-info-box:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .contact-info-box p {
@@ -296,6 +303,7 @@
 
 .contact-info-box strong {
   color: var(--primary-color);
+  font-weight: var(--font-weight-bold);
 }
 
 /* ===== INFORMAÇÕES ADICIONAIS ===== */
@@ -303,6 +311,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: var(--space-xl);
+  margin-top: var(--space-2xl);
 }
 
 .info-box {
@@ -314,6 +323,13 @@
   align-items: flex-start;
   gap: var(--space-lg);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: var(--transition-fast);
+}
+
+.info-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  border-color: var(--primary-color);
 }
 
 .info-icon {
@@ -321,6 +337,16 @@
   color: var(--primary-color);
   flex-shrink: 0;
   margin-top: var(--space-xs);
+  transition: var(--transition-fast);
+}
+
+.info-box:hover .info-icon {
+  transform: scale(1.1);
+  color: var(--primary-dark);
+}
+
+.info-content {
+  flex: 1;
 }
 
 .info-content h4 {
@@ -332,8 +358,9 @@
 
 .info-content p {
   color: #666666;
-  margin: 0;
+  margin: 0 0 var(--space-xs) 0;
   line-height: 1.6;
+  font-size: var(--font-size-base);
 }
 
 .info-note {
@@ -341,6 +368,7 @@
   color: #999999;
   font-style: italic;
   margin-top: var(--space-sm);
+  margin-bottom: 0;
 }
 
 /* ===== DICAS DE CONTATO ===== */

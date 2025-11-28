@@ -26,15 +26,93 @@ class FirstAccessModal:
     
     def _create_modal(self):
         """Cria o modal"""
-        # Overlay
-        self.overlay = tk.Frame(self.parent, bg="#000000")
-        self.overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        # Obtém a janela principal (toplevel)
+        self.toplevel = self.parent.winfo_toplevel()
         
-        # Modal
-        self.modal = tk.Frame(self.overlay, bg="#FFFFFF", bd=2, relief=tk.SOLID)
-        self.modal.place(relx=0.5, rely=0.5, anchor="center")
-        self.modal.config(width=500, height=600)
-        self.modal.pack_propagate(False)
+        # Garante que a janela principal está atualizada
+        self.toplevel.update_idletasks()
+        
+        # Obtém posição e tamanho da janela principal
+        x = self.toplevel.winfo_x()
+        y = self.toplevel.winfo_y()
+        width = self.toplevel.winfo_width()
+        height = self.toplevel.winfo_height()
+        
+        # === OVERLAY COM TRANSPARÊNCIA ===
+        # Usa Toplevel mas posiciona para não cobrir a barra de título
+        # Calcula a altura real da barra de título
+        self.toplevel.update_idletasks()
+        root_y = self.toplevel.winfo_rooty()
+        frame_y = self.toplevel.winfo_y()
+        title_bar_height = root_y - frame_y if root_y > frame_y else 30
+        
+        self.overlay_window = tk.Toplevel(self.toplevel)
+        self.overlay_window.overrideredirect(True)
+        self.overlay_window.transient(self.toplevel)
+        
+        # Calcula posição e tamanho do overlay (abaixo da barra de título)
+        # Usa a área do cliente da janela (sem a barra de título)
+        overlay_x = x
+        overlay_y = y + title_bar_height
+        overlay_width = width
+        overlay_height = height - title_bar_height
+        
+        self.overlay_window.geometry(f"{overlay_width}x{overlay_height}+{overlay_x}+{overlay_y}")
+        self.overlay_window.configure(bg="black")
+        
+        # Frame overlay
+        self.overlay = tk.Frame(self.overlay_window, bg="black", highlightthickness=0)
+        self.overlay.pack(fill=tk.BOTH, expand=True)
+        self.overlay.bind("<Button-1>", lambda e: None)  # Não fecha ao clicar no overlay
+        
+        # Configura transparência de 30% (alpha = 0.3) ANTES de exibir
+        try:
+            self.overlay_window.attributes('-alpha', 0.3)
+        except tk.TclError:
+            # Fallback: cor que escurece o fundo visivelmente
+            self.overlay.configure(bg="#808080")
+        
+        # Garante que a janela seja exibida e fique visível
+        self.overlay_window.update_idletasks()
+        self.overlay_window.deiconify()
+        self.overlay_window.lift()
+        self.overlay_window.update()
+        
+        # === MODAL OPAQUE ===
+        self.modal_window = tk.Toplevel(self.toplevel)
+        self.modal_window.overrideredirect(True)
+        self.modal_window.transient(self.toplevel)
+        
+        # Garante que o modal seja totalmente opaco
+        try:
+            self.modal_window.attributes('-alpha', 1.0)
+        except:
+            pass
+        
+        # Tamanho do modal
+        modal_width = 500
+        modal_height = 650
+        
+        # Centraliza o modal na janela principal (não na tela)
+        # Aguarda a janela principal estar atualizada
+        self.toplevel.update_idletasks()
+        
+        # Obtém posição e tamanho da janela principal
+        main_x = self.toplevel.winfo_x()
+        main_y = self.toplevel.winfo_y()
+        main_width = self.toplevel.winfo_width()
+        main_height = self.toplevel.winfo_height()
+        
+        # Calcula posição central na janela principal
+        modal_x = main_x + (main_width - modal_width) // 2
+        modal_y = main_y + (main_height - modal_height) // 2
+        
+        self.modal_window.geometry(f"{modal_width}x{modal_height}+{modal_x}+{modal_y}")
+        self.modal_window.configure(bg="#FFFFFF")
+        
+        # Frame interno do modal
+        self.modal = tk.Frame(self.modal_window, bg="#FFFFFF", bd=2, relief=tk.SOLID)
+        self.modal.pack(fill=tk.BOTH, expand=True)
         
         # Header
         header = tk.Frame(self.modal, bg="#A93226")
@@ -113,7 +191,7 @@ class FirstAccessModal:
             highlightbackground="#E5E5E5",
             highlightcolor="#A93226"
         )
-        senha_atual_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=12)
+        senha_atual_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=14)
         
         toggle_btn = tk.Button(
             senha_atual_input_frame,
@@ -158,7 +236,7 @@ class FirstAccessModal:
             highlightbackground="#E5E5E5",
             highlightcolor="#A93226"
         )
-        nova_senha_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=12)
+        nova_senha_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=14)
         
         toggle_btn2 = tk.Button(
             nova_senha_input_frame,
@@ -175,7 +253,7 @@ class FirstAccessModal:
         
         # Confirmar Senha
         confirmar_senha_frame = tk.Frame(body, bg="#FFFFFF")
-        confirmar_senha_frame.pack(fill=tk.X, pady=(0, 24))
+        confirmar_senha_frame.pack(fill=tk.X, pady=(0, 16))
         
         confirmar_senha_label = tk.Label(
             confirmar_senha_frame,
@@ -203,7 +281,7 @@ class FirstAccessModal:
             highlightbackground="#E5E5E5",
             highlightcolor="#A93226"
         )
-        confirmar_senha_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=12)
+        confirmar_senha_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=14)
         
         toggle_btn3 = tk.Button(
             confirmar_senha_input_frame,
@@ -218,23 +296,82 @@ class FirstAccessModal:
         )
         toggle_btn3.pack(side=tk.RIGHT, padx=(8, 0))
         
-        # Botão
-        submit_btn = tk.Button(
+        # Botão - usando Label estilizado para controle total da altura
+        def on_btn_click(event):
+            self._handle_submit()
+        
+        def on_btn_enter(event):
+            submit_btn_label.config(bg="#8B0000")
+        
+        def on_btn_leave(event):
+            submit_btn_label.config(bg="#A93226")
+        
+        submit_btn_label = tk.Label(
             body,
             text="Alterar Senha",
             font=("Inter", 16, "bold"),
             bg="#A93226",
             fg="white",
-            activebackground="#8B0000",
-            activeforeground="white",
-            bd=0,
-            relief=tk.FLAT,
-            padx=24,
-            pady=16,
             cursor="hand2",
-            command=self._handle_submit
+            relief=tk.FLAT,
+            bd=0,
+            height=3,  # Altura em linhas de texto (aproximadamente 50-60px)
+            anchor="center"
         )
-        submit_btn.pack(fill=tk.X, pady=(0, 0))
+        submit_btn_label.pack(fill=tk.X, pady=(16, 0))
+        submit_btn_label.bind("<Button-1>", on_btn_click)
+        submit_btn_label.bind("<Enter>", on_btn_enter)
+        submit_btn_label.bind("<Leave>", on_btn_leave)
+        
+        # Garante que o modal seja exibido e fique acima do overlay
+        self.modal_window.update_idletasks()
+        self.modal_window.deiconify()
+        self.modal_window.lift()
+        self.modal_window.focus_force()
+        self.modal_window.update()
+        
+        # Aplica grab_set APÓS o modal estar completamente renderizado
+        try:
+            self.modal_window.grab_set()
+        except:
+            pass
+        
+        # Função para reposicionar o modal quando a janela for redimensionada
+        def reposition_modal(event=None):
+            try:
+                if hasattr(self, 'toplevel') and self.toplevel.winfo_exists():
+                    self.toplevel.update_idletasks()
+                    main_x = self.toplevel.winfo_x()
+                    main_y = self.toplevel.winfo_y()
+                    main_width = self.toplevel.winfo_width()
+                    main_height = self.toplevel.winfo_height()
+                    
+                    # Calcula altura da barra de título dinamicamente
+                    root_y = self.toplevel.winfo_rooty()
+                    frame_y = self.toplevel.winfo_y()
+                    title_bar_height = root_y - frame_y if root_y > frame_y else 30
+                    
+                    # Reposiciona overlay (abaixo da barra de título)
+                    if hasattr(self, 'overlay_window') and self.overlay_window.winfo_exists():
+                        overlay_x = main_x
+                        overlay_y = main_y + title_bar_height
+                        overlay_width = main_width
+                        overlay_height = main_height - title_bar_height
+                        self.overlay_window.geometry(f"{overlay_width}x{overlay_height}+{overlay_x}+{overlay_y}")
+                    
+                    # Reposiciona modal
+                    if hasattr(self, 'modal_window') and self.modal_window.winfo_exists():
+                        modal_x = main_x + (main_width - modal_width) // 2
+                        modal_y = main_y + (main_height - modal_height) // 2
+                        self.modal_window.geometry(f"{modal_width}x{modal_height}+{modal_x}+{modal_y}")
+            except:
+                pass
+        
+        # Bind eventos de redimensionamento
+        try:
+            self.toplevel.bind('<Configure>', reposition_modal)
+        except:
+            pass
     
     def _toggle_password(self, entry, var):
         """Alterna visibilidade da senha"""
@@ -248,21 +385,22 @@ class FirstAccessModal:
         confirmar_senha = self.confirmar_senha_var.get()
         
         # Validação
+        target_window = self.modal_window if hasattr(self, 'modal_window') else self.parent
         if not senha_atual or not nova_senha or not confirmar_senha:
-            show_toast(self.parent, "Por favor, preencha todos os campos.", "error")
+            show_toast(target_window, "Por favor, preencha todos os campos.", "error")
             return
         
         if nova_senha != confirmar_senha:
-            show_toast(self.parent, "As senhas não conferem.", "error")
+            show_toast(target_window, "As senhas não conferem.", "error")
             return
         
         if len(nova_senha) < 6:
-            show_toast(self.parent, "A senha deve ter pelo menos 6 caracteres.", "error")
+            show_toast(target_window, "A senha deve ter pelo menos 6 caracteres.", "error")
             return
         
         # Abre modal de confirmação
         self.confirm_modal = ConfirmModal(
-            self.overlay,
+            self.modal_window if hasattr(self, 'modal_window') else self.toplevel,
             title="CONFIRMAR ALTERAÇÃO DE SENHA",
             message="Tem certeza que é a senha escolhida? Você usará ela por agora.",
             on_confirm=self._perform_change_password,
@@ -290,9 +428,15 @@ class FirstAccessModal:
             self.parent.after(0, lambda: show_toast(self.parent, "Senha alterada com sucesso!", "success"))
             self.parent.after(1500, lambda: self._handle_success())
         except Exception as e:
-            self.parent.after(0, lambda: show_toast(self.parent, f"Erro ao alterar senha: {str(e)}", "error"))
+            if hasattr(self, 'modal_window') and self.modal_window:
+                self.modal_window.after(0, lambda: show_toast(self.modal_window, f"Erro ao alterar senha: {str(e)}", "error"))
+            else:
+                self.parent.after(0, lambda: show_toast(self.parent, f"Erro ao alterar senha: {str(e)}", "error"))
         finally:
-            self.parent.after(0, lambda: setattr(self, 'is_loading', False))
+            if hasattr(self, 'modal_window') and self.modal_window:
+                self.modal_window.after(0, lambda: setattr(self, 'is_loading', False))
+            else:
+                self.parent.after(0, lambda: setattr(self, 'is_loading', False))
     
     def _handle_success(self):
         """Lida com sucesso"""
@@ -302,8 +446,19 @@ class FirstAccessModal:
     
     def close(self):
         """Fecha o modal"""
-        if self.overlay:
-            self.overlay.destroy()
+        if hasattr(self, 'modal_window') and self.modal_window:
+            try:
+                self.modal_window.destroy()
+            except:
+                pass
+        if hasattr(self, 'overlay_window') and self.overlay_window:
+            try:
+                self.overlay_window.destroy()
+            except:
+                pass
+
+
+
 
 
 

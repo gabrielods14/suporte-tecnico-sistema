@@ -1,12 +1,12 @@
 # config.py - Configurações do HelpWave Desktop
 import os
 
-# Configurações da API externa (Azure)
-API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+# Configurações da API externa (Azure) - API .NET
+API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
 API_TIMEOUT = 30
 
-# Configurações do backend Flask local
-FLASK_BASE_URL = 'http://localhost:5000'
+# Configurações do backend local (.NET)
+FLASK_BASE_URL = 'http://localhost:5232'  # Porta padrão do .NET
 
 # Configurações do Supabase (opcional - pode ser configurado via variáveis de ambiente)
 # Para usar Supabase, defina as variáveis de ambiente SUPABASE_URL e SUPABASE_KEY

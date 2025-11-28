@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
+import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import ConfirmSaveModal from '../components/ConfirmSaveModal';
 import '../styles/profile.css';
@@ -57,6 +58,9 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
   const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  
+  // Verifica se o usuário é administrador
+  const isAdmin = userInfo?.permissao === 3;
 
   // Carrega os dados do usuário quando o componente é montado
   useEffect(() => {
@@ -173,7 +177,8 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
         break;
         
       case 'cargo':
-        if (!value.trim()) {
+        // Validação de cargo apenas para administradores
+        if (isAdmin && !value.trim()) {
           newErrors.cargo = 'Cargo é obrigatório';
         } else {
           delete newErrors.cargo;
@@ -231,7 +236,7 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
     
     // Validação final antes do envio
     const hasErrors = Object.keys(errors).length > 0;
-    const hasEmptyRequiredFields = !formData.nome.trim() || !formData.email.trim() || !formData.cargo.trim();
+    const hasEmptyRequiredFields = !formData.nome.trim() || !formData.email.trim() || (isAdmin && !formData.cargo.trim());
     
     if (hasErrors || hasEmptyRequiredFields) {
       showToast('Por favor, corrija os erros antes de salvar.', 'error');
@@ -301,7 +306,8 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
           nome: formData.nome,
           email: formData.email,
           telefone: formData.telefone,
-          cargo: formData.cargo
+          // Cargo só é enviado se o usuário for administrador
+          ...(isAdmin && { cargo: formData.cargo })
         }),
       });
 
@@ -409,16 +415,16 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
             </div>
             
             <div className={`form-group ${errors.cargo ? 'error' : ''}`}>
-              <label htmlFor="cargo">Cargo *</label>
+              <label htmlFor="cargo">Cargo {isAdmin ? '*' : ''}</label>
               <div className="select-container">
                 <select
                   id="cargo"
                   name="cargo"
                   value={formData.cargo}
                   onChange={handleInputChange}
-                  disabled={!isEditing}
-                  required
-                  aria-describedby={errors.cargo ? 'cargo-error' : undefined}
+                  disabled={!isEditing || !isAdmin}
+                  required={isAdmin}
+                  aria-describedby={errors.cargo ? 'cargo-error' : isAdmin ? undefined : 'cargo-readonly'}
                 >
                   <option value="">Selecione um cargo</option>
                   {cargosCorporativos.map((cargo) => (
@@ -432,6 +438,11 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
               {errors.cargo && (
                 <span id="cargo-error" className="error-message" role="alert">
                   {errors.cargo}
+                </span>
+              )}
+              {!isAdmin && (
+                <span id="cargo-readonly" className="form-help" style={{ fontSize: '0.875rem', color: '#6c757d', marginTop: '0.25rem' }}>
+                  O cargo não pode ser alterado por você. Entre em contato com o administrador.
                 </span>
               )}
             </div>
@@ -508,6 +519,7 @@ const UserProfilePage = ({ onLogout, onNavigateToHome, onNavigateToPage, onNavig
         type={toast.type}
         onClose={hideToast}
       />
+      <Footer />
     </div>
   );
 };

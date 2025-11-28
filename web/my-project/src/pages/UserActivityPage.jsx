@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
 import '../styles/user-activity.css';
 import { userService, ticketService } from '../utils/api';
@@ -263,6 +264,7 @@ function UserActivityPage({ onLogout, onNavigateToHome, onNavigateToPage, curren
         </div>
 
       </main>
+      <Footer />
     </div>
   );
 }

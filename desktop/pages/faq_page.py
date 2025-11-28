@@ -3,7 +3,9 @@ FAQPage - Replica FAQPage.jsx do web
 Versão simplificada com as principais seções
 """
 import tkinter as tk
+import customtkinter as ctk
 from pages.base_page import BasePage
+from config import COLORS
 
 class FAQPage(BasePage):
     """Página FAQ - replica FAQPage.jsx"""
@@ -31,15 +33,49 @@ class FAQPage(BasePage):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
         
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Ajusta largura do frame interno quando canvas é redimensionado
+        def on_canvas_configure(event):
+            canvas_width = event.width
+            canvas.itemconfig(canvas_window, width=canvas_width)
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        
+        canvas.bind("<Configure>", on_canvas_configure)
+        
+        # Botão voltar
+        back_frame = tk.Frame(scrollable_frame, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
+        )
+        back_btn.pack(side="left")
+        
+        # Mousewheel support
+        def on_mousewheel(event):
+            try:
+                canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            except:
+                pass
+        
+        canvas.bind("<MouseWheel>", on_mousewheel)
+        scrollable_frame.bind("<MouseWheel>", on_mousewheel)
         
         canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
+        # Container interno com max width para melhor legibilidade
         container = tk.Frame(scrollable_frame, bg="#F8F9FA")
-        container.pack(fill=tk.BOTH, expand=True, padx=48, pady=48)
-        
+        container.pack(fill=tk.BOTH, expand=True, padx=24, pady=48)
         
         # Header
         header_frame = tk.Frame(container, bg="#F8F9FA")
@@ -85,7 +121,7 @@ class FAQPage(BasePage):
             font=("Inter", 14),
             bg="#F8F9FA",
             fg="#737373",
-            wraplength=800,
+            wraplength=600,
             justify="center"
         )
         footer_text.pack(pady=(0, 8))
@@ -238,11 +274,11 @@ class FAQPage(BasePage):
                 font=("Inter", 14),
                 bg="#FFFFFF",
                 fg="#262626",
-                wraplength=1000,
+                wraplength=800,
                 justify="left",
-                anchor="w"
+                anchor="nw"
             )
-            content_label.pack(anchor="w", pady=8)
+            content_label.pack(fill=tk.X, anchor="w", pady=8)
         else:
             # Se for uma lista de widgets, adiciona todos
             for widget in section['content']:

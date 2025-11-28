@@ -2,8 +2,10 @@
 UserActivityPage - Replica UserActivityPage.jsx do web
 """
 import tkinter as tk
+import customtkinter as ctk
 from pages.base_page import BasePage
 from api_client import UserService, TicketService
+from config import COLORS
 from datetime import datetime
 import threading
 import os
@@ -67,20 +69,51 @@ class UserActivityPage(BasePage):
         container = tk.Frame(self.main_content, bg="#F8F9FA")
         container.pack(fill=tk.BOTH, expand=True, padx=48, pady=48)
         
+        # Botão voltar (usa on_back se disponível, senão on_navigate_to_home)
+        back_frame = tk.Frame(container, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
         
-        # Título
-        title_label = tk.Label(
-            container,
-            text="ATIVIDADE DO USUÁRIO",
-            font=("Inter", 24, "bold"),
-            bg="#F8F9FA",
-            fg="#000000"
+        def go_back():
+            if self.on_back:
+                self.on_back()
+            else:
+                self.on_navigate_to_home()
+        
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=go_back
         )
-        title_label.pack(anchor="w", pady=(0, 24))
+        back_btn.pack(side="left", pady=(0, 24))
         
-        # Container de conteúdo (será preenchido quando carregar)
-        self.content_frame = tk.Frame(container, bg="#F8F9FA")
-        self.content_frame.pack(fill=tk.BOTH, expand=True)
+        # Container scrollável para conteúdo
+        content_canvas = tk.Canvas(container, bg="#F8F9FA", highlightthickness=0)
+        content_scrollbar = tk.Scrollbar(container, orient="vertical", command=content_canvas.yview)
+        
+        self.content_frame = tk.Frame(content_canvas, bg="#F8F9FA")
+        content_window = content_canvas.create_window((0, 0), window=self.content_frame, anchor="nw")
+        
+        def on_content_configure(event):
+            canvas_width = event.width
+            content_canvas.itemconfig(content_window, width=canvas_width)
+            content_canvas.configure(scrollregion=content_canvas.bbox("all"))
+        
+        content_canvas.bind("<Configure>", on_content_configure)
+        self.content_frame.bind("<Configure>", lambda e: content_canvas.configure(scrollregion=content_canvas.bbox("all")))
+        
+        content_canvas.pack(side="left", fill="both", expand=True)
+        content_scrollbar.pack(side="right", fill="y")
+        content_canvas.configure(yscrollcommand=content_scrollbar.set)
+        
+        # Habilita scroll do mouse
+        def on_mousewheel(event):
+            content_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        content_canvas.bind("<MouseWheel>", on_mousewheel)
     
     def _load_activity(self):
         """Carrega atividade do usuário"""
@@ -266,7 +299,7 @@ class UserActivityPage(BasePage):
     def _create_tickets_section(self, title, tickets, headers, row_func):
         """Cria seção de tickets"""
         section_frame = tk.Frame(self.content_frame, bg="#FFFFFF", bd=1, relief=tk.SOLID)
-        section_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 24))
+        section_frame.pack(fill=tk.X, pady=(0, 24))
         
         # Título da seção
         title_frame = tk.Frame(section_frame, bg="#FFFFFF")
@@ -285,12 +318,26 @@ class UserActivityPage(BasePage):
         table_frame = tk.Frame(section_frame, bg="#FFFFFF")
         table_frame.pack(fill=tk.BOTH, expand=True, padx=24, pady=(0, 24))
         
-        # Cabeçalho
+        # Define larguras fixas para as colunas (em pixels)
+        if len(headers) == 5:
+            # Para chamados abertos: CÓDIGO, TÍTULO, STATUS, DATA ABERTURA, TEMPO ABERTO
+            if 'STATUS' in headers:
+                col_widths = [100, 300, 150, 200, 120]
+            else:
+                # Para chamados resolvidos: CÓDIGO, TÍTULO, DATA ABERTURA, DATA FECHAMENTO, TEMPO ABERTO
+                col_widths = [100, 300, 200, 200, 120]
+        else:
+            col_widths = [100] * len(headers)
+        
+        # Guarda as larguras para usar nas linhas
+        self._current_col_widths = col_widths
+        
+        # Cabeçalho fixo (fora do scroll)
         header_frame = tk.Frame(table_frame, bg="#A93226", height=50)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
-        for i, header_text in enumerate(headers):
+        for i, (header_text, width) in enumerate(zip(headers, col_widths)):
             header_label = tk.Label(
                 header_frame,
                 text=header_text,
@@ -301,15 +348,37 @@ class UserActivityPage(BasePage):
             )
             header_label.grid(row=0, column=i, sticky="ew", padx=8, pady=12)
         
-        for i in range(len(headers)):
-            header_frame.grid_columnconfigure(i, weight=1)
+        # Configura larguras fixas no grid do cabeçalho
+        for i, width in enumerate(col_widths):
+            header_frame.grid_columnconfigure(i, weight=0, minsize=width)
         
-        # Corpo da tabela
-        from pages.pending_tickets_page import ScrollableFrame
-        scrollable = ScrollableFrame(table_frame, bg="#FFFFFF")
-        scrollable.pack(fill=tk.BOTH, expand=True)
+        # Corpo da tabela usando Canvas (altura limitada para não ocupar toda a tela)
+        canvas = tk.Canvas(table_frame, bg="#FFFFFF", highlightthickness=0, height=300)
+        scrollbar = tk.Scrollbar(table_frame, orient="vertical", command=canvas.yview)
         
-        body_frame = scrollable.scrollable_frame
+        body_frame = tk.Frame(canvas, bg="#FFFFFF")
+        canvas_window = canvas.create_window((0, 0), window=body_frame, anchor="nw")
+        
+        def on_configure(event):
+            canvas_width = event.width
+            canvas.itemconfig(canvas_window, width=canvas_width)
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        
+        canvas.bind("<Configure>", on_configure)
+        body_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        # Configura as colunas do body_frame com as mesmas larguras
+        for i, width in enumerate(col_widths):
+            body_frame.grid_columnconfigure(i, weight=0, minsize=width)
+        
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Mousewheel
+        def on_table_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        canvas.bind("<MouseWheel>", on_table_mousewheel)
         
         if not tickets:
             tk.Label(
@@ -329,11 +398,11 @@ class UserActivityPage(BasePage):
             row_frame.pack_propagate(False)
             
             row_func(row_frame, ticket, headers)
-        
-        self.after(10, lambda: scrollable.update_scroll())
     
     def _get_opened_ticket_row(self, row_frame, ticket, headers):
         """Cria linha para ticket aberto"""
+        col_widths = getattr(self, '_current_col_widths', [100, 300, 150, 200, 120])
+        
         # Código
         code_label = tk.Label(
             row_frame,
@@ -389,12 +458,14 @@ class UserActivityPage(BasePage):
         )
         time_label.grid(row=0, column=4, sticky="ew", padx=8, pady=12)
         
-        # Configura grid
-        for i in range(5):
-            row_frame.grid_columnconfigure(i, weight=1)
+        # Configura grid com larguras fixas (exatamente iguais ao cabeçalho)
+        for i, width in enumerate(col_widths):
+            row_frame.grid_columnconfigure(i, weight=0, minsize=width)
     
     def _get_resolved_ticket_row(self, row_frame, ticket, headers):
         """Cria linha para ticket resolvido"""
+        col_widths = getattr(self, '_current_col_widths', [100, 300, 200, 200, 120])
+        
         # Código
         code_label = tk.Label(
             row_frame,
@@ -450,7 +521,7 @@ class UserActivityPage(BasePage):
         )
         time_label.grid(row=0, column=4, sticky="ew", padx=8, pady=12)
         
-        # Configura grid
-        for i in range(5):
-            row_frame.grid_columnconfigure(i, weight=1)
+        # Configura grid com larguras fixas (exatamente iguais ao cabeçalho)
+        for i, width in enumerate(col_widths):
+            row_frame.grid_columnconfigure(i, weight=0, minsize=width)
 

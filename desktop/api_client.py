@@ -10,8 +10,8 @@ from typing import Optional, Dict, Any
 try:
     from config import FLASK_BASE_URL, API_URL_BASE, ADMIN_USER
 except ImportError:
-    FLASK_BASE_URL = 'http://localhost:5000'
-    API_URL_BASE = 'https://api-suporte-grupo-bhghgua5hbd4e5hk.brazilsouth-01.azurewebsites.net'
+    FLASK_BASE_URL = 'http://localhost:5232'  # Porta padrão do .NET
+    API_URL_BASE = 'https://api-suporte-grupoads-e4hmccf7gaczdbht.brazilsouth-01.azurewebsites.net'
     ADMIN_USER = {
         'email': 'admin@helpwave.com',
         'senha': 'admin123',
@@ -25,7 +25,8 @@ class ApiClient:
     """Cliente para fazer requisições à API"""
     
     def __init__(self):
-        self.base_url = FLASK_BASE_URL
+        # Usa a URL base da API Azure como padrão, mas pode usar a local
+        self.base_url = API_URL_BASE or FLASK_BASE_URL
         self.default_headers = {
             'Content-Type': 'application/json',
         }
@@ -197,9 +198,11 @@ class AuthService:
     
     @staticmethod
     def login(email: str, password: str) -> Dict[str, Any]:
-        """Faz login do usuário - exatamente como no web (api.js authService.login)"""
-        # Envia exatamente como o web: { email: username, senha: password }
-        return api_client.post('/login', {'email': email, 'senha': password}, include_auth=False)
+        """Faz login do usuário - API .NET: POST /api/Auth/login"""
+        # API .NET espera Email e Senha (PascalCase)
+        response = api_client.post('/api/Auth/login', {'Email': email, 'Senha': password}, include_auth=False)
+        # Retorna { Token: string, PrimeiroAcesso: bool }
+        return response
     
     @staticmethod
     def logout():
@@ -211,6 +214,34 @@ class AuthService:
     def is_authenticated() -> bool:
         """Verifica se o usuário está autenticado"""
         return api_client.get_auth_token() is not None
+    
+    @staticmethod
+    def get_user_info() -> Optional[Dict[str, Any]]:
+        """Obtém informações do usuário do token JWT - igual ao web (authService.getUserInfo)"""
+        token = api_client.get_auth_token()
+        if not token:
+            return None
+        
+        try:
+            import base64
+            # Decodifica o payload do JWT (segunda parte do token)
+            parts = token.split('.')
+            if len(parts) != 3:
+                return None
+            
+            # Decodifica o payload
+            payload = parts[1]
+            # Adiciona padding se necessário
+            padding = 4 - len(payload) % 4
+            if padding != 4:
+                payload += '=' * padding
+            
+            decoded = base64.urlsafe_b64decode(payload)
+            user_info = json.loads(decoded)
+            return user_info
+        except Exception as e:
+            print(f"[AuthService] Erro ao decodificar token: {e}")
+            return None
 
 
 class UserService:
@@ -218,8 +249,17 @@ class UserService:
     
     @staticmethod
     def register(user_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Registra um novo usuário - igual ao web"""
-        return api_client.post('/register', user_data, include_auth=False)
+        """Registra um novo usuário - API .NET: POST /api/Usuarios"""
+        # Converte campos para PascalCase conforme esperado pela API .NET
+        api_data = {
+            'Nome': user_data.get('nome') or user_data.get('Nome', ''),
+            'Email': user_data.get('email') or user_data.get('Email', ''),
+            'Senha': user_data.get('senha') or user_data.get('Senha', ''),
+            'Telefone': user_data.get('telefone') or user_data.get('Telefone'),
+            'Cargo': user_data.get('cargo') or user_data.get('Cargo', ''),
+            'Permissao': user_data.get('permissao') or user_data.get('Permissao', 1)
+        }
+        return api_client.post('/api/Usuarios', api_data, include_auth=False)
     
     @staticmethod
     def get_users() -> Dict[str, Any]:
@@ -271,8 +311,22 @@ class UserService:
     
     @staticmethod
     def update_user(user_id: int, user_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Atualiza dados do usuário - igual ao web: /api/Usuarios/{id}"""
-        return api_client.put(f'/api/Usuarios/{user_id}', user_data)
+        """Atualiza dados do usuário - API .NET: PUT /api/Usuarios/{id}"""
+        # Converte campos para PascalCase conforme esperado pela API .NET
+        api_data = {}
+        if 'nome' in user_data or 'Nome' in user_data:
+            api_data['Nome'] = user_data.get('nome') or user_data.get('Nome')
+        if 'email' in user_data or 'Email' in user_data:
+            api_data['Email'] = user_data.get('email') or user_data.get('Email')
+        if 'telefone' in user_data or 'Telefone' in user_data:
+            api_data['Telefone'] = user_data.get('telefone') or user_data.get('Telefone')
+        if 'cargo' in user_data or 'Cargo' in user_data:
+            api_data['Cargo'] = user_data.get('cargo') or user_data.get('Cargo')
+        if 'permissao' in user_data or 'Permissao' in user_data:
+            api_data['Permissao'] = user_data.get('permissao') or user_data.get('Permissao')
+        if 'novaSenha' in user_data or 'NovaSenha' in user_data:
+            api_data['NovaSenha'] = user_data.get('novaSenha') or user_data.get('NovaSenha')
+        return api_client.put(f'/api/Usuarios/{user_id}', api_data)
     
     @staticmethod
     def delete_user(user_id: int) -> Dict[str, Any]:
@@ -281,7 +335,8 @@ class UserService:
     
     @staticmethod
     def alterar_senha(senha_atual: str, nova_senha: str) -> Dict[str, Any]:
-        """Altera senha do usuário - igual ao web: /api/Usuarios/alterar-senha"""
+        """Altera senha do usuário - API .NET: PUT /api/Usuarios/alterar-senha"""
+        # API .NET espera SenhaAtual e NovaSenha (PascalCase)
         return api_client.put('/api/Usuarios/alterar-senha', {
             'SenhaAtual': senha_atual,
             'NovaSenha': nova_senha
@@ -299,8 +354,18 @@ class UserService:
     
     @staticmethod
     def update_meu_perfil(user_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Atualiza perfil do usuário logado - igual ao web: /api/Usuarios/meu-perfil"""
-        return api_client.put('/api/Usuarios/meu-perfil', user_data)
+        """Atualiza perfil do usuário logado - API .NET: PUT /api/Usuarios/meu-perfil"""
+        # Converte campos para PascalCase conforme esperado pela API .NET
+        api_data = {}
+        if 'nome' in user_data or 'Nome' in user_data:
+            api_data['Nome'] = user_data.get('nome') or user_data.get('Nome')
+        if 'email' in user_data or 'Email' in user_data:
+            api_data['Email'] = user_data.get('email') or user_data.get('Email')
+        if 'telefone' in user_data or 'Telefone' in user_data:
+            api_data['Telefone'] = user_data.get('telefone') or user_data.get('Telefone')
+        if 'cargo' in user_data or 'Cargo' in user_data:
+            api_data['Cargo'] = user_data.get('cargo') or user_data.get('Cargo')
+        return api_client.put('/api/Usuarios/meu-perfil', api_data)
 
 
 class TicketService:
@@ -308,9 +373,17 @@ class TicketService:
     
     @staticmethod
     def create_ticket(ticket_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Cria um novo ticket - igual ao web: POST /chamados"""
+        """Cria um novo ticket - API .NET: POST /api/Chamados"""
         try:
-            return api_client.post('/chamados', ticket_data)
+            # Converte campos para PascalCase conforme esperado pela API .NET
+            api_data = {
+                'Titulo': ticket_data.get('titulo') or ticket_data.get('Titulo', ''),
+                'Descricao': ticket_data.get('descricao') or ticket_data.get('Descricao', ''),
+                'Tipo': ticket_data.get('tipo') or ticket_data.get('Tipo', ''),
+                'SolicitanteId': ticket_data.get('solicitanteId') or ticket_data.get('SolicitanteId', 0),
+                'Prioridade': ticket_data.get('prioridade') or ticket_data.get('Prioridade')
+            }
+            return api_client.post('/api/Chamados', api_data)
         except Exception as e:
             # Se houver erro de conexão, usa dados mock
             error_str = str(e).lower()
@@ -334,11 +407,14 @@ class TicketService:
             if filters.get('status'):
                 query_params.append(f"status={filters['status']}")
             
-            endpoint = '/chamados'
+            endpoint = '/api/Chamados'
             if query_params:
-                endpoint = f'/chamados?{"&".join(query_params)}'
+                endpoint = f'/api/Chamados?{"&".join(query_params)}'
             
+            print(f"[TicketService.get_tickets] Endpoint chamado: {endpoint}")
+            print(f"[TicketService.get_tickets] Filtros recebidos: {filters}")
             response = api_client.get(endpoint)
+            print(f"[TicketService.get_tickets] Resposta recebida: {len(response) if isinstance(response, list) else 'não é lista'}")
             # Retorna lista diretamente se for lista, senão tenta extrair
             if isinstance(response, list):
                 return response
@@ -362,9 +438,9 @@ class TicketService:
     
     @staticmethod
     def get_ticket(ticket_id: int) -> Dict[str, Any]:
-        """Obtém um ticket específico - igual ao web: GET /chamados/{id}"""
+        """Obtém um ticket específico - API .NET: GET /api/Chamados/{id}"""
         try:
-            return api_client.get(f'/chamados/{ticket_id}')
+            return api_client.get(f'/api/Chamados/{ticket_id}')
         except Exception as e:
             # Se houver erro de conexão, usa dados mock
             error_str = str(e).lower()
@@ -376,9 +452,25 @@ class TicketService:
     
     @staticmethod
     def update_ticket(ticket_id: int, ticket_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Atualiza um ticket - igual ao web: PUT /chamados/{id}"""
+        """Atualiza um ticket - API .NET: PUT /api/Chamados/{id}"""
         try:
-            return api_client.put(f'/chamados/{ticket_id}', ticket_data)
+            # Converte campos para PascalCase conforme esperado pela API .NET
+            api_data = {}
+            if 'status' in ticket_data or 'Status' in ticket_data:
+                api_data['Status'] = ticket_data.get('status') or ticket_data.get('Status')
+            if 'tecnicoResponsavelId' in ticket_data or 'TecnicoResponsavelId' in ticket_data:
+                api_data['TecnicoResponsavelId'] = ticket_data.get('tecnicoResponsavelId') or ticket_data.get('TecnicoResponsavelId')
+            if 'solucao' in ticket_data or 'Solucao' in ticket_data:
+                api_data['Solucao'] = ticket_data.get('solucao') or ticket_data.get('Solucao')
+            if 'dataFechamento' in ticket_data or 'DataFechamento' in ticket_data:
+                api_data['DataFechamento'] = ticket_data.get('dataFechamento') or ticket_data.get('DataFechamento')
+            if 'titulo' in ticket_data or 'Titulo' in ticket_data:
+                api_data['Titulo'] = ticket_data.get('titulo') or ticket_data.get('Titulo')
+            if 'descricao' in ticket_data or 'Descricao' in ticket_data:
+                api_data['Descricao'] = ticket_data.get('descricao') or ticket_data.get('Descricao')
+            if 'prioridade' in ticket_data or 'Prioridade' in ticket_data:
+                api_data['Prioridade'] = ticket_data.get('prioridade') or ticket_data.get('Prioridade')
+            return api_client.put(f'/api/Chamados/{ticket_id}', api_data)
         except Exception as e:
             # Se houver erro de conexão, usa dados mock
             error_str = str(e).lower()
@@ -390,9 +482,9 @@ class TicketService:
     
     @staticmethod
     def delete_ticket(ticket_id: int) -> Dict[str, Any]:
-        """Remove um ticket - igual ao web: DELETE /chamados/{id}"""
+        """Remove um ticket - API .NET: DELETE /api/Chamados/{id}"""
         try:
-            return api_client.delete(f'/chamados/{ticket_id}')
+            return api_client.delete(f'/api/Chamados/{ticket_id}')
         except Exception as e:
             # Se houver erro de conexão, retorna sucesso mockado
             error_str = str(e).lower()
@@ -406,30 +498,78 @@ class TicketService:
 
 
 class AIService:
-    """Serviço para integração com IA (Gemini)"""
+    """Serviço para integração com IA (Gemini) - igual ao web"""
     
     @staticmethod
     def gerar_sugestao(titulo: str, descricao: str) -> Dict[str, Any]:
-        """Gera uma sugestão de resposta técnica usando Gemini AI"""
+        """Gera uma sugestão de resposta técnica usando Gemini AI - igual ao web"""
+        # O endpoint do Gemini está no backend Flask (localhost:5000), não na API .NET
+        # Cria um cliente temporário para usar o Flask backend
+        flask_base_url = 'http://localhost:5000'
+        
         try:
-            response = api_client.post('/api/gemini/sugerir-resposta', {
-                'titulo': titulo or '',
-                'descricao': descricao
-            }, include_auth=False)
-            return response
-        except (requests.exceptions.ConnectionError, requests.exceptions.RequestException) as e:
-            # Fallback para sugestão mock quando a API não estiver disponível
-            print(f"[AIService] Erro ao conectar com API do Gemini: {e}")
-            print("[AIService] Usando sugestão mock como fallback")
-            return _gerar_sugestao_mock(titulo or '', descricao)
-        except Exception as e:
-            # Se o erro for sobre API não configurada, usa fallback mock
-            error_str = str(e).lower()
-            if 'gemini' in error_str or 'api' in error_str or 'configurada' in error_str or 'erro' in error_str:
-                print(f"[AIService] API do Gemini não disponível: {e}")
-                print("[AIService] Usando sugestão mock como fallback")
-                return _gerar_sugestao_mock(titulo or '', descricao)
-            raise
+            # Faz requisição direta ao Flask backend (igual ao web)
+            response = requests.post(
+                f'{flask_base_url}/api/gemini/sugerir-resposta',
+                json={
+                    'titulo': titulo or '',
+                    'descricao': descricao
+                },
+                headers={
+                    'Content-Type': 'application/json'
+                },
+                timeout=30
+            )
+            
+            # Processa a resposta igual ao web
+            if response.status_code == 204:
+                return {'message': 'Operação realizada com sucesso'}
+            
+            try:
+                text = response.text
+                if not text:
+                    data = {}
+                else:
+                    data = response.json()
+            except Exception:
+                if response.ok:
+                    data = {'message': 'Operação realizada com sucesso'}
+                else:
+                    data = {'message': 'Erro interno do servidor.'}
+            
+            if not response.ok:
+                # Cria erro com status_code e data (igual ao web)
+                error = Exception(data.get('erro') or data.get('message', 'Erro na requisição'))
+                error.status_code = response.status_code
+                error.data = data
+                raise error
+            
+            # Retorna no formato esperado (igual ao web)
+            # O backend Flask retorna {"sugestao": "..."} ou {"erro": "..."}
+            return data
+            
+        except requests.exceptions.ConnectionError as e:
+            # Erro de conexão - servidor não está rodando ou não está acessível
+            error = Exception('Erro de conexão. Verifique se o servidor Flask está rodando em http://localhost:5000')
+            error.status_code = 0
+            error.data = {'erro': 'Erro de conexão. Verifique se o servidor Flask está rodando em http://localhost:5000'}
+            error.message = str(e)  # Armazena mensagem original para debug
+            raise error
+        except requests.exceptions.Timeout as e:
+            # Timeout na requisição
+            error = Exception('Timeout na requisição. O servidor pode estar demorando muito para responder.')
+            error.status_code = 0
+            error.data = {'erro': 'Timeout na requisição. O servidor pode estar demorando muito para responder.'}
+            error.message = str(e)
+            raise error
+        except requests.exceptions.RequestException as e:
+            # Outros erros de requisição
+            error_msg = str(e)
+            error = Exception(f'Erro na requisição: {error_msg}')
+            error.status_code = 0
+            error.data = {'erro': f'Erro na requisição: {error_msg}'}
+            error.message = error_msg
+            raise error
 
 
 def _gerar_sugestao_mock(titulo: str, descricao: str) -> Dict[str, Any]:

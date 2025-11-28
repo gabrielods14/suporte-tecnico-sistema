@@ -18,7 +18,6 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(false);
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,7 +39,9 @@ const LoginScreen = ({ navigation }) => {
       
       console.log('Resposta do login:', response);
       
-      if (response && response.token) {
+      // A API retorna "Token" com T maiúsculo (conforme LoginResponseDto)
+      const token = response?.Token || response?.token;
+      if (response && token) {
         console.log('Login bem-sucedido! Navegando para Home...');
         // Login bem-sucedido, navegar para a tela home
         navigation.navigate('Home');
@@ -141,24 +142,6 @@ const LoginScreen = ({ navigation }) => {
           >
             <Text style={styles.forgotPasswordText}>Esqueci minha senha</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.credentialsButton}
-            onPress={() => setShowCredentials(!showCredentials)}
-          >
-            <Text style={styles.credentialsText}>
-              {showCredentials ? 'Ocultar' : 'Mostrar'} credenciais de teste
-            </Text>
-          </TouchableOpacity>
-          
-          {showCredentials && (
-            <View style={styles.credentialsBox}>
-              <Text style={styles.credentialLabel}>Usuário:</Text>
-              <Text style={styles.credentialValue}>admin@suporte.com</Text>
-              <Text style={styles.credentialLabel}>Senha:</Text>
-              <Text style={styles.credentialValue}>123456</Text>
-            </View>
-          )}
         </View>
       </View>
 
@@ -287,34 +270,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textDecorationLine: 'underline',
     fontWeight: '500',
-  },
-  credentialsButton: {
-    marginTop: 30,
-    alignItems: 'center',
-  },
-  credentialsText: {
-    color: '#fff',
-    fontSize: 16,
-    textDecorationLine: 'underline',
-  },
-  credentialsBox: {
-    marginTop: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  credentialLabel: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  credentialValue: {
-    color: '#fff',
-    fontSize: 14,
-    marginBottom: 5,
   },
 });
 

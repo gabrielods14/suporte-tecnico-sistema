@@ -75,10 +75,27 @@ def gerenciar_usuario(usuario_id):
         cargo = data.get('cargo') or data.get('Cargo')
         permissao = data.get('permissao') if 'permissao' in data else (data.get('Permissao') if 'Permissao' in data else None)
         
-        print(f'[PUT /api/Usuarios/{usuario_id}] Campos extraídos - nome: {nome}, email: {email}, cargo: {cargo}, permissao: {permissao}')
+        # Extração do campo NovaSenha (verifica se existe e não está vazio)
+        nova_senha = None
+        if 'novaSenha' in data:
+            valor = data['novaSenha']
+            if valor and isinstance(valor, str) and valor.strip():
+                nova_senha = valor.strip()
+        if not nova_senha and 'NovaSenha' in data:
+            valor = data['NovaSenha']
+            if valor and isinstance(valor, str) and valor.strip():
+                nova_senha = valor.strip()
         
-        # Validação mínima
-        if not nome and not email and not telefone and not cargo and permissao is None:
+        print(f'[PUT /api/Usuarios/{usuario_id}] Campos extraídos - nome: {nome}, email: {email}, cargo: {cargo}, permissao: {permissao}')
+        print(f'[PUT /api/Usuarios/{usuario_id}] Campos recebidos no JSON: {list(data.keys())}')
+        print(f'[PUT /api/Usuarios/{usuario_id}] NovaSenha presente no JSON? {"Sim" if "NovaSenha" in data or "novaSenha" in data else "Não"}')
+        if 'NovaSenha' in data or 'novaSenha' in data:
+            valor_recebido = data.get('NovaSenha') or data.get('novaSenha') or ''
+            print(f'[PUT /api/Usuarios/{usuario_id}] NovaSenha valor recebido (tipo): {type(valor_recebido)}, tamanho: {len(str(valor_recebido)) if valor_recebido else 0}')
+        print(f'[PUT /api/Usuarios/{usuario_id}] NovaSenha será enviada? {"Sim" if nova_senha else "Não"}')
+        
+        # Validação mínima (agora inclui nova_senha)
+        if not nome and not email and not telefone and not cargo and permissao is None and not nova_senha:
             return jsonify({"message": "Pelo menos um campo deve ser fornecido para atualização."}), 400
         
         # Prepara os dados no formato esperado pela API do Azure
@@ -93,6 +110,20 @@ def gerenciar_usuario(usuario_id):
             dados_para_api['Cargo'] = cargo
         if permissao is not None:
             dados_para_api['Permissao'] = int(permissao)  # Garante que seja inteiro
+        # CRÍTICO: Adiciona NovaSenha sempre que fornecida (independente de outros campos)
+        if nova_senha:
+            dados_para_api['NovaSenha'] = nova_senha  # Campo para atualização de senha pelo admin
+            print(f'[PUT /api/Usuarios/{usuario_id}] ✅ NovaSenha ADICIONADA ao payload: *** (oculta)')
+        else:
+            print(f'[PUT /api/Usuarios/{usuario_id}] ❌ NovaSenha NÃO será enviada (campo ausente ou vazio)')
+        
+        # Prepara um dicionário para log (oculta senha por segurança)
+        dados_para_log = dados_para_api.copy()
+        if 'NovaSenha' in dados_para_log:
+            dados_para_log['NovaSenha'] = '*** (ocultada por segurança)'
+        
+        print(f'[PUT /api/Usuarios/{usuario_id}] Total de campos no payload: {len(dados_para_api)}')
+        print(f'[PUT /api/Usuarios/{usuario_id}] Campos no payload: {list(dados_para_api.keys())}')
         
         try:
             # Endpoint de Atualização na API do Azure (PUT)
@@ -107,9 +138,23 @@ def gerenciar_usuario(usuario_id):
             if auth:
                 headers['Authorization'] = auth
             
-            print(f'[PUT /api/Usuarios/{usuario_id}] Enviando para API Azure: {dados_para_api}')
-            response = requests.put(url_atualizacao, json=dados_para_api, headers=headers)
-            print(f'[PUT /api/Usuarios/{usuario_id}] Resposta da API Azure: {response.status_code}')
+            print(f'[PUT /api/Usuarios/{usuario_id}] 🚀 Enviando para API Azure - Campos: {list(dados_para_api.keys())}')
+            print(f'[PUT /api/Usuarios/{usuario_id}] 📦 Payload (senha ocultada): {dados_para_log}')
+            
+            response = requests.put(url_atualizacao, json=dados_para_api, headers=headers, timeout=30)
+            
+            print(f'[PUT /api/Usuarios/{usuario_id}] ✅ Resposta da API Azure: Status {response.status_code}')
+            
+            # Log detalhado da resposta
+            try:
+                if response.status_code in [200, 204]:
+                    response_data = response.json() if response.content else {}
+                    print(f'[PUT /api/Usuarios/{usuario_id}] ✅ Resposta (sucesso): {response_data}')
+                else:
+                    response_text = response.text[:1000]  # Limita a 1000 caracteres
+                    print(f'[PUT /api/Usuarios/{usuario_id}] ❌ Resposta (erro): {response_text}')
+            except Exception as e:
+                print(f'[PUT /api/Usuarios/{usuario_id}] ⚠️ Erro ao processar resposta: {e}')
             
             # 1. Atualização BEM-SUCEDIDA
             if response.status_code in [200, 204]:

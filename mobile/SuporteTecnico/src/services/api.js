@@ -80,9 +80,10 @@ class ApiService {
       const data = JSON.parse(responseText);
       console.log('Dados parseados:', data);
       
-      // Armazenar o token JWT
-      if (data.token) {
-        this.setToken(data.token);
+      // Armazenar o token JWT (a API retorna "Token" com T maiúsculo)
+      const token = data.Token || data.token;
+      if (token) {
+        this.setToken(token);
         console.log('Token armazenado com sucesso');
       } else {
         console.log('AVISO: Nenhum token recebido na resposta');
@@ -123,7 +124,15 @@ class ApiService {
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao buscar chamados');
+        const errorText = await response.text();
+        let errorMessage = 'Erro ao buscar chamados';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
@@ -141,7 +150,15 @@ class ApiService {
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao buscar chamado');
+        const errorText = await response.text();
+        let errorMessage = 'Erro ao buscar chamado';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
@@ -153,14 +170,32 @@ class ApiService {
 
   async criarChamado(chamadoData) {
     try {
+      // Garantir que os dados estão no formato correto esperado pela API
+      // A API espera: Titulo, Descricao, Tipo, SolicitanteId, Prioridade (opcional)
+      const requestData = {
+        Titulo: chamadoData.titulo || chamadoData.Titulo || chamadoData.title,
+        Descricao: chamadoData.descricao || chamadoData.Descricao || chamadoData.description,
+        Tipo: chamadoData.tipo || chamadoData.Tipo || chamadoData.type,
+        SolicitanteId: chamadoData.solicitanteId || chamadoData.SolicitanteId || chamadoData.solicitante_id || 1,
+        Prioridade: chamadoData.prioridade || chamadoData.Prioridade || null
+      };
+
       const response = await fetch(`${API_BASE_URL}/api/Chamados`, {
         method: 'POST',
         headers: this.getHeaders(),
-        body: JSON.stringify(chamadoData),
+        body: JSON.stringify(requestData),
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao criar chamado');
+        const errorText = await response.text();
+        let errorMessage = 'Erro ao criar chamado';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
@@ -172,14 +207,48 @@ class ApiService {
 
   async atualizarChamado(id, dadosAtualizacao) {
     try {
+      // Garantir que os dados estão no formato correto esperado pela API
+      // A API espera campos opcionais: Status, TecnicoResponsavelId, DataFechamento, Titulo, Descricao, Solucao, Prioridade
+      const requestData = {};
+      
+      if (dadosAtualizacao.status !== undefined) {
+        requestData.Status = dadosAtualizacao.status;
+      }
+      if (dadosAtualizacao.tecnicoResponsavelId !== undefined || dadosAtualizacao.TecnicoResponsavelId !== undefined) {
+        requestData.TecnicoResponsavelId = dadosAtualizacao.tecnicoResponsavelId || dadosAtualizacao.TecnicoResponsavelId;
+      }
+      if (dadosAtualizacao.dataFechamento !== undefined || dadosAtualizacao.DataFechamento !== undefined) {
+        requestData.DataFechamento = dadosAtualizacao.dataFechamento || dadosAtualizacao.DataFechamento;
+      }
+      if (dadosAtualizacao.titulo !== undefined || dadosAtualizacao.Titulo !== undefined) {
+        requestData.Titulo = dadosAtualizacao.titulo || dadosAtualizacao.Titulo;
+      }
+      if (dadosAtualizacao.descricao !== undefined || dadosAtualizacao.Descricao !== undefined) {
+        requestData.Descricao = dadosAtualizacao.descricao || dadosAtualizacao.Descricao;
+      }
+      if (dadosAtualizacao.solucao !== undefined || dadosAtualizacao.Solucao !== undefined) {
+        requestData.Solucao = dadosAtualizacao.solucao || dadosAtualizacao.Solucao;
+      }
+      if (dadosAtualizacao.prioridade !== undefined || dadosAtualizacao.Prioridade !== undefined) {
+        requestData.Prioridade = dadosAtualizacao.prioridade || dadosAtualizacao.Prioridade;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/Chamados/${id}`, {
         method: 'PUT',
         headers: this.getHeaders(),
-        body: JSON.stringify(dadosAtualizacao),
+        body: JSON.stringify(requestData),
       });
       
       if (!response.ok) {
-        throw new Error('Erro ao atualizar chamado');
+        const errorText = await response.text();
+        let errorMessage = 'Erro ao atualizar chamado';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();

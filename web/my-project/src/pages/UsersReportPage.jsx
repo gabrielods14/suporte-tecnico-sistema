@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/users-report.css';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
 import { FaSearch, FaUsers } from 'react-icons/fa';
 import { userService } from '../utils/api';
@@ -173,6 +174,7 @@ function UsersReportPage({ onLogout, onNavigateToHome, onNavigateToPage, current
           </table>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

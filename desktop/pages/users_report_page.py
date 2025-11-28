@@ -2,8 +2,10 @@
 UsersReportPage - Replica UsersReportPage.jsx do web
 """
 import tkinter as tk
+import customtkinter as ctk
 from pages.base_page import BasePage
 from api_client import UserService
+from config import COLORS
 import threading
 
 def map_permissao_to_label(permissao):
@@ -52,16 +54,21 @@ class UsersReportPage(BasePage):
         container = tk.Frame(self.main_content, bg="#F8F9FA")
         container.pack(fill=tk.BOTH, expand=True, padx=48, pady=48)
         
+        # Botão voltar
+        back_frame = tk.Frame(container, bg="#F8F9FA")
+        back_frame.pack(fill="x", anchor="w", pady=(0, 20))
         
-        # Título
-        title_label = tk.Label(
-            container,
-            text="RELATÓRIO DE USUÁRIOS",
-            font=("Inter", 24, "bold"),
-            bg="#F8F9FA",
-            fg="#000000"
+        back_btn = ctk.CTkButton(
+            back_frame,
+            text="← Voltar",
+            font=ctk.CTkFont(size=14),
+            fg_color="transparent",
+            text_color=COLORS['primary'],
+            hover_color=COLORS['neutral_100'],
+            anchor="w",
+            command=self.on_navigate_to_home
         )
-        title_label.pack(anchor="w", pady=(0, 24))
+        back_btn.pack(side="left", pady=(0, 24))
         
         # Barra de busca
         search_frame = tk.Frame(container, bg="#FFFFFF", bd=1, relief=tk.SOLID)
@@ -123,12 +130,29 @@ class UsersReportPage(BasePage):
         header_frame.grid_columnconfigure(3, weight=1)
         header_frame.grid_columnconfigure(4, weight=1)
         
-        # Frame scrollável para corpo da tabela
-        from pages.pending_tickets_page import ScrollableFrame
-        self.scrollable_frame = ScrollableFrame(table_frame, bg="#FFFFFF")
-        self.scrollable_frame.pack(fill=tk.BOTH, expand=True)
+        # Frame scrollável para corpo da tabela usando Canvas
+        self.table_canvas = tk.Canvas(table_frame, bg="#FFFFFF", highlightthickness=0)
+        scrollbar = tk.Scrollbar(table_frame, orient="vertical", command=self.table_canvas.yview)
         
-        self.table_body = self.scrollable_frame.scrollable_frame
+        self.table_body = tk.Frame(self.table_canvas, bg="#FFFFFF")
+        canvas_window = self.table_canvas.create_window((0, 0), window=self.table_body, anchor="nw")
+        
+        def on_configure(event):
+            canvas_width = event.width
+            self.table_canvas.itemconfig(canvas_window, width=canvas_width)
+            self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
+        
+        self.table_canvas.bind("<Configure>", on_configure)
+        self.table_body.bind("<Configure>", lambda e: self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all")))
+        
+        self.table_canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        self.table_canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Mousewheel
+        def on_mousewheel(event):
+            self.table_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        self.table_canvas.bind("<MouseWheel>", on_mousewheel)
     
     def _on_search_focus_in(self, event):
         """Quando o campo de busca recebe foco"""
@@ -222,6 +246,7 @@ class UsersReportPage(BasePage):
                 fg="#666666",
                 pady=48
             ).pack(pady=48)
+            self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
             return
         
         if not self.filtered_users:
@@ -233,6 +258,7 @@ class UsersReportPage(BasePage):
                 fg="#999999",
                 pady=48
             ).pack(pady=48)
+            self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
             return
         
         # Adiciona linhas
@@ -333,6 +359,7 @@ class UsersReportPage(BasePage):
             
             row_frame.config(cursor="hand2")
         
-        # Atualiza scrollregion
-        self.after(10, lambda: self.scrollable_frame.update_scroll())
+        # Atualiza scrollregion após renderizar tudo
+        self.after(10, lambda: self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all")))
+        self.table_canvas.configure(scrollregion=self.table_canvas.bbox("all"))
 

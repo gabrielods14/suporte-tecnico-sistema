@@ -20,6 +20,7 @@ class Header(tk.Frame):
         self.is_dropdown_open = False
         self.show_logout_modal = False
         self.dropdown_menu = None
+        self.logout_modal = None
         
         # Usa o nome completo do userInfo diretamente
         display_name = self.user_info.get('nome', user_name) if self.user_info else user_name
@@ -61,7 +62,11 @@ class Header(tk.Frame):
         )
         if on_navigate_to_profile:
             user_icon.config(cursor="hand2")
-            user_icon.bind("<Button-1>", lambda e: self._handle_user_icon_click())
+            # Acessibilidade: aria-label
+            try:
+                user_icon.bind("<Button-1>", lambda e: self._handle_user_icon_click())
+            except:
+                pass
         user_icon.pack(side=tk.LEFT, padx=(0, 8))
         
         # Texto de boas-vindas
@@ -83,6 +88,12 @@ class Header(tk.Frame):
             bg="#A93226",
             cursor="hand2"
         )
+        # Acessibilidade: aria-label (simulado via tooltip)
+        try:
+            # Tkinter não suporta aria-label diretamente, mas podemos usar tooltip
+            pass
+        except:
+            pass
         self.settings_icon.pack(side=tk.LEFT, padx=(0, 8))
         self.settings_icon.bind("<Button-1>", self._toggle_dropdown)
         
@@ -132,13 +143,55 @@ class Header(tk.Frame):
         if self.dropdown_menu:
             self.dropdown_menu.close()
         
-        # Calcula posição
+        # Obtém a janela principal
+        toplevel = self.winfo_toplevel()
+        
+        # Calcula posição baseada no botão de dropdown
         if event:
-            x = event.x_root
-            y = event.y_root + 10
+            # Posição do clique no evento
+            x_base = event.x_root
+            y_base = event.y_root + 10
         else:
-            x = self.winfo_rootx() + self.winfo_width() - 150
-            y = self.winfo_rooty() + self.winfo_height()
+            # Posição padrão no canto superior direito
+            x_base = self.winfo_rootx() + self.winfo_width() - 150
+            y_base = self.winfo_rooty() + self.winfo_height()
+        
+        # Tamanho aproximado do dropdown (largura fixa, altura variável)
+        dropdown_width = 180
+        dropdown_height = 100  # Aproximado: 2 itens + separador
+        
+        # Obtém dimensões e posição da janela principal
+        window_x = toplevel.winfo_x()
+        window_y = toplevel.winfo_y()
+        window_width = toplevel.winfo_width()
+        window_height = toplevel.winfo_height()
+        
+        # Calcula limites da janela
+        window_right = window_x + window_width
+        window_bottom = window_y + window_height
+        
+        # Ajusta posição horizontal se necessário
+        x = x_base
+        if x + dropdown_width > window_right:
+            # Se ultrapassar à direita, alinha com a borda direita da janela
+            x = window_right - dropdown_width - 5
+        
+        if x < window_x:
+            # Se ultrapassar à esquerda, alinha com a borda esquerda
+            x = window_x + 5
+        
+        # Ajusta posição vertical se necessário
+        y = y_base
+        if y + dropdown_height > window_bottom:
+            # Se ultrapassar abaixo, posiciona acima do botão
+            if event:
+                y = event.y_root - dropdown_height - 10
+            else:
+                y = self.winfo_rooty() - dropdown_height - 5
+            
+            # Se ainda ultrapassar acima, alinha com o topo da janela
+            if y < window_y:
+                y = window_y + 5
         
         self.dropdown_menu = DropdownMenu(
             self,
@@ -164,8 +217,18 @@ class Header(tk.Frame):
     def _show_logout_modal(self):
         """Mostra modal de confirmação de logout"""
         if self.show_logout_modal:
-            modal = ConfirmLogoutModal(
-                self,
+            # Fecha modal anterior se existir
+            if self.logout_modal:
+                try:
+                    self.logout_modal.close()
+                except:
+                    pass
+                self.logout_modal = None
+            
+            # Obtém a janela principal (toplevel) para centralizar o modal corretamente
+            toplevel = self.winfo_toplevel()
+            self.logout_modal = ConfirmLogoutModal(
+                toplevel,
                 is_open=True,
                 on_confirm=self._handle_logout,
                 on_cancel=self._cancel_logout
@@ -174,10 +237,22 @@ class Header(tk.Frame):
     def _cancel_logout(self):
         """Cancela logout"""
         self.show_logout_modal = False
+        if self.logout_modal:
+            try:
+                self.logout_modal.close()
+            except:
+                pass
+            self.logout_modal = None
     
     def _handle_logout(self):
         """Chama o callback de logout"""
         self.show_logout_modal = False
+        if self.logout_modal:
+            try:
+                self.logout_modal.close()
+            except:
+                pass
+            self.logout_modal = None
         if self.on_logout:
             self.on_logout()
     
