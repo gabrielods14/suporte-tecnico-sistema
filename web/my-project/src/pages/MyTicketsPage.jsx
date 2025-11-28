@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
-import { FaSearch, FaFilter } from 'react-icons/fa';
+import { FaSearch, FaFilter, FaSyncAlt } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
 function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
@@ -15,6 +15,80 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('dataAbertura'); // codigo, titulo, prioridade, dataAbertura, status
   const [sortOrder, setSortOrder] = useState('desc'); // asc, desc
+  // Removido: edição de prioridade - usuários apenas visualizam, não editam
+
+  // Funções centralizadas para mapeamento de prioridade
+  const mapPriority = (p) => {
+    // Se for null ou undefined, retorna default
+    if (p === null || p === undefined) {
+      return 'MÉDIA';
+    }
+    
+    // Se for número, mapeia diretamente
+    if (typeof p === 'number') {
+      if (p === 3 || p === '3') return 'ALTA';
+      if (p === 2 || p === '2') return 'MÉDIA';
+      if (p === 1 || p === '1') return 'BAIXA';
+      return 'MÉDIA'; // default
+    }
+    
+    // Se for string, tenta parsear
+    if (typeof p === 'string') {
+      const normalized = p.trim().toLowerCase();
+      
+      // Tenta parsear como número primeiro
+      const numValue = parseInt(normalized, 10);
+      if (!isNaN(numValue) && numValue >= 1 && numValue <= 3) {
+        return mapPriority(numValue);
+      }
+      
+      // Mapeia por texto (verifica vários formatos possíveis)
+      if (normalized === 'alta' || normalized === '3' || normalized.includes('alta')) return 'ALTA';
+      if (normalized === 'média' || normalized === 'media' || normalized === '2' || normalized.includes('medi')) return 'MÉDIA';
+      if (normalized === 'baixa' || normalized === '1' || normalized.includes('baix')) return 'BAIXA';
+      
+      // Verifica enum do C# (PrioridadeChamado.Alta, etc)
+      if (normalized.includes('prioridadechamado.alta') || normalized.includes('alta')) return 'ALTA';
+      if (normalized.includes('prioridadechamado.media') || normalized.includes('prioridadechamado.média')) return 'MÉDIA';
+      if (normalized.includes('prioridadechamado.baixa')) return 'BAIXA';
+    }
+    
+    // Default para MÉDIA se não conseguir identificar
+    return 'MÉDIA';
+  };
+
+  // Função para converter texto de prioridade para número do backend
+  const priorityTextToNumber = (priorityText) => {
+    if (typeof priorityText === 'number') {
+      return priorityText;
+    }
+    const normalized = String(priorityText || '').trim().toUpperCase();
+    switch (normalized) {
+      case 'ALTA':
+      case '3':
+        return 3;
+      case 'MÉDIA':
+      case 'MEDIA':
+      case '2':
+        return 2;
+      case 'BAIXA':
+      case '1':
+        return 1;
+      default:
+        return 2; // Default para MÉDIA
+    }
+  };
+
+  // Função para converter número do backend para texto de prioridade
+  const priorityNumberToText = (priorityNumber) => {
+    const num = typeof priorityNumber === 'number' ? priorityNumber : parseInt(priorityNumber, 10);
+    switch (num) {
+      case 3: return 'ALTA';
+      case 2: return 'MÉDIA';
+      case 1: return 'BAIXA';
+      default: return 'MÉDIA';
+    }
+  };
 
   const handleTicketClick = (ticketId) => {
     if (onNavigateToTicketDetail) {
@@ -22,9 +96,13 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
     }
   };
 
+  // Recarrega os tickets sempre que a página for acessada ou o userInfo mudar
   useEffect(() => {
-    loadTickets();
-  }, [userInfo?.id]);
+    if (currentPage === 'my-tickets' && userInfo?.id) {
+      loadTickets();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userInfo?.id, currentPage]);
 
   useEffect(() => {
     applyFiltersAndSort();
@@ -62,16 +140,6 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
       const apiTickets = await ticketService.getTickets(filters);
       
       if (apiTickets && apiTickets.length > 0) {
-        const mapPriority = (p) => {
-          if (typeof p === 'number') {
-            return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
-          }
-          const val = (p || '').toString().toLowerCase();
-          if (val.includes('alta')) return 'ALTA';
-          if (val.includes('medi')) return 'MÉDIA';
-          if (val.includes('baix')) return 'BAIXA';
-          return 'MÉDIA';
-        };
 
         const mapStatus = (s) => {
           if (typeof s === 'number') {
@@ -86,17 +154,29 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
         };
         
         const mapped = apiTickets
-          .map(item => ({
-            id: item.id,
-            codigo: String(item.id).padStart(6, '0'),
-            titulo: item.titulo || '',
-            prioridade: mapPriority(item.prioridade),
-            status: item.status,
-            statusText: mapStatus(item.status),
-            dataAbertura: item.dataAbertura,
-            dataFechamento: item.dataFechamento,
-            tecnico: item.tecnicoResponsavel?.nome || 'N/A'
-          }));
+          .map(item => {
+            // Mapeia a prioridade de diferentes formatos possíveis
+            const prioridadeValue = item.prioridade !== undefined ? item.prioridade : 
+                                  item.Prioridade !== undefined ? item.Prioridade : 
+                                  2; // Default para MÉDIA
+            const prioridadeText = mapPriority(prioridadeValue);
+            const prioridadeNum = typeof prioridadeValue === 'number' 
+              ? prioridadeValue 
+              : priorityTextToNumber(prioridadeText);
+            
+            return {
+              id: item.id,
+              codigo: String(item.id).padStart(6, '0'),
+              titulo: item.titulo || '',
+              prioridade: prioridadeText,
+              prioridadeNumber: prioridadeNum,
+              status: item.status,
+              statusText: mapStatus(item.status),
+              dataAbertura: item.dataAbertura,
+              dataFechamento: item.dataFechamento,
+              tecnico: item.tecnicoResponsavel?.nome || 'N/A'
+            };
+          });
         
         setTickets(mapped);
         return;
@@ -194,6 +274,8 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
     return date.toLocaleDateString('pt-BR');
   };
 
+  // Removido: funções de edição de prioridade - apenas visualização nesta página
+
   if (loading) {
     return <LoadingScreen message="Aguarde..." />;
   }
@@ -215,6 +297,14 @@ function MyTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPa
         {/* Header da página */}
         <div className="page-header">
           <h1>MEUS CHAMADOS</h1>
+          <button 
+            className="refresh-button"
+            onClick={() => loadTickets()}
+            title="Atualizar lista de chamados"
+            aria-label="Atualizar lista de chamados"
+          >
+            <FaSyncAlt /> Atualizar
+          </button>
         </div>
 
         {/* Filtros */}

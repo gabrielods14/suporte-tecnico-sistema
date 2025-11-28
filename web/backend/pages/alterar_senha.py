@@ -43,7 +43,14 @@ def alterar_senha():
             if auth:
                 headers['Authorization'] = auth
             
+            print(f'[PUT /api/Usuarios/alterar-senha] Enviando para API Azure: {url}')
+            print(f'[PUT /api/Usuarios/alterar-senha] Headers: {headers}')
+            print(f'[PUT /api/Usuarios/alterar-senha] Payload (senha ocultada): {{"SenhaAtual": "***", "NovaSenha": "***"}}')
+            
             response = requests.put(url, json=dados_para_api, headers=headers)
+            
+            print(f'[PUT /api/Usuarios/alterar-senha] Resposta da API Azure: {response.status_code}')
+            print(f'[PUT /api/Usuarios/alterar-senha] Resposta (text): {response.text[:200]}')
             
             # Resposta bem-sucedida
             if response.status_code in [200, 204]:

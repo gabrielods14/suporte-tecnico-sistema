@@ -5,7 +5,8 @@ import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LoadingScreen from '../components/LoadingScreen';
-import { FaClipboardList, FaSearch, FaFilter } from 'react-icons/fa';
+import Toast from '../components/Toast';
+import { FaClipboardList, FaSearch, FaFilter, FaEdit } from 'react-icons/fa';
 import { ticketService } from '../utils/api';
 
 function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, currentPage, userInfo, onNavigateToTicketDetail, onNavigateToProfile }) {
@@ -20,6 +21,49 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('codigo'); // codigo, titulo, prioridade, dataLimite
   const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
+  const [editingPriority, setEditingPriority] = useState(null); // ID do ticket sendo editado
+  const [toast, setToast] = useState({ isVisible: false, message: '', type: 'error' });
+  const [updatingPriority, setUpdatingPriority] = useState(false);
+
+  // Funções centralizadas para mapeamento de prioridade
+  const mapPriority = (p) => {
+    // Se for null ou undefined, retorna default
+    if (p === null || p === undefined) {
+      return 'MÉDIA';
+    }
+    
+    // Se for número, mapeia diretamente
+    if (typeof p === 'number') {
+      if (p === 3 || p === '3') return 'ALTA';
+      if (p === 2 || p === '2') return 'MÉDIA';
+      if (p === 1 || p === '1') return 'BAIXA';
+      return 'MÉDIA'; // default
+    }
+    
+    // Se for string, tenta parsear
+    if (typeof p === 'string') {
+      const normalized = p.trim().toLowerCase();
+      
+      // Tenta parsear como número primeiro
+      const numValue = parseInt(normalized, 10);
+      if (!isNaN(numValue) && numValue >= 1 && numValue <= 3) {
+        return mapPriority(numValue);
+      }
+      
+      // Mapeia por texto (verifica vários formatos possíveis)
+      if (normalized === 'alta' || normalized === '3' || normalized.includes('alta')) return 'ALTA';
+      if (normalized === 'média' || normalized === 'media' || normalized === '2' || normalized.includes('medi')) return 'MÉDIA';
+      if (normalized === 'baixa' || normalized === '1' || normalized.includes('baix')) return 'BAIXA';
+      
+      // Verifica enum do C# (PrioridadeChamado.Alta, etc)
+      if (normalized.includes('prioridadechamado.alta') || normalized.includes('alta')) return 'ALTA';
+      if (normalized.includes('prioridadechamado.media') || normalized.includes('prioridadechamado.média')) return 'MÉDIA';
+      if (normalized.includes('prioridadechamado.baixa')) return 'BAIXA';
+    }
+    
+    // Default para MÉDIA se não conseguir identificar
+    return 'MÉDIA';
+  };
 
   
 
@@ -60,17 +104,6 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
       try {
         const apiTickets = await ticketService.getTickets(filters);
         if (apiTickets && apiTickets.length > 0) {
-          const mapPriority = (p) => {
-            if (typeof p === 'number') {
-              return p === 3 ? 'ALTA' : p === 2 ? 'MÉDIA' : 'BAIXA';
-            }
-            const val = (p || '').toString().toLowerCase();
-            if (val.includes('alta')) return 'ALTA';
-            if (val.includes('medi')) return 'MÉDIA';
-            if (val.includes('baix')) return 'BAIXA';
-            return 'MÉDIA';
-          };
-          
           let filteredTickets = apiTickets.filter(item => {
             const status = item.status;
             return status === 1 || status === 2 || status === 4;
@@ -104,11 +137,22 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
               const abertura = item.dataAbertura ? new Date(item.dataAbertura) : new Date();
               const limite = new Date(abertura);
               limite.setDate(limite.getDate() + 7);
+              // Mapeia a prioridade de diferentes formatos possíveis
+              const prioridadeValue = item.prioridade !== undefined ? item.prioridade : 
+                                    item.Prioridade !== undefined ? item.Prioridade : 
+                                    2; // Default para MÉDIA
+              
+              const prioridadeText = mapPriority(prioridadeValue);
+              const prioridadeNum = typeof prioridadeValue === 'number' 
+                ? prioridadeValue 
+                : priorityTextToNumber(prioridadeText);
+              
               return {
                 id: item.id,
                 codigo: String(item.id).padStart(6, '0'),
                 titulo: item.titulo || '',
-                prioridade: mapPriority(item.prioridade || item.Prioridade),
+                prioridade: prioridadeText,
+                prioridadeNumber: prioridadeNum,
                 dataLimite: limite.toISOString(),
                 status: item.status || 'ABERTO'
               };
@@ -215,6 +259,114 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
     return date.toLocaleDateString('pt-BR');
   };
 
+  // Função para converter texto de prioridade para número do backend
+  const priorityTextToNumber = (priorityText) => {
+    if (typeof priorityText === 'number') {
+      return priorityText;
+    }
+    const normalized = String(priorityText || '').trim().toUpperCase();
+    switch (normalized) {
+      case 'ALTA':
+      case '3':
+        return 3;
+      case 'MÉDIA':
+      case 'MEDIA':
+      case '2':
+        return 2;
+      case 'BAIXA':
+      case '1':
+        return 1;
+      default:
+        return 2; // Default para MÉDIA
+    }
+  };
+
+  // Função para converter número do backend para texto de prioridade
+  const priorityNumberToText = (priorityNumber) => {
+    const num = typeof priorityNumber === 'number' ? priorityNumber : parseInt(priorityNumber, 10);
+    switch (num) {
+      case 3: return 'ALTA';
+      case 2: return 'MÉDIA';
+      case 1: return 'BAIXA';
+      default: return 'MÉDIA';
+    }
+  };
+
+  const handlePriorityChange = async (ticketId, newPriority) => {
+    try {
+      setUpdatingPriority(true);
+      const priorityNumber = priorityTextToNumber(newPriority);
+      
+      // Envia a prioridade no formato que o backend espera (minúsculo)
+      await ticketService.updateTicket(ticketId, {
+        prioridade: priorityNumber
+      });
+
+      // Atualiza o ticket localmente
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { 
+                ...ticket, 
+                prioridade: newPriority,
+                prioridadeNumber: priorityTextToNumber(newPriority)
+              }
+            : ticket
+        )
+      );
+
+      // Atualiza também os tickets filtrados
+      setFilteredTickets(prevFiltered => 
+        prevFiltered.map(ticket => 
+          ticket.id === ticketId 
+            ? { 
+                ...ticket, 
+                prioridade: newPriority,
+                prioridadeNumber: priorityTextToNumber(newPriority)
+              }
+            : ticket
+        )
+      );
+
+      setEditingPriority(null);
+      showToast('Prioridade atualizada com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao atualizar prioridade:', error);
+      const errorMessage = error?.data?.message || error?.message || 'Erro ao atualizar prioridade.';
+      showToast(errorMessage, 'error');
+    } finally {
+      setUpdatingPriority(false);
+    }
+  };
+
+  const showToast = (message, type = 'error') => {
+    setToast({ isVisible: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ isVisible: false, message: '', type: 'error' });
+  };
+
+  const handlePriorityClick = (e, ticketId) => {
+    e.stopPropagation(); // Previne o clique na linha da tabela
+    setEditingPriority(ticketId);
+  };
+
+  const handlePrioritySelectChange = (e, ticketId) => {
+    e.stopPropagation();
+    const newPriority = e.target.value;
+    handlePriorityChange(ticketId, newPriority);
+  };
+
+  const handlePrioritySelectBlur = (e, ticketId) => {
+    // Aguarda um pouco antes de fechar para permitir que o onChange seja processado
+    setTimeout(() => {
+      if (!updatingPriority) {
+        setEditingPriority(null);
+      }
+    }, 300);
+  };
+
   if (loading) {
     return <LoadingScreen message="Aguarde..." />;
   }
@@ -304,13 +456,39 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
                     <tr key={ticket.id} onClick={() => handleTicketClick(ticket.id)} style={{ cursor: 'pointer' }}>
                       <td className="code-cell">{ticket.codigo}</td>
                       <td className="title-cell">{ticket.titulo}</td>
-                      <td>
-                        <span 
-                          className="priority-badge"
-                          style={{ backgroundColor: getPriorityColor(ticket.prioridade) }}
-                        >
-                          {ticket.prioridade}
-                        </span>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        {editingPriority === ticket.id ? (
+                          <div className="priority-edit-container">
+                            <select
+                              className="priority-select"
+                              value={ticket.prioridade || 'MÉDIA'}
+                              onChange={(e) => handlePrioritySelectChange(e, ticket.id)}
+                              onBlur={(e) => handlePrioritySelectBlur(e, ticket.id)}
+                              disabled={updatingPriority}
+                              autoFocus
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                            >
+                              <option value="BAIXA">BAIXA</option>
+                              <option value="MÉDIA">MÉDIA</option>
+                              <option value="ALTA">ALTA</option>
+                            </select>
+                          </div>
+                        ) : (
+                          <div 
+                            className="priority-badge-container"
+                            onClick={(e) => handlePriorityClick(e, ticket.id)}
+                            title="Clique para editar a prioridade"
+                          >
+                            <span 
+                              className="priority-badge priority-badge-editable"
+                              style={{ backgroundColor: getPriorityColor(ticket.prioridade) }}
+                            >
+                              {ticket.prioridade}
+                            </span>
+                            <FaEdit className="priority-edit-icon" />
+                          </div>
+                        )}
                       </td>
                       <td className="date-cell">{formatDate(ticket.dataLimite)}</td>
                       <td className={`days-cell ${isOverdue ? 'overdue' : ''}`}>
@@ -325,6 +503,13 @@ function PendingTicketsPage({ onLogout, onNavigateToHome, onNavigateToPage, curr
         </div>
       </main>
       <Footer />
+      
+      <Toast
+        isVisible={toast.isVisible}
+        message={toast.message}
+        type={toast.type}
+        onClose={hideToast}
+      />
     </div>
   );
 }
