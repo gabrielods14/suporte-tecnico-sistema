@@ -3,10 +3,18 @@ import os
 from dotenv import load_dotenv
 
 # Carrega variáveis de ambiente do arquivo .env no diretório do backend
-# Procura o arquivo .env no diretório web/backend
+# Procura o arquivo .env ou env no diretório web/backend
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 env_path = os.path.join(backend_dir, '.env')
-load_dotenv(dotenv_path=env_path)
+env_path_alt = os.path.join(backend_dir, 'env')
+# Tenta carregar .env primeiro, se não existir, tenta env
+if os.path.exists(env_path):
+    load_dotenv(dotenv_path=env_path)
+elif os.path.exists(env_path_alt):
+    load_dotenv(dotenv_path=env_path_alt)
+else:
+    # Tenta carregar sem especificar caminho (procura no diretório atual)
+    load_dotenv()
 
 # Configure sua chave de API do Gemini
 api_key = os.getenv("GEMINI_API_KEY")
@@ -35,7 +43,15 @@ def gerar_sugestao(titulo, descricao):
         # Recarrega variáveis de ambiente do arquivo .env
         backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend'))
         env_path = os.path.join(backend_dir, '.env')
-        load_dotenv(dotenv_path=env_path, override=True)
+        env_path_alt = os.path.join(backend_dir, 'env')
+        # Tenta carregar .env primeiro, se não existir, tenta env
+        if os.path.exists(env_path):
+            load_dotenv(dotenv_path=env_path, override=True)
+        elif os.path.exists(env_path_alt):
+            load_dotenv(dotenv_path=env_path_alt, override=True)
+        else:
+            # Tenta carregar sem especificar caminho
+            load_dotenv(override=True)
         current_api_key = os.getenv("GEMINI_API_KEY")
         
         if not current_api_key:
@@ -236,14 +252,32 @@ def gerar_sugestao(titulo, descricao):
         Gere uma resposta em texto corrido, profissional, completa e bem estruturada que descreva TODO o processo de resolução do problema com máximo detalhamento técnico e rastreabilidade.
         """
 
-        # Usa um modelo estável disponível (gemini-2.0-flash ou gemini-flash-latest)
-        # Estes são modelos estáveis e rápidos disponíveis na API
-        try:
-            model = genai.GenerativeModel("gemini-2.0-flash")
-        except:
-            # Fallback para modelo alternativo
-            model = genai.GenerativeModel("gemini-flash-latest")
-        response = model.generate_content(prompt)
+        # Usa um modelo estável disponível
+        # Tenta modelos em ordem de preferência
+        modelos_tentados = []
+        response = None
+        modelos_disponiveis = [
+            "gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "gemini-pro",
+            "gemini-flash-latest"
+        ]
+        
+        ultimo_erro = None
+        for modelo_nome in modelos_disponiveis:
+            try:
+                modelos_tentados.append(modelo_nome)
+                model = genai.GenerativeModel(modelo_nome)
+                response = model.generate_content(prompt)
+                # Se chegou aqui, o modelo funcionou
+                break
+            except Exception as e:
+                ultimo_erro = str(e)
+                # Se falhar, tenta o próximo modelo
+                continue
+        
+        if response is None:
+            raise Exception(f"Nenhum modelo do Gemini está disponível. Modelos tentados: {', '.join(modelos_tentados)}. Último erro: {ultimo_erro}")
 
         if not response or not response.text:
             raise Exception("Resposta vazia do Gemini API")

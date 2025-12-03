@@ -42,12 +42,19 @@ def sugerir_resposta():
     except ValueError as e:
         # Erros de validação (ex: chave de API não configurada)
         error_msg = str(e)
+        print(f"[GeminiController] Erro de validação: {error_msg}")
         if "GEMINI_API_KEY" in error_msg.upper():
-            error_msg = "GEMINI_API_KEY não configurada. Configure a chave no arquivo .env em web/backend/.env"
+            error_msg = "GEMINI_API_KEY não configurada. Configure a chave no arquivo .env ou env em web/backend/"
         return jsonify({"erro": error_msg}), 400
     except Exception as e:
         # Outros erros (ex: erro de comunicação com API)
         error_msg = str(e)
-        if "GEMINI_API_KEY" in error_msg.upper():
-            error_msg = "GEMINI_API_KEY não configurada. Execute: python configurar_chave_api.py ou configure manualmente no arquivo .env"
+        print(f"[GeminiController] Erro ao processar solicitação: {error_msg}")
+        import traceback
+        print(f"[GeminiController] Traceback completo:")
+        traceback.print_exc()
+        if "GEMINI_API_KEY" in error_msg.upper() or "API key" in error_msg:
+            error_msg = "GEMINI_API_KEY não configurada ou inválida. Execute: python configurar_chave_api.py ou configure manualmente no arquivo .env ou env em web/backend/"
+        elif "modelo" in error_msg.lower() or "model" in error_msg.lower():
+            error_msg = f"Erro ao acessar modelo do Gemini: {error_msg}"
         return jsonify({"erro": f"Erro ao processar solicitação: {error_msg}"}), 500
